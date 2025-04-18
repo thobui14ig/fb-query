@@ -22,9 +22,12 @@ services:
     depends_on:
       - db
     environment:
+      - DB_TYPE=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER_NAME=root
       - DB_PASSWORD=111111
       - DB_DATABASE=crawl-fb
-      - DB_HOST=db
       - NODE_OPTIONS=--max-old-space-size=4096  
     ports:
       - '9000:9000'
