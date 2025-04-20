@@ -25,6 +25,7 @@ import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { FacebookModule } from './modules/facebook/facebook.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { MonitoringModule } from './modules/monitoring/monitoring.module';
     JwtModule.register({
       secret: 'reset',
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     LinkModule,
     CommentsModule,
@@ -82,4 +84,4 @@ import { MonitoringModule } from './modules/monitoring/monitoring.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

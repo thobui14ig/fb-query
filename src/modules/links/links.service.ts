@@ -11,7 +11,7 @@ export class LinkService {
   constructor(
     @InjectRepository(LinkEntity)
     private repo: Repository<LinkEntity>,
-  ) {}
+  ) { }
 
   create(params: CreateLinkParams) {
     const entities: Partial<LinkEntity>[] = params.links.map((item) => {
