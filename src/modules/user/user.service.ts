@@ -43,6 +43,9 @@ export class UserService {
         level: true,
         expiredAt: true
       },
+      order: {
+        id: "DESC"
+      }
 
     })
   }

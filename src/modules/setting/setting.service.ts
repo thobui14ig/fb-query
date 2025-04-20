@@ -1,26 +1,57 @@
 import { Injectable } from '@nestjs/common';
-import { CreateSettingDto } from './dto/create-setting.dto';
-import { UpdateSettingDto } from './dto/update-setting.dto';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { CreateKeywordDto } from './dto/create-keyword.dto';
+import { KeywordEntity } from './entities/keyword';
+import { CreateDelayDTO } from './dto/create-delay.dto';
+import { DelayEntity } from './entities/delay.entity';
 
 @Injectable()
 export class SettingService {
-  create(createSettingDto: CreateSettingDto) {
-    return 'This action adds a new setting';
+  constructor(
+    @InjectRepository(KeywordEntity)
+    private keywordRepository: Repository<KeywordEntity>,
+    @InjectRepository(DelayEntity)
+    private delayRepository: Repository<DelayEntity>,
+    @InjectDataSource() private readonly dataSource: DataSource,
+  ) { }
+
+  async createKeyword(params: CreateKeywordDto, userId: number) {
+    return await this.dataSource.transaction(async (manager) => {
+      await manager.delete(KeywordEntity, { userId });
+
+      const delayEntities: Partial<KeywordEntity>[] = params.keywords.map((keyword) => ({
+        keyword,
+        userId,
+      }));
+
+      return await manager.insert(KeywordEntity, delayEntities);
+    });
+
   }
 
-  findAll() {
-    return `This action returns all setting`;
+  async createDelay(param: CreateDelayDTO) {
+    const delayFromDb = await this.delayRepository.find()
+    const updatedAt = new Date().toUTCString()
+    let currentDelayEntity = delayFromDb.length === 0 ? { ...param, updatedAt } : { ...delayFromDb[0], ...param, updatedAt }
+
+    return this.delayRepository.save(currentDelayEntity)
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} setting`;
+  getKeywords(userId: number) {
+    return this.keywordRepository.findOne({
+      where: {
+        userId
+      }
+    })
   }
 
-  update(id: number, updateSettingDto: UpdateSettingDto) {
-    return `This action updates a #${id} setting`;
+  async getDelay() {
+    const response = await this.delayRepository.find()
+    return (response.length === 0 ? null : response[0])
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} setting`;
+  removeAllKeyword() {
+    return this.keywordRepository.delete({})
   }
 }

@@ -60,6 +60,9 @@ export class LinkService {
                     email: true
                 },
                 userId: true
+            },
+            order: {
+                id: "DESC"
             }
         })
     }

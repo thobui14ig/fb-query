@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,12 +12,40 @@ export class ProxyService {
     private repo: Repository<ProxyEntity>,
   ) { }
 
-  create(createProxyDto: CreateProxyDto) {
-    return 'This action adds a new proxy';
+  async create(params: CreateProxyDto) {
+    const proxiesValid = []
+    const proxiesInValid = []
+
+    for (const proxy of params.proxies) {
+      const isExit = await this.repo.findOne({
+        where: {
+          proxyAddress: proxy
+        }
+      }) ? true : false
+
+      if (!isExit) {
+        proxiesValid.push({
+          proxyAddress: proxy
+        })
+        continue
+      }
+
+      proxiesInValid.push(proxy)
+    }
+    await this.repo.save(proxiesValid)
+
+    if (proxiesInValid.length > 0) {
+      throw new HttpException(`Thêm thành công ${proxiesValid.length}, Proxy bị trùng: [${proxiesInValid.join(',')}]`, HttpStatus.BAD_REQUEST);
+    }
+    throw new HttpException(`Thêm thành công ${proxiesValid.length} proxy`, HttpStatus.OK);
   }
 
   findAll() {
-    return this.repo.find()
+    return this.repo.find({
+      order: {
+        id: 'DESC'
+      }
+    })
   }
 
   findOne(id: number) {
@@ -33,6 +61,6 @@ export class ProxyService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} proxy`;
+    return this.repo.delete(id);
   }
 }

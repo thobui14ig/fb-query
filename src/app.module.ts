@@ -23,6 +23,7 @@ import { DelayEntity } from './modules/setting/entities/delay.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { FacebookModule } from './modules/facebook/facebook.module';
 
 @Module({
   imports: [
@@ -66,7 +67,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     CookieModule,
     TokenModule,
     ProxyModule,
-    SettingModule
+    SettingModule,
+    FacebookModule
   ],
   controllers: [AppController],
   providers: [AppService,

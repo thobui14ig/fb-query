@@ -12,12 +12,21 @@ export class CookieService {
     private repo: Repository<CookieEntity>,
   ) { }
 
-  create(createCookieDto: CreateCookieDto) {
-    return 'This action adds a new cookie';
+  create(params: CreateCookieDto) {
+    const cookies = params.cookies.map((cookie) => {
+      return {
+        cookie
+      }
+    })
+    return this.repo.save(cookies)
   }
 
   findAll() {
-    return this.repo.find()
+    return this.repo.find({
+      order: {
+        id: "DESC"
+      }
+    })
   }
 
   findOne(id: number) {
@@ -29,10 +38,10 @@ export class CookieService {
   }
 
   update(id: number, updateCookieDto: UpdateCookieDto) {
-    return `This action updates a #${id} cookie`;
+    return this.repo.save({ ...updateCookieDto, id })
   }
 
   remove(id: number) {
-    return `This action removes a #${id} cookie`;
+    return this.repo.delete(id);
   }
 }

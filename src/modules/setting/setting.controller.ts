@@ -1,34 +1,34 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
 import { SettingService } from './setting.service';
-import { CreateSettingDto } from './dto/create-setting.dto';
-import { UpdateSettingDto } from './dto/update-setting.dto';
+import { CreateKeywordDto } from './dto/create-keyword.dto';
+import { Request } from 'express';
+import { getUser } from 'src/common/helper/user';
+import { CreateDelayDTO } from './dto/create-delay.dto';
 
 @Controller('setting')
 export class SettingController {
-  constructor(private readonly settingService: SettingService) {}
+  constructor(private readonly settingService: SettingService) { }
 
-  @Post()
-  create(@Body() createSettingDto: CreateSettingDto) {
-    return this.settingService.create(createSettingDto);
+  @Post('/create-keyword')
+  createKeyword(@Req() req: Request, @Body() createKeywordDto: CreateKeywordDto) {
+    const user = getUser(req);
+    return this.settingService.createKeyword(createKeywordDto, user.id);
   }
 
-  @Get()
-  findAll() {
-    return this.settingService.findAll();
+  @Post('/create-delay')
+  createDelay(@Req() req: Request, @Body() createDelayDto: CreateDelayDTO) {
+    const user = getUser(req);
+    return this.settingService.createDelay(createDelayDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.settingService.findOne(+id);
+  @Get('get-keywords')
+  getKeywords(@Req() req: Request,) {
+    const user = getUser(req);
+    return this.settingService.getKeywords(user.id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSettingDto: UpdateSettingDto) {
-    return this.settingService.update(+id, updateSettingDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.settingService.remove(+id);
+  @Get('get-delay')
+  getDelay() {
+    return this.settingService.getDelay();
   }
 }
