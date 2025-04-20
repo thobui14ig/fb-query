@@ -10,50 +10,58 @@ export class ProxyService {
   constructor(
     @InjectRepository(ProxyEntity)
     private repo: Repository<ProxyEntity>,
-  ) { }
+  ) {}
 
   async create(params: CreateProxyDto) {
-    const proxiesValid = []
-    const proxiesInValid = []
+    const proxiesValid = [];
+    const proxiesInValid = [];
 
     for (const proxy of params.proxies) {
-      const isExit = await this.repo.findOne({
+      const isExit = (await this.repo.findOne({
         where: {
-          proxyAddress: proxy
-        }
-      }) ? true : false
+          proxyAddress: proxy,
+        },
+      }))
+        ? true
+        : false;
 
       if (!isExit) {
         proxiesValid.push({
-          proxyAddress: proxy
-        })
-        continue
+          proxyAddress: proxy,
+        });
+        continue;
       }
 
-      proxiesInValid.push(proxy)
+      proxiesInValid.push(proxy);
     }
-    await this.repo.save(proxiesValid)
+    await this.repo.save(proxiesValid);
 
     if (proxiesInValid.length > 0) {
-      throw new HttpException(`Thêm thành công ${proxiesValid.length}, Proxy bị trùng: [${proxiesInValid.join(',')}]`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        `Thêm thành công ${proxiesValid.length}, Proxy bị trùng: [${proxiesInValid.join(',')}]`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    throw new HttpException(`Thêm thành công ${proxiesValid.length} proxy`, HttpStatus.OK);
+    throw new HttpException(
+      `Thêm thành công ${proxiesValid.length} proxy`,
+      HttpStatus.OK,
+    );
   }
 
   findAll() {
     return this.repo.find({
       order: {
-        id: 'DESC'
-      }
-    })
+        id: 'DESC',
+      },
+    });
   }
 
   findOne(id: number) {
     return this.repo.findOne({
       where: {
-        id
-      }
-    })
+        id,
+      },
+    });
   }
 
   update(id: number, updateProxyDto: UpdateProxyDto) {

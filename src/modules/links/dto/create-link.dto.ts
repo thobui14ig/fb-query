@@ -1,26 +1,37 @@
-import { ArrayNotEmpty, IsArray, IsEnum, IsNumber, IsString, Matches, MaxLength, ValidateNested } from "class-validator";
-import { LinkStatus } from "../entities/links.entity";
-import { Optional } from "@nestjs/common";
-import { Type } from "class-transformer";
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsString,
+  Matches,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import { LinkStatus } from '../entities/links.entity';
+import { Optional } from '@nestjs/common';
+import { Type } from 'class-transformer';
 
 class LinkDto {
-    @IsString()
-    @Matches(/^https:\/\/www\.facebook\.com\//, { message: 'Nội dung phải bắt đầu bằng "https://www.facebook.com/"' })
-    @MaxLength(1, { message: "Nội dung không được bỏ trống" })
-    url: string
+  @IsString()
+  @Matches(/^https:\/\/www\.facebook\.com\//, {
+    message: 'Nội dung phải bắt đầu bằng "https://www.facebook.com/"',
+  })
+  @MaxLength(1, { message: 'Nội dung không được bỏ trống' })
+  url: string;
 
-    @IsNumber()
-    @Optional()
-    delayTime?: number
+  @IsNumber()
+  @Optional()
+  delayTime?: number;
 }
 
 export class CreateLinkDTO {
-    @IsArray()
-    @ArrayNotEmpty()
-    @ValidateNested({ each: true })
-    @Type(() => LinkDto)
-    links: LinkDto[];
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => LinkDto)
+  links: LinkDto[];
 
-    @IsEnum(LinkStatus)
-    status: LinkStatus;
+  @IsEnum(LinkStatus)
+  status: LinkStatus;
 }

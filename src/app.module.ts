@@ -24,6 +24,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { FacebookModule } from './modules/facebook/facebook.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 
 @Module({
   imports: [
@@ -68,10 +69,12 @@ import { FacebookModule } from './modules/facebook/facebook.module';
     TokenModule,
     ProxyModule,
     SettingModule,
-    FacebookModule
+    FacebookModule,
+    MonitoringModule,
   ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     AppService,
     {
       provide: APP_GUARD,
@@ -79,4 +82,4 @@ import { FacebookModule } from './modules/facebook/facebook.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

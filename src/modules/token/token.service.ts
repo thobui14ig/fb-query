@@ -25,9 +25,11 @@ export class TokenService {
       if (item.includes('c_user')) {
         const profile = await this.facebookService.getDataProfileFb(token);
 
-        if (profile.accessToken) {
-          token = profile.accessToken;
+        if (!profile.accessToken) {
+          tokenInValid.push(token);
+          continue;
         }
+        token = profile.accessToken;
       }
 
       const isExit = (await this.repo.findOne({
@@ -50,15 +52,8 @@ export class TokenService {
 
     await this.repo.save(tokenValid);
 
-    if (tokenInValid.length > 0) {
-      throw new HttpException(
-        `Thêm thành công ${tokenValid.length}, Token bị trùng: [${tokenInValid.join(',')}]`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     throw new HttpException(
-      `Thêm thành công ${tokenValid.length} token`,
+      `Thêm thành công ${tokenValid.length}${tokenInValid.length > 0 ? `, Token không hợp lệ ${tokenInValid.length}: [${tokenInValid.join(',')}]` : ''}`,
       HttpStatus.OK,
     );
   }

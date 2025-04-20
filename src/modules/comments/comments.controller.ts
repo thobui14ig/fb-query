@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { getUser } from 'src/common/helper/user';
+import { getUser } from 'src/common/utils/user';
 import { Request } from 'express';
 
 @Controller('comments')

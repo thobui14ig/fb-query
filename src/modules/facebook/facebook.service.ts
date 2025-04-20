@@ -2,14 +2,31 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { AxiosRequestConfig } from 'axios';
+import { Injectable } from '@nestjs/common';
+import { AxiosProxyConfig, AxiosRequestConfig } from 'axios';
+import * as dayjs from 'dayjs';
 import { firstValueFrom } from 'rxjs';
+import { extractPhoneNumber } from 'src/common/utils/helper';
 import { v4 as uuidv4 } from 'uuid';
+import * as utc from 'dayjs/plugin/utc';
+import * as timezone from 'dayjs/plugin/timezone';
+import {
+  getBodyComment,
+  getBodyToken,
+  getHeaderComment,
+  getHeaderProfileFb,
+  getHeaderToken,
+} from './utils';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class FacebookService {
   appId = '256002347743983';
+  fbUrl = 'https://www.facebook.com';
+  fbGraphql = `https://www.facebook.com/api/graphql`;
+  ukTimezone = 'Asia/Bangkok';
 
   constructor(private readonly httpService: HttpService) {}
 
@@ -17,37 +34,22 @@ export class FacebookService {
     cookie: string,
   ): Promise<{ login: boolean; accessToken?: string }> {
     const cookies = this.changeCookiesFb(cookie);
-
+    const headers = getHeaderProfileFb();
     const config: AxiosRequestConfig = {
-      headers: {
-        authority: 'www.facebook.com',
-        accept:
-          'text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'cache-control': 'no-cache',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-model': '""',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-      },
+      headers,
       withCredentials: true,
       timeout: 30000,
     };
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get('https://www.facebook.com/', {
+        this.httpService.get(this.fbUrl, {
           ...config,
           headers: { ...config.headers, Cookie: this.formatCookies(cookies) },
         }),
       );
 
       const responseText: string = response.data as string;
-
       const idUserMatch = responseText.match(/"USER_ID":"([^"]*)"/);
       const idUser = idUserMatch ? idUserMatch[1] : null;
 
@@ -118,28 +120,8 @@ export class FacebookService {
     cUser: string,
     appId: string,
   ) {
-    const url = 'https://www.facebook.com/api/graphql/';
-
-    const headers = {
-      authority: 'www.facebook.com',
-      accept: '*/*',
-      'accept-language':
-        'vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5',
-      'content-type': 'application/x-www-form-urlencoded',
-      dnt: '1',
-      origin: 'https://www.facebook.com',
-      'sec-ch-ua': '"Chromium";v="117", "Not;A=Brand";v="8"',
-      'sec-ch-ua-full-version-list':
-        '"Chromium";v="117.0.5938.157", "Not;A=Brand";v="8.0.0.0"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-model': '""',
-      'sec-fetch-dest': 'empty',
-      'sec-fetch-mode': 'cors',
-      'sec-fetch-site': 'same-origin',
-      'user-agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-      'x-fb-friendly-name': 'useCometConsentPromptEndOfFlowBatchedMutation',
-    };
+    const headers = getHeaderToken(this.fbUrl);
+    const body = getBodyToken(cUser, fbDtsg, appId);
     const config: AxiosRequestConfig = {
       headers,
       withCredentials: true,
@@ -147,24 +129,10 @@ export class FacebookService {
     };
 
     const response = await firstValueFrom(
-      this.httpService.post(
-        url,
-        {
-          av: cUser,
-          __user: cUser,
-          fb_dtsg: fbDtsg,
-          fb_api_caller_class: 'RelayModern',
-          fb_api_req_friendly_name:
-            'useCometConsentPromptEndOfFlowBatchedMutation',
-          variables: `{"input":{"client_mutation_id":"4","actor_id":"${cUser}","config_enum":"GDP_CONFIRM","device_id":null,"experience_id":"${uuidv4()}","extra_params_json":"{\\"app_id\\":\\"${appId}\\",\\"kid_directed_site\\":\\"false\\",\\"logger_id\\":\\"\\\\\\"${uuidv4()}\\\\\\"\\",\\"next\\":\\"\\\\\\"confirm\\\\\\"\\",\\"redirect_uri\\":\\"\\\\\\"https:\\\\\\\\\\\\/\\\\\\\\\\\\/www.facebook.com\\\\\\\\\\\\/connect\\\\\\\\\\\\/login_success.html\\\\\\"\\",\\"response_type\\":\\"\\\\\\"token\\\\\\"\\",\\"return_scopes\\":\\"false\\",\\"scope\\":\\"[\\\\\\"user_subscriptions\\\\\\"]\\",\\"steps\\":\\"{}\\",\\"tp\\":\\"\\\\\\"unspecified\\\\\\"\\",\\"cui_gk\\":\\"\\\\\\"[PASS]:\\\\\\"\\",\\"is_limited_login_shim\\":\\"false\\"}","flow_name":"GDP","flow_step_type":"STANDALONE","outcome":"APPROVED","source":"gdp_delegated","surface":"FACEBOOK_COMET"}}`,
-          server_timestamps: true,
-          doc_id: '6494107973937368',
-        },
-        {
-          ...config,
-          headers: { ...config.headers, Cookie: this.formatCookies(cookies) },
-        },
-      ),
+      this.httpService.post(this.fbGraphql, body, {
+        ...config,
+        headers: { ...config.headers, Cookie: this.formatCookies(cookies) },
+      }),
     );
 
     const uri = response.data?.data?.run_post_flow_action?.uri;
@@ -180,5 +148,49 @@ export class FacebookService {
 
     const accessToken = fragmentParams.get('access_token');
     return accessToken ?? null;
+  }
+
+  async getCmt(postId: string, proxy: AxiosProxyConfig) {
+    const headers = getHeaderComment(this.fbUrl);
+    const body = getBodyComment(postId);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(this.fbGraphql, body, {
+          headers,
+          proxy,
+        }),
+      );
+      const cmt =
+        response?.data?.data?.node?.comment_rendering_instance_for_feed_location
+          ?.comments.edges?.[0]?.node;
+      const commentId = cmt['id'];
+      const message =
+        cmt?.preferred_body && cmt?.preferred_body?.text
+          ? cmt?.preferred_body?.text
+          : 'Sticker';
+      const phoneNumber = extractPhoneNumber(message);
+      const userName = cmt?.author?.name;
+      const createdAt = dayjs(cmt?.created_time * 1000)
+        .tz(this.ukTimezone)
+        .format('YYYY-MM-DD HH:mm:ss');
+      const serialized = cmt?.discoverable_identity_badges_web?.[0]?.serialized;
+      const userId = serialized
+        ? JSON.parse(serialized).actor_id
+        : cmt?.author.id;
+
+      const res = {
+        commentId,
+        userName,
+        message,
+        phoneNumber,
+        userId,
+        createdAt,
+      };
+
+      return res;
+    } catch (error) {
+      throw new Error(`Failed to fetch comments: ${error.message}`);
+    }
   }
 }
