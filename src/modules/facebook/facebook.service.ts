@@ -211,7 +211,8 @@ export class FacebookService {
       const match = htmlContent.match(/,"actors":(\[.*?\])/);
       //case 1
       if (match && match[1]) {
-        const postId = htmlContent.split('"post_id":"')[1].split('"')[0];
+        console.log("🚀 ~ getProfileLink ~ match[1]:", match[1])
+        const postId = htmlContent?.split('"post_id":"')[1]?.split('"')[0];
         const profileDecode = JSON.parse(match[1])
         return {
           type: LinkType.PUBLIC,
@@ -222,10 +223,11 @@ export class FacebookService {
       //case 2: video
       const match1 = htmlContent.match(/"video_owner":({.*?})/);
       if (match && match1[1]) {
+        console.log("🚀 ~ getProfileLink ~ match1[1]:", match1[1])
         let videoOwnerJson = JSON.parse(match1[1])
-        const postId = htmlContent.split('"post_id":"')[1].split('"')[0];
+        const postId = htmlContent?.split('"post_id":"')[1]?.split('"')[0];
         // const pageId = videoOwnerJson.split('"id":"')[1].split('","')[0];
-        let name = videoOwnerJson.split('"name":"')[1].split('","')[0];
+        let name = videoOwnerJson?.split('"name":"')[1]?.split('","')[0];
         name = JSON.parse(`"${name}"`);
         return {
           type: LinkType.PUBLIC,
