@@ -41,6 +41,9 @@ export class CommentsService {
           link: {
             linkName: true
           }
+        },
+        order: {
+          id: "DESC"
         }
       })
     }

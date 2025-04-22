@@ -120,7 +120,6 @@ export class MonitoringService {
   @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
     const links = await this.getLinksWithoutProfile()
-    console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ links:", links)
     if (links.length === 0) return;
 
     for (const link of links) {
