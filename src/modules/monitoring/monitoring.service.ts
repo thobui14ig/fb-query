@@ -23,8 +23,8 @@ export class MonitoringService {
     host: '38.153.152.244',
     port: 9594,
     auth: {
-      username: 'pchwrbfj',
-      password: 'ochbgqn9v4w3',
+      username: 'ubsoqvlh',
+      password: 'l0sc2fz7p8p7',
     },
   };
 

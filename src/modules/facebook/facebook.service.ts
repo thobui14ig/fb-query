@@ -19,7 +19,6 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
-import { writeFileSync } from 'fs';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -164,6 +163,7 @@ export class FacebookService {
           proxy,
         }),
       );
+
       const comment =
         response?.data?.data?.node?.comment_rendering_instance_for_feed_location
           ?.comments.edges?.[0]?.node;
@@ -193,6 +193,7 @@ export class FacebookService {
 
       return res;
     } catch (error) {
+      console.log("🚀 ~ getCmt ~ error:", error)
       throw new Error(`Failed to fetch comments: ${error.message}`);
     }
   }
