@@ -28,7 +28,8 @@ export class LinkService {
     for (const link of params.links) {
       const isExitLink = await this.repo.findOne({
         where: {
-          linkUrl: link.url
+          linkUrl: link.url,
+          userId: params.userId
         }
       })
 
