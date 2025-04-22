@@ -119,4 +119,37 @@ const getHeaderProfileFb = () => {
   };
 };
 
-export { getHeaderToken, getBodyToken, getHeaderProfileFb };
+const getHeaderProfileLink = () => {
+  const headers = {
+    "authority": "www.facebook.com",
+    "method": "GET",
+    "scheme": "https",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
+    "cache-control": "max-age=0",
+    "dpr": "1.25",
+    "priority": "u=0, i",
+    "sec-ch-ua": '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+  }
+  const cookies = {
+    "datr": "vxn_Zj2fqOZ1P07fvi8nPhKf",
+    "sb": "vxn_ZlcV_Nbp124XgBM45zLL",
+    "ps_l": "1",
+    "ps_n": "1",
+    "dpr": "1.25",
+    "fr": "1d7OWZU4tToHabPiT.AWV8OfLuVxfMiIBEks0IKH0rnotI0uebNNLJ_w.BnruFE..AAA.0.0.Bnyp0_.AWWR4SZ7tKw",
+    "wd": "654x730"
+  }
+
+  return { headers, cookies }
+}
+
+export { getHeaderToken, getBodyToken, getHeaderProfileFb, getHeaderProfileLink };

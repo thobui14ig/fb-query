@@ -6,17 +6,15 @@ import { Request } from 'express';
 
 @Controller('monitoring')
 export class MonitoringController {
-  constructor(private readonly monitoringService: MonitoringService) {}
+  constructor(private readonly monitoringService: MonitoringService) { }
 
   @Post('/process')
   updateProcess(@Req() req: Request, @Body() processDTO: ProcessDTO) {
-    // const user = getUser(req);
-    // return this.monitoringService.updateProcess(
-    //   processDTO,
-    //   user.level,
-    //   user.id,
-    // );
-
-    return this.monitoringService.startMonitoring();
+    const user = getUser(req);
+    return this.monitoringService.updateProcess(
+      processDTO,
+      user.level,
+      user.id,
+    );
   }
 }

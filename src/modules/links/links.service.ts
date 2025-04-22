@@ -1,29 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { LinkEntity, LinkStatus } from './entities/links.entity';
 import { CreateLinkParams } from './links.service.i';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { LEVEL } from '../user/entities/user.entity';
+import * as dayjs from 'dayjs';
+import * as timezone from 'dayjs/plugin/timezone';
+import * as utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class LinkService {
+  ukTimezone = 'Asia/Ho_Chi_Minh';
   constructor(
     @InjectRepository(LinkEntity)
     private repo: Repository<LinkEntity>,
+    private connection: DataSource
   ) { }
 
-  create(params: CreateLinkParams) {
-    const entities: Partial<LinkEntity>[] = params.links.map((item) => {
-      return {
-        userId: params.userId,
-        linkName: item.url,
-        linkUrl: item.url,
-        delayTime: item.delayTime,
-        status: params.status,
-      };
-    });
-    return this.repo.save(entities);
+  async create(params: CreateLinkParams) {
+    const linkEntities: Partial<LinkEntity>[] = []
+    const linksInValid = [];
+
+    for (const link of params.links) {
+      const isExitLink = await this.repo.findOne({
+        where: {
+          linkUrl: link.url
+        }
+      })
+
+      if (!isExitLink) {
+        const entity: Partial<LinkEntity> = {
+          userId: params.userId,
+          linkUrl: link.url,
+          delayTime: link.delayTime,
+          status: params.status,
+          linkName: link.name
+        }
+        linkEntities.push(entity)
+        continue
+      }
+
+      linksInValid.push(link.url)
+    }
+
+    await this.repo.save(linkEntities);
+    if (linksInValid.length > 0) {
+      throw new HttpException(
+        `Thêm thành công ${linkEntities.length}, Link bị trùng: [${linksInValid.join(',')}]`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    throw new HttpException(
+      `Thêm thành công ${linkEntities.length} link`,
+      HttpStatus.OK,
+    );
   }
 
   getOne(id: number) {
@@ -34,69 +68,41 @@ export class LinkService {
     });
   }
 
-  getAll(status: LinkStatus, level: LEVEL, userId: number) {
-    if (level === LEVEL.ADMIN) {
-      return this.repo.find({
-        where: {
-          status,
-        },
-        relations: {
-          user: true,
-        },
-        select: {
-          id: true,
-          linkName: true,
-          linkUrl: true,
-          like: true,
-          postId: true,
-          delayTime: true,
-          status: true,
-          createdAt: true,
-          commentCount: true,
-          lastCommentTime: true,
-          process: true,
-          type: true,
-          user: {
-            email: true,
-          },
-          userId: true,
-        },
-        order: {
-          id: 'DESC',
-        },
-      });
-    }
+  async getAll(status: LinkStatus, level: LEVEL, userId: number) {
+    const response = await this.connection.query(`
+        SELECT 
+            l.id,
+            l.link_name as linkName,
+            l.link_url as linkUrl,
+            l.like,
+            l.post_id as postId,
+            l.delay_time as delayTime,
+            l.status,
+            l.created_at as createdAt,
+            l.last_comment_time as lastCommentTime,
+            l.process,
+            l.type,
+            u.email, 
+            COUNT(*) AS commentCount
+        FROM 
+            links l
+        JOIN 
+            users u ON u.id = l.user_id
+        LEFT JOIN 
+            comments c ON c.link_id = l.id
+        WHERE l.status = ? ${level === LEVEL.USER ? `AND l.user_id = ${userId}` : ''}
+        GROUP BY 
+            l.id, u.email
+            order by l.id desc
+      `, [status])
 
-    return this.repo.find({
-      where: {
-        status,
-        userId,
-      },
-      relations: {
-        user: true,
-      },
-      select: {
-        id: true,
-        linkName: true,
-        linkUrl: true,
-        like: true,
-        postId: true,
-        delayTime: true,
-        status: true,
-        createdAt: true,
-        commentCount: true,
-        lastCommentTime: true,
-        process: true,
-        type: true,
-        user: {
-          email: true,
-        },
-        userId: true,
-      },
-      order: {
-        id: 'DESC',
-      },
-    });
+    return response.map((item) => {
+      return {
+        ...item,
+        createdAt: dayjs().tz(this.ukTimezone)
+          .format('YYYY-MM-DD HH:mm:ss')
+      }
+    })
   }
 
   update(params: UpdateLinkDTO, level: LEVEL) {

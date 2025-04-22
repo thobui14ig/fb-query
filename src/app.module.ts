@@ -56,7 +56,7 @@ import { ScheduleModule } from '@nestjs/schedule';
           KeywordEntity,
           DelayEntity,
         ],
-        logging: true,
+        // logging: true,
         // synchronize: true, // chỉ dùng trong dev!
       }),
     }),

@@ -30,7 +30,7 @@ export class LinkEntity {
   @Column({ name: 'user_id' })
   userId: number;
 
-  @Column({ length: 255, name: 'link_name' })
+  @Column({ length: 255, name: 'link_name', nullable: true })
   linkName: string;
 
   @Column({ length: 255, name: 'link_url' })

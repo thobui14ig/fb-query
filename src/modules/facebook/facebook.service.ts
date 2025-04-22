@@ -5,16 +5,18 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AxiosProxyConfig, AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
+import * as timezone from 'dayjs/plugin/timezone';
+import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { v4 as uuidv4 } from 'uuid';
-import * as utc from 'dayjs/plugin/utc';
-import * as timezone from 'dayjs/plugin/timezone';
+import { LinkType } from '../links/entities/links.entity';
+import { IGetProfileLinkResponse } from './facebook.service.i';
 import {
   getBodyComment,
   getBodyToken,
   getHeaderComment,
   getHeaderProfileFb,
+  getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
 
@@ -28,7 +30,7 @@ export class FacebookService {
   fbGraphql = `https://www.facebook.com/api/graphql`;
   ukTimezone = 'Asia/Bangkok';
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   async getDataProfileFb(
     cookie: string,
@@ -161,36 +163,83 @@ export class FacebookService {
           proxy,
         }),
       );
-      const cmt =
+      const comment =
         response?.data?.data?.node?.comment_rendering_instance_for_feed_location
           ?.comments.edges?.[0]?.node;
-      const commentId = cmt['id'];
-      const message =
-        cmt?.preferred_body && cmt?.preferred_body?.text
-          ? cmt?.preferred_body?.text
+      const commentId = comment?.id
+      const commentMessage =
+        comment?.preferred_body && comment?.preferred_body?.text
+          ? comment?.preferred_body?.text
           : 'Sticker';
-      const phoneNumber = extractPhoneNumber(message);
-      const userName = cmt?.author?.name;
-      const createdAt = dayjs(cmt?.created_time * 1000)
+      const phoneNumber = extractPhoneNumber(commentMessage);
+      const userNameComment = comment?.author?.name;
+      const commentCreatedAt = dayjs(comment?.created_time * 1000)
         .tz(this.ukTimezone)
         .format('YYYY-MM-DD HH:mm:ss');
-      const serialized = cmt?.discoverable_identity_badges_web?.[0]?.serialized;
-      const userId = serialized
+      const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
+      const userIdComment = serialized
         ? JSON.parse(serialized).actor_id
-        : cmt?.author.id;
+        : comment?.author.id;
 
       const res = {
         commentId,
-        userName,
-        message,
+        userNameComment,
+        commentMessage,
         phoneNumber,
-        userId,
-        createdAt,
+        userIdComment,
+        commentCreatedAt,
       };
 
       return res;
     } catch (error) {
       throw new Error(`Failed to fetch comments: ${error.message}`);
+    }
+  }
+
+  async getProfileLink(url: string, proxy: AxiosProxyConfig): Promise<IGetProfileLinkResponse> {
+    try {
+      const { cookies, headers } = getHeaderProfileLink()
+
+      const response = await firstValueFrom(
+        this.httpService.get(url, {
+          headers: { ...headers, Cookie: this.formatCookies(cookies) },
+          proxy,
+        }),
+      );
+      const htmlContent = response.data
+      const match = htmlContent.match(/,"actors":(\[.*?\])/);
+      //case 1
+      if (match && match[1]) {
+        const postId = htmlContent.split('"post_id":"')[1].split('"')[0];
+        const profileDecode = JSON.parse(match[1])
+        return {
+          type: LinkType.PUBLIC,
+          name: profileDecode[0]?.name,
+          postId: postId,
+        }
+      }
+      //case 2: video
+      const match1 = htmlContent.match(/"video_owner":({.*?})/);
+      if (match && match1[1]) {
+        let videoOwnerJson = JSON.parse(match1[1])
+        const postId = htmlContent.split('"post_id":"')[1].split('"')[0];
+        // const pageId = videoOwnerJson.split('"id":"')[1].split('","')[0];
+        let name = videoOwnerJson.split('"name":"')[1].split('","')[0];
+        name = JSON.parse(`"${name}"`);
+        return {
+          type: LinkType.PUBLIC,
+          name,
+          postId: postId,
+        }
+      }
+
+      return {
+        type: LinkType.PRIVATE,
+      }
+    } catch (error) {
+      return {
+        type: LinkType.PRIVATE,
+      }
     }
   }
 }

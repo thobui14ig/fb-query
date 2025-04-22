@@ -3,6 +3,7 @@ import {
   IsArray,
   IsEnum,
   IsNumber,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -20,6 +21,10 @@ class LinkDto {
   })
   @MinLength(1, { message: 'Nội dung không được bỏ trống' })
   url: string;
+
+  @IsString()
+  @IsOptional()
+  name?: string
 
   @IsNumber()
   @Optional()

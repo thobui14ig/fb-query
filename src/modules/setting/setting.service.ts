@@ -39,7 +39,7 @@ export class SettingService {
   }
 
   getKeywords(userId: number) {
-    return this.keywordRepository.findOne({
+    return this.keywordRepository.find({
       where: {
         userId
       }
