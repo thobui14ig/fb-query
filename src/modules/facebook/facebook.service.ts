@@ -198,6 +198,7 @@ export class FacebookService {
 
   async getProfileLink(url: string, proxy: AxiosProxyConfig): Promise<IGetProfileLinkResponse> {
     try {
+      console.log("----------Đang lấy thông tin url:", url)
       const { cookies, headers } = getHeaderProfileLink()
 
       const response = await firstValueFrom(
@@ -237,6 +238,7 @@ export class FacebookService {
         type: LinkType.PRIVATE,
       }
     } catch (error) {
+      console.log("Lỗi lấy thông tin bài viết ", error)
       return {
         type: LinkType.PRIVATE,
       }
