@@ -313,13 +313,13 @@ export class FacebookService {
   }
 
   async getUuidByCookie(uuid: string, httpsAgent) {
-    const cookies = this.changeCookiesFb(`c_user=61575647909201; xs=19:rcpADPk3PNlPFg:2:1745395358:-1:-1; fr=0plgX3kfaGXWWEW8D.AWeN-6rlNUhxPZBiX2c5kzqyiIzPCfq31kh7AUdsW-weVHAJbvY.BoCJ6d..AAA.0.0.BoCJ6d.AWdVNwRIWQy-OR5OlR5v1PQpFzs; datr=nZ4IaKt0PGuQ4sUq5KCH--fW`);
+    const cookies = this.changeCookiesFb(`datr=5-kEaEggYORdPbZny5oFp5pB; sb=_ukEaIt0oqbw6wKP9ZDCQGqs; ps_l=1; ps_n=1; ar_debug=1; c_user=100051755359634; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1745417906996%2C%22v%22%3A1%7D; fr=18l2CnqH1U3kE0vFh.AWf60Zfuql4K5EJZz9tCiL5oEOMUFtk_CQ4hB59qFijMRBB3cxA.BoCPkE..AAA.0.0.BoCPkE.AWfm1RtyihH2YrUXFWIXorCpykI; xs=50%3AHmELAuPsvrwShw%3A2%3A1745414736%3A-1%3A6267%3A%3AAcWWuYoW2hx5484cjcYMMjZqffe4pt2kztewER0EVw; wd=1912x252`);
     const dataUser = await firstValueFrom(
       this.httpService.get(`https://www.facebook.com/${uuid}`, {
         headers: {
           Cookie: this.formatCookies(cookies)
         },
-        httpsAgent
+        // httpsAgent
       }),
     );
 
