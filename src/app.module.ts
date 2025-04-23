@@ -26,6 +26,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { FacebookModule } from './modules/facebook/facebook.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MproxyModule } from './modules/mproxy/mproxy.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     SettingModule,
     FacebookModule,
     MonitoringModule,
+    MproxyModule
   ],
   controllers: [AppController],
   providers: [
