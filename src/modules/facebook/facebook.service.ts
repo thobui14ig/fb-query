@@ -193,7 +193,7 @@ export class FacebookService {
 
       return res;
     } catch (error) {
-      console.log("🚀 ~ getCmt ~ error:", error)
+      console.log("🚀 ~ getCmt ~ error:", error?.message)
     }
   }
 
