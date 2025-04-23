@@ -175,9 +175,7 @@ export class FacebookService {
           : 'Sticker';
       const phoneNumber = extractPhoneNumber(commentMessage);
       const userNameComment = comment?.author?.name;
-      const commentCreatedAt = dayjs(comment?.created_time * 1000)
-        .tz(this.ukTimezone)
-        .format('YYYY-MM-DD HH:mm:ss');
+      const commentCreatedAt = dayjs(comment?.created_time * 1000).format('YYYY-MM-DD HH:mm:ss');
       const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
       let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
       userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, httpsAgent)
