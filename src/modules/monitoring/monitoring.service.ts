@@ -11,22 +11,15 @@ import {
 import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
 import { GroupedLinksByType, IPostStarted } from './monitoring.service.i';
+import { HttpsProxyAgent } from "https-proxy-agent";
+const httpsAgent = new HttpsProxyAgent('http://chuongndh:LOKeNCbTGeI1t@ip.mproxy.vn:12370');
+
 
 @Injectable()
 export class MonitoringService {
   postIdRunning: string[] = []
   postsPublic: IPostStarted[] = []
   postsPrivate: IPostStarted[] = []
-
-  proxy = {
-    protocol: 'http',
-    host: '38.153.152.244',
-    port: 9594,
-    auth: {
-      username: 'ubsoqvlh',
-      password: 'l0sc2fz7p8p7',
-    },
-  };
 
   constructor(
     @InjectRepository(LinkEntity)
@@ -65,7 +58,7 @@ export class MonitoringService {
     this.postsPrivate = groupPost.private ?? [];
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handlePostsPublic() {
     if (this.postsPublic.length === 0) return;
 
@@ -80,7 +73,7 @@ export class MonitoringService {
           userIdComment,
           userNameComment,
           commentCreatedAt
-        } = await this.facebookService.getCmt(encodedPostId, this.proxy);
+        } = await this.facebookService.getCmt(encodedPostId, httpsAgent) || {}
         const links = await this.selectLinkUpdate(post.postId)
         const commentEntities: CommentEntity[] = []
         const linkEntities: LinkEntity[] = []
@@ -107,7 +100,7 @@ export class MonitoringService {
         await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
         await this.delay(3000)
       } catch (error) {
-        console.log(`Crawl comment with postId ${post.postId} Error.`, error)
+        console.log(`Crawl comment with postId ${post.postId} Error.`, error?.message)
       }
     }
     const postHandle = this.postsPublic.map((post) => {
@@ -123,7 +116,7 @@ export class MonitoringService {
     if (links.length === 0) return;
 
     for (const link of links) {
-      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, this.proxy) || {}
+      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, httpsAgent) || {}
       if (!link.linkName || link.linkName.length === 0) {
         link.linkName = name
       }

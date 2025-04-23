@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { AxiosProxyConfig, AxiosRequestConfig } from 'axios';
+import { AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
@@ -152,7 +152,7 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmt(postId: string, proxy: AxiosProxyConfig) {
+  async getCmt(postId: string, httpsAgent) {
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
 
@@ -160,7 +160,7 @@ export class FacebookService {
       const response = await firstValueFrom(
         this.httpService.post(this.fbGraphql, body, {
           headers,
-          proxy,
+          httpsAgent
         }),
       );
 
@@ -180,7 +180,7 @@ export class FacebookService {
       const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
       const userIdComment = serialized
         ? JSON.parse(serialized).actor_id
-        : (await this.getProfileUserByUuid(userNameComment, comment?.author.id) || comment?.author.id);
+        : (await this.getProfileUserByUuid(userNameComment, comment?.author.id, httpsAgent) || comment?.author.id);
 
       const res = {
         commentId,
@@ -194,11 +194,10 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmt ~ error:", error)
-      throw new Error(`Failed to fetch comments: ${error.message}`);
     }
   }
 
-  async getProfileLink(url: string, proxy: AxiosProxyConfig): Promise<IGetProfileLinkResponse> {
+  async getProfileLink(url: string, httpsAgent: any): Promise<IGetProfileLinkResponse> {
     try {
       console.log("----------Đang lấy thông tin url:", url)
       const { cookies, headers } = getHeaderProfileLink()
@@ -206,7 +205,7 @@ export class FacebookService {
       const response = await firstValueFrom(
         this.httpService.get(url, {
           headers: { ...headers, Cookie: this.formatCookies(cookies) },
-          proxy,
+          httpsAgent,
         }),
       );
       const htmlContent = response.data
@@ -249,7 +248,7 @@ export class FacebookService {
     }
   }
 
-  async getProfileUserByUuid(userNameComment: string, uuid: string) {
+  async getProfileUserByUuid(userNameComment: string, uuid: string, httpsAgent) {
     const dataUser = await firstValueFrom(
       this.httpService.get(`https://www.facebook.com/people/${userNameComment}/${uuid}`, {
         headers: {
@@ -273,13 +272,15 @@ export class FacebookService {
           "upgrade-insecure-requests": "1",
           "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
           "viewport-width": "816"
-        }
+        },
+        httpsAgent
       }),
     );
     const match = dataUser.data.match(/fb:\/\/profile\/(\d+)/);
-    if (match && match[1]) {
-      const userId = match[0].split("fb://profile/")[1].split('"')[0]
 
+    if (match && match[1]) {
+      console.log("🚀 ~ getProfileUserByUuid ~ match:", match[1])
+      const userId = match[0].split("fb://profile/")[1].split('"')[0]
       return userId
     }
 
