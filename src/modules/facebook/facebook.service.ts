@@ -179,6 +179,7 @@ export class FacebookService {
       const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
       let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
       userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, httpsAgent)
+      console.log("🚀 ~ getCmt ~ userIdComment:", userIdComment)
 
       const res = {
         commentId,
@@ -318,7 +319,7 @@ export class FacebookService {
         headers: {
           Cookie: this.formatCookies(cookies)
         },
-        // httpsAgent
+        httpsAgent
       }),
     );
 

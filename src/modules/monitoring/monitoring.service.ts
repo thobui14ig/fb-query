@@ -75,7 +75,7 @@ export class MonitoringService {
           commentCreatedAt
         } = await this.facebookService.getCmt(encodedPostId, httpsAgent) || {}
 
-        if (!commentId && !userIdComment) return;
+        if (!commentId || !userIdComment) return;
         const links = await this.selectLinkUpdate(post.postId)
         const commentEntities: CommentEntity[] = []
         const linkEntities: LinkEntity[] = []
