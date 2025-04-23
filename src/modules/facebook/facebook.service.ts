@@ -327,6 +327,7 @@ export class FacebookService {
     const match = html.match(/"userID"\s*:\s*"(\d+)"/);
     if (match) {
       const userID = match[1];
+      console.log("🚀 ~ getUuidByCookie ~ userID:", userID)
       return userID
     }
     return null
