@@ -50,7 +50,7 @@ export class MonitoringService {
     );
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -58,7 +58,7 @@ export class MonitoringService {
     this.postsPrivate = groupPost.private ?? [];
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handlePostsPublic() {
     if (this.postsPublic.length === 0) return;
 
@@ -111,7 +111,7 @@ export class MonitoringService {
     return Promise.all(postHandle)
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
     const links = await this.getLinksWithoutProfile()
     if (links.length === 0) return;
