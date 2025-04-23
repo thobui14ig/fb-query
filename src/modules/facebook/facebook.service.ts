@@ -8,6 +8,7 @@ import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
+import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
 import { LinkType } from '../links/entities/links.entity';
 import { IGetProfileLinkResponse } from './facebook.service.i';
@@ -178,9 +179,8 @@ export class FacebookService {
         .tz(this.ukTimezone)
         .format('YYYY-MM-DD HH:mm:ss');
       const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
-      const userIdComment = serialized
-        ? JSON.parse(serialized).actor_id
-        : (await this.getProfileUserByUuid(userNameComment, comment?.author.id, httpsAgent) || comment?.author.id);
+      let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
+      userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, httpsAgent)
 
       const res = {
         commentId,
@@ -248,9 +248,9 @@ export class FacebookService {
     }
   }
 
-  async getProfileUserByUuid(userNameComment: string, uuid: string, httpsAgent) {
+  async getProfileUserByUuid(name: string, uuid: string, httpsAgent) {
     const dataUser = await firstValueFrom(
-      this.httpService.get(`https://www.facebook.com/people/${userNameComment}/${uuid}`, {
+      this.httpService.get(`https://www.facebook.com/people/${name}/${uuid}`, {
         headers: {
           "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
           "accept-language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
@@ -284,6 +284,51 @@ export class FacebookService {
       return userId
     }
 
+    return null
+  }
+
+  async getInfoAccountsByCookie(httpsAgent) {
+    const cookies = this.changeCookiesFb(`datr=5-kEaEggYORdPbZny5oFp5pB; sb=_ukEaIt0oqbw6wKP9ZDCQGqs; ps_l=1; ps_n=1; ar_debug=1; c_user=100051755359634; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1745417906996%2C%22v%22%3A1%7D; fr=18l2CnqH1U3kE0vFh.AWf60Zfuql4K5EJZz9tCiL5oEOMUFtk_CQ4hB59qFijMRBB3cxA.BoCPkE..AAA.0.0.BoCPkE.AWfm1RtyihH2YrUXFWIXorCpykI; xs=50%3AHmELAuPsvrwShw%3A2%3A1745414736%3A-1%3A6267%3A%3AAcWWuYoW2hx5484cjcYMMjZqffe4pt2kztewER0EVw; wd=1912x252`);
+    const dataUser = await firstValueFrom(
+      this.httpService.get('https://www.facebook.com/pfbid0TJT85ZZMCi5YnookFbfevyNGCjGURBjByXYGNrg3VKBXcA6EzTVYiCPTuFELoHvxl', {
+        headers: {
+          Cookie: this.formatCookies(cookies)
+        },
+        // httpsAgent
+      }),
+    );
+
+    // const dtsgMatch = dataUser.data.match(/DTSGInitialData",\[\],{"token":"(.*?)"}/);
+    // const jazoestMatch = dataUser.data.match(/&jazoest=(.*?)"/);
+    // const userIdMatch = dataUser.data.match(/"USER_ID":"(.*?)"/);
+
+    // if (dtsgMatch && jazoestMatch && userIdMatch) {
+    //   const fbDtsg = dtsgMatch[1];
+    //   const jazoest = jazoestMatch[1];
+    //   const facebookId = userIdMatch[1];
+
+    //   console.log(`🚀 ~ getInfoAccountsByCookie ~ { fbDtsg, jazoest, facebookId }:`, { fbDtsg, jazoest, facebookId })
+    //   return { fbDtsg, jazoest, facebookId }
+    // }
+  }
+
+  async getUuidByCookie(uuid: string, httpsAgent) {
+    const cookies = this.changeCookiesFb(`datr=5-kEaEggYORdPbZny5oFp5pB; sb=_ukEaIt0oqbw6wKP9ZDCQGqs; ps_l=1; ps_n=1; ar_debug=1; c_user=100051755359634; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1745417906996%2C%22v%22%3A1%7D; fr=18l2CnqH1U3kE0vFh.AWf60Zfuql4K5EJZz9tCiL5oEOMUFtk_CQ4hB59qFijMRBB3cxA.BoCPkE..AAA.0.0.BoCPkE.AWfm1RtyihH2YrUXFWIXorCpykI; xs=50%3AHmELAuPsvrwShw%3A2%3A1745414736%3A-1%3A6267%3A%3AAcWWuYoW2hx5484cjcYMMjZqffe4pt2kztewER0EVw; wd=1912x252`);
+    const dataUser = await firstValueFrom(
+      this.httpService.get(`https://www.facebook.com/${uuid}`, {
+        headers: {
+          Cookie: this.formatCookies(cookies)
+        },
+        httpsAgent
+      }),
+    );
+
+    const html = dataUser.data
+    const match = html.match(/"userID"\s*:\s*"(\d+)"/);
+    if (match) {
+      const userID = match[1];
+      return userID
+    }
     return null
   }
 }
