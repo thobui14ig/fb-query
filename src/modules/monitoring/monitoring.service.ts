@@ -141,6 +141,7 @@ export class MonitoringService {
   async handlePostsPrivate() {
     if (this.postsPrivate.length === 0) return;
     const token = await this.getTokenActiveFromDb()
+    console.log("🚀 ~ MonitoringService ~ handlePostsPrivate ~ token:", token)
 
     const process = async (post: IPostStarted) => {
       try {
