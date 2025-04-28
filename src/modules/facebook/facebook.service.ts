@@ -197,6 +197,7 @@ export class FacebookService {
   }
 
   async getCommentByToken(postId: string, httpsAgent: any, token: TokenEntity) {
+    console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     try {
       const headers = {
         'authority': 'graph.facebook.com',
@@ -238,8 +239,10 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", error)
-      await this.updateTokenDie(token)
+      console.log("🚀 ~ getCommentByToken ~ error:", error?.response?.data)
+      if (error.status != 400) {
+        await this.updateTokenDie(token)
+      }
       return {}
     }
   }
