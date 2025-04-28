@@ -238,7 +238,7 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", error.message)
+      console.log("🚀 ~ getCommentByToken ~ error:", error)
       await this.updateTokenDie(token)
       return {}
     }
