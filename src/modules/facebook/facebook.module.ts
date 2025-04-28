@@ -1,11 +1,14 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { TokenEntity } from '../token/entities/token.entity';
 import { FacebookService } from './facebook.service';
+import { CookieEntity } from '../cookie/entities/cookie.entity';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity])],
   controllers: [],
   providers: [FacebookService],
   exports: [FacebookService],
 })
-export class FacebookModule {}
+export class FacebookModule { }

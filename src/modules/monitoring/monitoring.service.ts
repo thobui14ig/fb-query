@@ -12,8 +12,10 @@ import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
 import { GroupedLinksByType, IPostStarted } from './monitoring.service.i';
 import { HttpsProxyAgent } from "https-proxy-agent";
-const httpsAgent = new HttpsProxyAgent('http://chuongndh:LOKeNCbTGeI1t@ip.mproxy.vn:12370');
-
+import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
+import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
+const httpsAgent = new HttpsProxyAgent('http://proxy49209:nhDRKlPS@103.90.228.47:49209');
+// proxy49209:nhDRKlPS@103.90.228.47:49209
 
 @Injectable()
 export class MonitoringService {
@@ -27,6 +29,10 @@ export class MonitoringService {
     @InjectRepository(CommentEntity)
     private commentRepository: Repository<CommentEntity>,
     private readonly facebookService: FacebookService,
+    @InjectRepository(TokenEntity)
+    private tokenRepository: Repository<TokenEntity>,
+    @InjectRepository(CookieEntity)
+    private cookieRepository: Repository<CookieEntity>
   ) { }
 
   async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
@@ -61,6 +67,7 @@ export class MonitoringService {
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handlePostsPublic() {
     if (this.postsPublic.length === 0) return;
+    const cookie = await this.getCookieActiveFromDb()
 
     const process = async (post: IPostStarted) => {
       try {
@@ -73,7 +80,8 @@ export class MonitoringService {
           userIdComment,
           userNameComment,
           commentCreatedAt
-        } = await this.facebookService.getCmt(encodedPostId, httpsAgent) || {}
+        } = await this.facebookService.getCmtPublic(encodedPostId, httpsAgent, cookie) || {}
+
 
         if (!commentId || !userIdComment) return;
         const links = await this.selectLinkUpdate(post.postId)
@@ -129,7 +137,58 @@ export class MonitoringService {
     }
   }
 
-  handlePostsPrivate(links: IPostStarted[]) { }
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handlePostsPrivate() {
+    if (this.postsPrivate.length === 0) return;
+    const token = await this.getTokenActiveFromDb()
+
+    const process = async (post: IPostStarted) => {
+      try {
+        const {
+          commentId,
+          commentMessage,
+          phoneNumber,
+          userIdComment,
+          userNameComment,
+          commentCreatedAt
+        } = await this.facebookService.getCommentByToken(post.postId, httpsAgent, token) || {}
+
+        if (!commentId || !userIdComment) return;
+        const links = await this.selectLinkUpdate(post.postId)
+        const commentEntities: CommentEntity[] = []
+        const linkEntities: LinkEntity[] = []
+
+        for (const link of links) {
+          const commentEntity: Partial<CommentEntity> = {
+            cmtId: commentId,
+            linkId: link.id,
+            postId: post.postId,
+            userId: link.userId,
+            uid: userIdComment,
+            message: commentMessage,
+            phoneNumber,
+            name: userNameComment,
+            timeCreated: commentCreatedAt as any
+          }
+          const comment = await this.getComment(link.id, link.userId, commentId)
+          commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
+
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
+          linkEntities.push(linkEntity)
+        }
+
+        await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
+        await this.delay(3000)
+      } catch (error) {
+        console.log(`Crawl comment with postId ${post.postId} Error.`, error?.message)
+      }
+    }
+    const postHandle = this.postsPrivate.map((post) => {
+      return process(post)
+    })
+
+    return Promise.all(postHandle)
+  }
 
   private getPostStarted(): Promise<IPostStarted[]> {
     return this.linkRepository
@@ -186,5 +245,21 @@ export class MonitoringService {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  getTokenActiveFromDb(): Promise<TokenEntity> {
+    return this.tokenRepository.findOne({
+      where: {
+        status: TokenStatus.ACTIVE
+      }
+    })
+  }
+
+  getCookieActiveFromDb(): Promise<CookieEntity> {
+    return this.cookieRepository.findOne({
+      where: {
+        status: CookieStatus.ACTIVE
+      }
+    })
   }
 }
