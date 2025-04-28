@@ -462,10 +462,12 @@ export class FacebookService {
   // }
 
   updateTokenDie(token: TokenEntity) {
+    console.log("🚀 ~ updateTokenDie ~ token:", token)
     return this.tokenRepository.save({ ...token, status: TokenStatus.DIE })
   }
 
   updateCookieDie(cookie: CookieEntity) {
+    console.log("🚀 ~ updateCookieDie ~ cookie:", cookie)
     return this.cookieRepository.save({ ...cookie, status: CookieStatus.DIE })
   }
 }
