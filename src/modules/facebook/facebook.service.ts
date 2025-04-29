@@ -197,12 +197,12 @@ export class FacebookService {
 
       return res;
     } catch (error) {
-      console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
+      console.log("🚀 ~ getCmtPublic ~ error:", error)
       if ((error?.message as string).includes('connect ETIMEDOUT')) {
         await this.updateProxyDie(proxy)
         return
       }
-      console.log("🚀 ~ getCmt ~ error:", error?.message)
+
       throw new Error(error?.message)
     }
   }
