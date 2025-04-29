@@ -6,9 +6,15 @@ import { Repository } from 'typeorm';
 import { CommentEntity } from './entities/comment.entity';
 import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import * as dayjs from 'dayjs';
+import * as timezone from 'dayjs/plugin/timezone';
+import * as utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class CommentsService {
+  vnTimezone = 'Asia/Bangkok';
   constructor(
     @InjectRepository(CommentEntity)
     private repo: Repository<CommentEntity>,
@@ -87,7 +93,7 @@ export class CommentsService {
     return response.map((item) => {
       return {
         ...item,
-        timeCreated: dayjs(item.timeCreated).format('YYYY-MM-DD HH:mm:ss')
+        timeCreated: dayjs(item.timeCreated).tz(this.vnTimezone).format('YYYY-MM-DD HH:mm:ss')
       }
     })
   }
