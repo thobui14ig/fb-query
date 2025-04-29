@@ -48,7 +48,17 @@ export class LinkService {
       linksInValid.push(link.url)
     }
 
-    await this.repo.save(linkEntities);
+    const seenUrls = new Set<string>();
+    const uniqueLinks: Partial<LinkEntity>[] = [];
+
+    for (const link of linkEntities) {
+      if (link.linkUrl && !seenUrls.has(link.linkUrl)) {
+        seenUrls.add(link.linkUrl);
+        uniqueLinks.push(link);
+      }
+    }
+
+    await this.repo.save(uniqueLinks);
     if (linksInValid.length > 0) {
       throw new HttpException(
         `Thêm thành công ${linkEntities.length}, Link bị trùng: [${linksInValid.join(',')}]`,
