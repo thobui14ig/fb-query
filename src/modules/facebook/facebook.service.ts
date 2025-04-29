@@ -424,7 +424,7 @@ export class FacebookService {
       }
       return null
     } catch (error) {
-      console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
+      console.log("🚀 ~ getUuidByCookie ~ error:", error)
       if ((error?.message as string).includes('connect ETIMEDOUT')) {
         await this.updateProxyDie(proxy)
 
