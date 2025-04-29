@@ -198,12 +198,12 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error)
-      if ((error?.message as string).includes('connect ETIMEDOUT')) {
+      if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
         return
       }
 
-      throw new Error(error?.message)
+      return
     }
   }
 
@@ -252,7 +252,7 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
-      if ((error?.message as string).includes('connect ETIMEDOUT')) {
+      if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
       }
       if (error?.response?.status == 400) {
@@ -425,7 +425,7 @@ export class FacebookService {
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error)
-      if ((error?.message as string).includes('connect ETIMEDOUT')) {
+      if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
 
         return
