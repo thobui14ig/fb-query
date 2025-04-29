@@ -10,7 +10,7 @@ services:
       - MYSQL_ROOT_PASSWORD=111111
       - MYSQL_DATABASE=crawl-fb
     volumes:
-    - db:/var/lib/mysql
+    - ../mysql-data:/var/lib/mysql
 
   backend:
     build:
@@ -31,6 +31,3 @@ services:
     ports:
       - '9000:9000'
 
-volumes:
-  db:
-    driver: local
