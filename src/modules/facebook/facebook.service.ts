@@ -27,7 +27,7 @@ import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
 dayjs.extend(utc);
-dayjs.extend(timezone);
+// dayjs.extend(timezone);
 
 @Injectable()
 export class FacebookService {
@@ -202,7 +202,7 @@ export class FacebookService {
         await this.updateProxyDie(proxy)
         return
       }
-      console.log("🚀 ~ getCmt ~ error:", error)
+      console.log("🚀 ~ getCmt ~ error:", error?.message)
       throw new Error(error?.message)
     }
   }
@@ -248,7 +248,7 @@ export class FacebookService {
         commentMessage: res?.message,
         phoneNumber: extractPhoneNumber(res?.message),
         userIdComment: res?.from?.id,
-        commentCreatedAt: dayjs(res?.created_time).format('YYYY-MM-DD HH:mm:ss')
+        commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
@@ -274,7 +274,7 @@ export class FacebookService {
         : 'Sticker';
     const phoneNumber = extractPhoneNumber(commentMessage);
     const userNameComment = comment?.author?.name;
-    const commentCreatedAt = dayjs(comment?.created_time * 1000).format('YYYY-MM-DD HH:mm:ss');
+    const commentCreatedAt = dayjs(comment?.created_time * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
     userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, proxy, cookie)

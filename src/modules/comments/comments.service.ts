@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CommentEntity } from './entities/comment.entity';
 import { LEVEL, UserEntity } from '../user/entities/user.entity';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class CommentsService {
@@ -17,9 +18,10 @@ export class CommentsService {
     return 'This action adds a new comment';
   }
 
-  findAll(user: UserEntity) {
+  async findAll(user: UserEntity) {
+    let response: CommentEntity[] = []
     if (user.level === LEVEL.ADMIN) {
-      return this.repo.find({
+      response = await this.repo.find({
         relations: {
           user: true,
           link: true
@@ -43,39 +45,49 @@ export class CommentsService {
           }
         },
         order: {
-          id: "DESC"
+          timeCreated: "DESC"
+        }
+      })
+    } else {
+      response = await this.repo.find({
+        relations: {
+          user: true,
+          link: true
+        },
+        select: {
+          id: true,
+          postId: true,
+          userId: true,
+          uid: true,
+          name: true,
+          message: true,
+          timeCreated: true,
+          phoneNumber: true,
+          cmtId: true,
+          linkId: true,
+          user: {
+            email: true
+          },
+          link: {
+            linkName: true
+          }
+        },
+        where: {
+          userId: user.id,
+          link: {
+            userId: user.id,
+          }
+        },
+        order: {
+          timeCreated: "DESC"
         }
       })
     }
 
-    return this.repo.find({
-      relations: {
-        user: true,
-        link: true
-      },
-      select: {
-        id: true,
-        postId: true,
-        userId: true,
-        uid: true,
-        name: true,
-        message: true,
-        timeCreated: true,
-        phoneNumber: true,
-        cmtId: true,
-        linkId: true,
-        user: {
-          email: true
-        },
-        link: {
-          linkName: true
-        }
-      },
-      where: {
-        userId: user.id,
-        link: {
-          userId: user.id,
-        }
+    return response.map((item) => {
+      return {
+        ...item,
+        timeCreated: dayjs(item.timeCreated).format('YYYY-MM-DD HH:mm:ss')
       }
     })
   }
