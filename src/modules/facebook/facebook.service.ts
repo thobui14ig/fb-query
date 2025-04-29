@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
@@ -10,7 +11,10 @@ import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
+import { Repository } from 'typeorm';
+import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkType } from '../links/entities/links.entity';
+import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import {
   getBodyComment,
   getBodyToken,
@@ -19,10 +23,6 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
-import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -38,7 +38,7 @@ export class FacebookService {
     @InjectRepository(TokenEntity)
     private tokenRepository: Repository<TokenEntity>,
     @InjectRepository(CookieEntity)
-    private cookieRepository: Repository<CookieEntity>
+    private cookieRepository: Repository<CookieEntity>,
   ) { }
 
   async getDataProfileFb(
@@ -63,13 +63,13 @@ export class FacebookService {
       const responseText: string = response.data as string;
       const idUserMatch = responseText.match(/"USER_ID":"([^"]*)"/);
       const idUser = idUserMatch ? idUserMatch[1] : null;
-
       if (idUser === '0') {
         return { login: false };
       }
 
       const fbDtsgMatch = responseText.match(/"f":"([^"]*)","l/);
       const fbDtsg = fbDtsgMatch ? fbDtsgMatch[1] : null;
+
       const cleanedText = responseText.replace(/\[\]/g, '');
       const match = cleanedText.match(/LSD",,{"token":"(.+?)"/);
 
@@ -85,6 +85,7 @@ export class FacebookService {
 
       return { login: true, accessToken: accessToken };
     } catch (error) {
+      console.log("🚀 ~ error:", error)
       return { login: false };
     }
   }
@@ -191,7 +192,13 @@ export class FacebookService {
 
       return res;
     } catch (error) {
-      console.log("🚀 ~ getCmt ~ error:", error?.message)
+      console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
+      if ((error?.message as string).includes('connect ETIMEDOUT')) {
+        console.log("🚀 ~ getCmtPublic ~ connect ETIMEDOUT:")
+        //update proxy die
+        return
+      }
+      console.log("🚀 ~ getCmt ~ error:", error)
       throw new Error(error?.message)
     }
   }
@@ -239,10 +246,16 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", error?.response?.data)
-      if (error.status != 400) {
+      console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
+      if ((error?.message as string).includes('connect ETIMEDOUT')) {
+        console.log("🚀 ~ getCmtPublic ~ connect ETIMEDOUT:")
+        //update proxy die
+        return {}
+      }
+      if (error.status != 400 || error?.response?.status == 400) {
         await this.updateTokenDie(token)
       }
+
       return {}
     }
   }
@@ -406,6 +419,13 @@ export class FacebookService {
       }
       return null
     } catch (error) {
+      console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
+      if ((error?.message as string).includes('connect ETIMEDOUT')) {
+        console.log("🚀 ~ getCmtPublic ~ connect ETIMEDOUT:")
+        //update proxy die
+
+        return
+      }
       await this.updateCookieDie(cookieEntity)
       return null
     }

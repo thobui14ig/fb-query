@@ -12,7 +12,7 @@ export class TokenService {
     @InjectRepository(TokenEntity)
     private repo: Repository<TokenEntity>,
     private facebookService: FacebookService,
-  ) {}
+  ) { }
 
   async create(params: CreateTokenDto) {
     //chưa code trường hợp có cookie
@@ -82,5 +82,5 @@ export class TokenService {
     return this.repo.delete(id);
   }
 
-  getToken(token: string) {}
+  getToken(token: string) { }
 }

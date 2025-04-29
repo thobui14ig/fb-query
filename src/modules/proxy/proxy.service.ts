@@ -10,13 +10,17 @@ export class ProxyService {
   constructor(
     @InjectRepository(ProxyEntity)
     private repo: Repository<ProxyEntity>,
-  ) {}
+  ) { }
 
   async create(params: CreateProxyDto) {
     const proxiesValid = [];
     const proxiesInValid = [];
 
-    for (const proxy of params.proxies) {
+    for (let proxy of params.proxies) {
+      if (proxy.includes('@')) {
+        const proxyArr = proxy.split('@')
+        proxy = `${proxyArr[1]}@${proxyArr[0]}`
+      }
       const isExit = (await this.repo.findOne({
         where: {
           proxyAddress: proxy,

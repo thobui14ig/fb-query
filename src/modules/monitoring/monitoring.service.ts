@@ -14,8 +14,7 @@ import { GroupedLinksByType, IPostStarted } from './monitoring.service.i';
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-const httpsAgent = new HttpsProxyAgent('http://proxy49209:nhDRKlPS@103.90.228.47:49209');
-// proxy49209:nhDRKlPS@103.90.228.47:49209
+import { ProxyEntity } from '../proxy/entities/proxy.entity';
 
 @Injectable()
 export class MonitoringService {
@@ -32,7 +31,9 @@ export class MonitoringService {
     @InjectRepository(TokenEntity)
     private tokenRepository: Repository<TokenEntity>,
     @InjectRepository(CookieEntity)
-    private cookieRepository: Repository<CookieEntity>
+    private cookieRepository: Repository<CookieEntity>,
+    @InjectRepository(ProxyEntity)
+    private proxyRepository: Repository<ProxyEntity>
   ) { }
 
   async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
@@ -64,10 +65,13 @@ export class MonitoringService {
     this.postsPrivate = groupPost.private ?? [];
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  // @Cron(CronExpression.EVERY_10_SECONDS)
   async handlePostsPublic() {
     if (this.postsPublic.length === 0) return;
     const cookie = await this.getCookieActiveFromDb()
+    if (!cookie) return
+    const proxy = await this.getRandomProxy()
+    if (!proxy) return
 
     const process = async (post: IPostStarted) => {
       try {
@@ -80,7 +84,7 @@ export class MonitoringService {
           userIdComment,
           userNameComment,
           commentCreatedAt
-        } = await this.facebookService.getCmtPublic(encodedPostId, httpsAgent, cookie) || {}
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, cookie) || {}
 
 
         if (!commentId || !userIdComment) return;
@@ -124,9 +128,11 @@ export class MonitoringService {
   async cronjobHandleProfileUrl() {
     const links = await this.getLinksWithoutProfile()
     if (links.length === 0) return;
+    const proxy = await this.getRandomProxy()
+    if (!proxy) return
 
     for (const link of links) {
-      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, httpsAgent) || {}
+      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {}
       if (!link.linkName || link.linkName.length === 0) {
         link.linkName = name
       }
@@ -141,7 +147,9 @@ export class MonitoringService {
   async handlePostsPrivate() {
     if (this.postsPrivate.length === 0) return;
     const token = await this.getTokenActiveFromDb()
-    console.log("🚀 ~ MonitoringService ~ handlePostsPrivate ~ token:", token)
+    if (!token) return
+    const proxy = await this.getRandomProxy()
+    if (!proxy) return
 
     const process = async (post: IPostStarted) => {
       try {
@@ -152,7 +160,7 @@ export class MonitoringService {
           userIdComment,
           userNameComment,
           commentCreatedAt
-        } = await this.facebookService.getCommentByToken(post.postId, httpsAgent, token) || {}
+        } = await this.facebookService.getCommentByToken(post.postId, proxy, token) || {}
 
         if (!commentId || !userIdComment) return;
         const links = await this.selectLinkUpdate(post.postId)
@@ -262,5 +270,16 @@ export class MonitoringService {
         status: CookieStatus.ACTIVE
       }
     })
+  }
+
+  async getRandomProxy() {
+    const proxies = await this.proxyRepository.find()
+    const randomIndex = Math.floor(Math.random() * proxies.length);
+    const randomProxy = proxies[randomIndex];
+    const proxyArr = randomProxy?.proxyAddress.split(':')
+    const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+    const httpsAgent = new HttpsProxyAgent(agent);
+
+    return httpsAgent;
   }
 }
