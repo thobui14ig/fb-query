@@ -23,6 +23,8 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
+import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -39,6 +41,8 @@ export class FacebookService {
     private tokenRepository: Repository<TokenEntity>,
     @InjectRepository(CookieEntity)
     private cookieRepository: Repository<CookieEntity>,
+    @InjectRepository(ProxyEntity)
+    private proxyRepository: Repository<ProxyEntity>
   ) { }
 
   async getDataProfileFb(
@@ -162,7 +166,8 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, httpsAgent, cookie: CookieEntity) {
+  async getCmtPublic(postId: string, proxy: ProxyEntity, cookie: CookieEntity) {
+    const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
 
@@ -179,7 +184,7 @@ export class FacebookService {
         commentMessage,
         phoneNumber,
         userIdComment,
-        commentCreatedAt, } = await this.handleDataComment(response, httpsAgent, cookie)
+        commentCreatedAt, } = await this.handleDataComment(response, proxy, cookie)
 
       const res = {
         commentId,
@@ -194,8 +199,7 @@ export class FacebookService {
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
       if ((error?.message as string).includes('connect ETIMEDOUT')) {
-        console.log("🚀 ~ getCmtPublic ~ connect ETIMEDOUT:")
-        //update proxy die
+        await this.updateProxyDie(proxy)
         return
       }
       console.log("🚀 ~ getCmt ~ error:", error)
@@ -203,7 +207,8 @@ export class FacebookService {
     }
   }
 
-  async getCommentByToken(postId: string, httpsAgent: any, token: TokenEntity) {
+  async getCommentByToken(postId: string, proxy: ProxyEntity, token: TokenEntity) {
+    const httpsAgent = this.getHttpAgent(proxy)
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     try {
       const headers = {
@@ -248,11 +253,9 @@ export class FacebookService {
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
       if ((error?.message as string).includes('connect ETIMEDOUT')) {
-        console.log("🚀 ~ getCmtPublic ~ connect ETIMEDOUT:")
-        //update proxy die
-        return {}
+        await this.updateProxyDie(proxy)
       }
-      if (error.status != 400 || error?.response?.status == 400) {
+      if (error?.response?.status == 400) {
         await this.updateTokenDie(token)
       }
 
@@ -260,7 +263,7 @@ export class FacebookService {
     }
   }
 
-  async handleDataComment(response, httpsAgent, cookie: CookieEntity) {
+  async handleDataComment(response, proxy: ProxyEntity, cookie: CookieEntity) {
     const comment =
       response?.data?.data?.node?.comment_rendering_instance_for_feed_location
         ?.comments.edges?.[0]?.node;
@@ -274,7 +277,7 @@ export class FacebookService {
     const commentCreatedAt = dayjs(comment?.created_time * 1000).format('YYYY-MM-DD HH:mm:ss');
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
-    userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, httpsAgent, cookie)
+    userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, proxy, cookie)
 
     return {
       commentId,
@@ -286,8 +289,9 @@ export class FacebookService {
     };
   }
 
-  async getProfileLink(url: string, httpsAgent: any) {
+  async getProfileLink(url: string, proxy: ProxyEntity) {
     try {
+      const httpsAgent = this.getHttpAgent(proxy)
       console.log("----------Đang lấy thông tin url:", url)
       const { cookies, headers } = getHeaderProfileLink()
 
@@ -398,8 +402,9 @@ export class FacebookService {
   //   }
   // }
 
-  async getUuidByCookie(uuid: string, httpsAgent, cookieEntity: CookieEntity) {
+  async getUuidByCookie(uuid: string, proxy: ProxyEntity, cookieEntity: CookieEntity) {
     try {
+      const httpsAgent = this.getHttpAgent(proxy)
       const cookies = this.changeCookiesFb(cookieEntity.cookie);
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -421,8 +426,7 @@ export class FacebookService {
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
       if ((error?.message as string).includes('connect ETIMEDOUT')) {
-        console.log("🚀 ~ getCmtPublic ~ connect ETIMEDOUT:")
-        //update proxy die
+        await this.updateProxyDie(proxy)
 
         return
       }
@@ -493,5 +497,18 @@ export class FacebookService {
   updateCookieDie(cookie: CookieEntity) {
     console.log("🚀 ~ updateCookieDie ~ cookie:", cookie)
     return this.cookieRepository.save({ ...cookie, status: CookieStatus.DIE })
+  }
+
+  updateProxyDie(proxy: ProxyEntity) {
+    console.log("🚀 ~ updateProxyDie ~ proxy:", proxy)
+    return this.proxyRepository.save({ ...proxy, status: ProxyStatus.IN_ACTIVE })
+  }
+
+  getHttpAgent(proxy: ProxyEntity) {
+    const proxyArr = proxy?.proxyAddress.split(':')
+    const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+    const httpsAgent = new HttpsProxyAgent(agent);
+
+    return httpsAgent;
   }
 }

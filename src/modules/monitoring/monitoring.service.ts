@@ -14,7 +14,7 @@ import { GroupedLinksByType, IPostStarted } from './monitoring.service.i';
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { ProxyEntity } from '../proxy/entities/proxy.entity';
+import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 
 @Injectable()
 export class MonitoringService {
@@ -65,7 +65,7 @@ export class MonitoringService {
     this.postsPrivate = groupPost.private ?? [];
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handlePostsPublic() {
     if (this.postsPublic.length === 0) return;
     const cookie = await this.getCookieActiveFromDb()
@@ -273,13 +273,14 @@ export class MonitoringService {
   }
 
   async getRandomProxy() {
-    const proxies = await this.proxyRepository.find()
+    const proxies = await this.proxyRepository.find({
+      where: {
+        status: ProxyStatus.ACTIVE
+      }
+    })
     const randomIndex = Math.floor(Math.random() * proxies.length);
     const randomProxy = proxies[randomIndex];
-    const proxyArr = randomProxy?.proxyAddress.split(':')
-    const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-    const httpsAgent = new HttpsProxyAgent(agent);
 
-    return httpsAgent;
+    return randomProxy
   }
 }

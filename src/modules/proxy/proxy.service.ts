@@ -19,7 +19,7 @@ export class ProxyService {
     for (let proxy of params.proxies) {
       if (proxy.includes('@')) {
         const proxyArr = proxy.split('@')
-        proxy = `${proxyArr[1]}@${proxyArr[0]}`
+        proxy = `${proxyArr[1]}:${proxyArr[0]}`
       }
       const isExit = (await this.repo.findOne({
         where: {
