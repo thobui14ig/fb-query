@@ -215,10 +215,8 @@ export class FacebookService {
       "en-US,en;q=0.9",
       "fr-FR,fr;q=0.9,en;q=0.8"
     ];
-    const connectionTypes = ["wifi", "cell.4g", "ethernet"];
     const userAgent = faker.internet.userAgent()
     const apceptLanguage = acceptLanguages[Math.floor(Math.random() * acceptLanguages.length)]
-    const connectionType = connectionTypes[Math.floor(Math.random() * connectionTypes.length)]
     const httpsAgent = this.getHttpAgent(proxy)
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     try {
@@ -235,7 +233,6 @@ export class FacebookService {
         'sec-fetch-user': '?1',
         'sec-fetch-dest': 'document',
         'accept-language': apceptLanguage,
-        "X-FB-Connection-Type": connectionType
       }
 
       const params = {
