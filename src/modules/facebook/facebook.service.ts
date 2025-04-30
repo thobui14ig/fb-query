@@ -276,6 +276,10 @@ export class FacebookService {
       if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
       }
+      if ((error?.response?.data?.error?.message as string).includes('Unsupported get request. Object with ID')) {
+        console.log("🚀 ~ PostId notFound:", postId)
+        return
+      }
       if (error?.response?.status == 400) {
         await this.updateTokenDie(token)
       }
