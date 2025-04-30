@@ -47,7 +47,8 @@ export class CommentsService {
             email: true
           },
           link: {
-            linkName: true
+            linkName: true,
+            linkUrl: true
           }
         },
         order: {
