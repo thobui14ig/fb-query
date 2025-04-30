@@ -298,9 +298,15 @@ export class MonitoringService {
     return randomProxy
   }
 
-  updateActiveAllToken() {
-    return this.tokenRepository.createQueryBuilder().update({
-      status: TokenStatus.ACTIVE
-    })
+  async updateActiveAllToken() {
+    console.log("🚀 ~ MonitoringService ~ updateActiveAllToken ~ updateActiveAllToken:")
+    const allToken = await this.tokenRepository.find()
+
+    return this.tokenRepository.save(allToken.map((item) => {
+      return {
+        ...item,
+        status: TokenStatus.ACTIVE
+      }
+    }))
   }
 }
