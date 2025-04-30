@@ -132,12 +132,12 @@ export class MonitoringService {
       return
     }
 
-    this.isHandleUrl = true
+
     const links = await this.getLinksWithoutProfile()
     if (links.length === 0) return;
     const proxy = await this.getRandomProxy()
     if (!proxy) return
-
+    this.isHandleUrl = true
     const tasks = links.map(async (link) => {
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
 
