@@ -16,4 +16,7 @@ export class TokenEntity {
 
   @Column({ type: 'enum', enum: TokenStatus, default: TokenStatus.ACTIVE })
   status: TokenStatus;
+
+  @Column({ name: 'retry_count', type: 'int', default: 0, nullable: true })
+  retryCount?: number;
 }

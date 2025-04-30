@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, LessThan, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { FacebookService } from '../facebook/facebook.service';
 import {
@@ -300,12 +300,17 @@ export class MonitoringService {
 
   async updateActiveAllToken() {
     console.log("🚀 ~ MonitoringService ~ updateActiveAllToken ~ updateActiveAllToken:")
-    const allToken = await this.tokenRepository.find()
+    const allToken = await this.tokenRepository.find({
+      where: {
+        retryCount: LessThan(4)
+      }
+    })
 
     return this.tokenRepository.save(allToken.map((item) => {
       return {
         ...item,
-        status: TokenStatus.ACTIVE
+        status: TokenStatus.ACTIVE,
+        retryCount: item.retryCount + 1
       }
     }))
   }
