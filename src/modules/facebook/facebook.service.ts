@@ -13,7 +13,7 @@ import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
 import { Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { LinkType } from '../links/entities/links.entity';
+import { LinkEntity, LinkType } from '../links/entities/links.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import {
   getBodyComment,
@@ -44,7 +44,9 @@ export class FacebookService {
     @InjectRepository(CookieEntity)
     private cookieRepository: Repository<CookieEntity>,
     @InjectRepository(ProxyEntity)
-    private proxyRepository: Repository<ProxyEntity>
+    private proxyRepository: Repository<ProxyEntity>,
+    @InjectRepository(LinkEntity)
+    private linkRepository: Repository<LinkEntity>
   ) { }
 
   async getDataProfileFb(
@@ -271,13 +273,12 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ proxy:", proxy)
       console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
       if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
       }
       if ((error?.response?.data?.error?.message as string).includes('Unsupported get request. Object with ID')) {
-        console.log("🚀 ~ PostId notFound:", postId)
+        await this.updateLinkPostIdInvalid(postId)
         return
       }
       if (error?.response?.status == 400) {
@@ -527,6 +528,22 @@ export class FacebookService {
   updateProxyDie(proxy: ProxyEntity) {
     console.log("🚀 ~ updateProxyDie ~ proxy:", proxy)
     return this.proxyRepository.save({ ...proxy, status: ProxyStatus.IN_ACTIVE })
+  }
+
+  async updateLinkPostIdInvalid(postId: string) {
+    console.log("🚀 ~ updateLinkPostIdInvalid ~ updateLinkPostIdInvalid:", postId, "Does not exit")
+    const links = await this.linkRepository.find({
+      where: {
+        postId
+      }
+    })
+
+    return this.linkRepository.save(links.map((item) => {
+      return {
+        ...item,
+        errorMessage: `PostId: ${postId} NotFound.`
+      }
+    }))
   }
 
   getHttpAgent(proxy: ProxyEntity) {

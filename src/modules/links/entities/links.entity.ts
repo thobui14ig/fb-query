@@ -57,6 +57,9 @@ export class LinkEntity {
   @Column()
   type: LinkType;
 
+  @Column({ length: 255, name: 'error_message', nullable: true })
+  errorMessage: string;
+
   @Column({ default: false })
   process: boolean;
 
