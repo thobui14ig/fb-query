@@ -133,14 +133,20 @@ export class MonitoringService {
       return
     }
 
-
     const links = await this.getLinksWithoutProfile()
     if (links.length === 0) return;
     const proxy = await this.getRandomProxy()
     if (!proxy) return
+    const token = await this.getTokenActiveFromDb()
+    if (!token) {
+      return this.updateActiveAllToken()
+    }
     this.isHandleUrl = true
     const tasks = links.map(async (link) => {
-      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
+      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy, token) || {};
+      if (!postId) {
+        return
+      }
 
       if (!link.linkName || link.linkName.length === 0) {
         link.linkName = name;

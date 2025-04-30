@@ -26,7 +26,7 @@ import {
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { faker } from '@faker-js/faker';
-import { v4 as uuidv4 } from 'uuid';
+import { writeFile } from 'src/common/utils/file';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -78,7 +78,7 @@ export class FacebookService {
       const fbDtsgMatch = responseText.match(/"f":"([^"]*)","l/);
       const fbDtsg = fbDtsgMatch ? fbDtsgMatch[1] : null;
 
-      const cleanedText = responseText.replace(/\[\]/g, '');
+      const cleanedText = responseText?.replace(/\[\]/g, '');
       const match = cleanedText.match(/LSD",,{"token":"(.+?)"/);
 
       const lsd = match ? match[1] : null;
@@ -99,7 +99,7 @@ export class FacebookService {
   }
 
   private changeCookiesFb(cookies: string): Record<string, string> {
-    cookies = cookies.trim().replace(/;$/, '');
+    cookies = cookies.trim()?.replace(/;$/, '');
     const result = {};
 
     try {
@@ -203,7 +203,7 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
-      if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
         return
       }
@@ -257,6 +257,7 @@ export class FacebookService {
         }),
       );
       const res = dataCommentToken.data?.data[0]
+      if (!res?.message?.length) return
 
       return {
         commentId: btoa(encodeURIComponent(`comment:${res?.id}`)),
@@ -268,10 +269,10 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
-      if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
       }
-      if ((error?.response?.data?.error?.message as string).includes('Unsupported get request. Object with ID')) {
+      if ((error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
         await this.updateLinkPostIdInvalid(postId)
         return
       }
@@ -309,11 +310,11 @@ export class FacebookService {
     };
   }
 
-  async getProfileLink(url: string, proxy: ProxyEntity) {
+  async getProfileLink(url: string, proxy: ProxyEntity, token: TokenEntity) {
     try {
       const httpsAgent = this.getHttpAgent(proxy)
       console.log("----------Đang lấy thông tin url:", url)
-      const { cookies, headers } = getHeaderProfileLink()
+      const { headers, cookies } = getHeaderProfileLink()
 
       const response = await firstValueFrom(
         this.httpService.get(url, {
@@ -322,12 +323,13 @@ export class FacebookService {
         }),
       );
       const htmlContent = response.data
-      const match = htmlContent.match(/,"actors":(\[.*?\])/);
-      //case 1
-      if (match && match[1]) {
-        console.log("🚀 ~ getProfileLink ~ match[1]:", match[1])
+
+      const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
+      //case 1: video, post public
+      if (matchVideoPublic && matchVideoPublic[1]) {
+        console.log("🚀 ~ getProfileLink ~ match[1]:", matchVideoPublic[1])
         const postId = htmlContent?.split('"post_id":"')[1]?.split('"')[0];
-        const profileDecode = JSON.parse(match[1])
+        const profileDecode = JSON.parse(matchVideoPublic[1])
         if (postId) {
           return {
             type: LinkType.PUBLIC,
@@ -336,11 +338,41 @@ export class FacebookService {
           }
         }
       }
-      //case 2: video
-      const match1 = htmlContent.match(/"video_id":"(.*?)"/);
-      if (match && match1[1]) {
-        console.log("🚀 ~ getProfileLink ~ match1[1]:", match1[1])
+      //case 3: story
+      const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
+      if (matchStoryPublic && matchStoryPublic[1]) {
+        const postId = matchStoryPublic[1]
+        if (postId) {
+          return {
+            type: LinkType.PRIVATE,
+            name: url,
+            postId: postId,
+          }
+        }
+      }
+
+      //case 2: cần token
+      const params = {
+        "order": "reverse_chronological",
+        "limit": "1000",
+        "access_token": token.tokenValue,
+        "created_time": "created_time"
+      }
+
+      const responseV1 = await firstValueFrom(
+        this.httpService.get(url, {
+          headers: { ...headers },
+          httpsAgent,
+          params
+        }),
+      );
+      const htmlContentV1 = responseV1.data
+      writeFile(htmlContentV1, 'a')
+      const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
+      if (match1 && match1[1]) {
         const postId = match1[1]
+        console.log("🚀 ~ getProfileLink ~ match1[1]:", postId)
+
         return {
           type: LinkType.PRIVATE,
           name: url,
@@ -352,9 +384,13 @@ export class FacebookService {
         type: LinkType.PRIVATE,
       }
     } catch (error) {
-      console.log("Lỗi lấy thông tin bài viết ", error)
-      return {
-        type: LinkType.PRIVATE,
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
+        await this.updateProxyDie(proxy)
+        return
+      }
+      if (error?.response?.status == 400) {
+        await this.updateTokenDie(token)
+        return
       }
     }
   }
@@ -445,7 +481,7 @@ export class FacebookService {
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
-      if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
 
         return
