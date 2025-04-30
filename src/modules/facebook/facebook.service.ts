@@ -211,9 +211,9 @@ export class FacebookService {
   }
 
   async getCommentByToken(postId: string, proxy: ProxyEntity, token: TokenEntity) {
-    const httpsAgent = this.getHttpAgent(proxy)
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     try {
+      const httpsAgent = this.getHttpAgent(proxy)
       const userAgent = faker.internet.userAgent()
       const languages = [
         'en-US,en;q=0.9',
@@ -228,21 +228,21 @@ export class FacebookService {
 
       const headers = {
         'authority': 'graph.facebook.com',
-        'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="99", "Opera";v="85"',
+        'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
         'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': platforms[Math.floor(Math.random() * platforms.length)],
+        'sec-ch-ua-platform': '"Windows"',
         'upgrade-insecure-requests': '1',
-        'user-agent': userAgent,
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'sec-fetch-site': 'none',
         'sec-fetch-mode': 'navigate',
         'sec-fetch-user': '?1',
         'sec-fetch-dest': 'document',
-        'accept-language': languages[Math.floor(Math.random() * languages.length)],
-        'X-FB-Connection-Type': connectionTypes[Math.floor(Math.random() * connectionTypes.length)],
-        'X-FB-Connection-Quality': connectionQualities[Math.floor(Math.random() * connectionQualities.length)],
+        'accept-language': 'en-US,en;q=0.9',
+        'X-FB-Connection-Type': 'wifi',
+        'X-FB-Connection-Quality': 'EXCELLENT',
         'X-FB-Client-Trace-ID': uuidv4(),
-        'X-FB-HTTP-Engine': httpEngines[Math.floor(Math.random() * httpEngines.length)]
+        'X-FB-HTTP-Engine': 'Liger',
       };
 
       const params = {
