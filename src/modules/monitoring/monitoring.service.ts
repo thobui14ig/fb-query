@@ -92,10 +92,15 @@ export class MonitoringService {
       while (true) {
         const isCheckRuning = this.linksPublic.find(item => item.id === link.id)// check còn nằm trong link
         if (!isCheckRuning) { break };
-
+        const currentLink = await this.linkRepository.findOne({
+          where: {
+            id: link.id
+          }
+        })
+        if (!currentLink) continue;
         try {
 
-          if (linksRunning.length === 0) continue;
+          if (!currentLink) break;
           const cookie = await this.getCookieActiveFromDb()
           if (!cookie) continue
           const proxy = await this.getRandomProxy()
@@ -157,7 +162,12 @@ export class MonitoringService {
         const isCheckRuning = this.linksPrivate.find(item => item.id === link.id)// check còn nằm trong link
         if (!isCheckRuning) { break };
         try {
-          if (linksRunning.length === 0) continue;
+          const currentLink = await this.linkRepository.findOne({
+            where: {
+              id: link.id
+            }
+          })
+          if (!currentLink) break;
           const token = await this.getTokenActiveFromDb()
           if (!token) {
             await this.updateActiveAllToken()
