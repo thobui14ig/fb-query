@@ -25,6 +25,7 @@ import {
 } from './utils';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { faker } from '@faker-js/faker';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -209,6 +210,15 @@ export class FacebookService {
   }
 
   async getCommentByToken(postId: string, proxy: ProxyEntity, token: TokenEntity) {
+    const acceptLanguages = [
+      "vi-VN,vi;q=0.9,en-US;q=0.8",
+      "en-US,en;q=0.9",
+      "fr-FR,fr;q=0.9,en;q=0.8"
+    ];
+    const connectionTypes = ["wifi", "cell.4g", "ethernet"];
+    const userAgent = faker.internet.userAgent()
+    const apceptLanguage = acceptLanguages[Math.floor(Math.random() * acceptLanguages.length)]
+    const connectionType = connectionTypes[Math.floor(Math.random() * connectionTypes.length)]
     const httpsAgent = this.getHttpAgent(proxy)
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     try {
@@ -218,13 +228,14 @@ export class FacebookService {
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36',
+        'user-agent': userAgent,
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'sec-fetch-site': 'none',
         'sec-fetch-mode': 'navigate',
         'sec-fetch-user': '?1',
         'sec-fetch-dest': 'document',
-        'accept-language': 'en-US,en;q=0.9',
+        'accept-language': apceptLanguage,
+        "X-FB-Connection-Type": connectionType
       }
 
       const params = {
@@ -252,6 +263,7 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
+      console.log("🚀 ~ proxy:", proxy)
       console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
       if ((error?.message as string).includes('connect ETIMEDOUT') || (error?.message as string).includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
