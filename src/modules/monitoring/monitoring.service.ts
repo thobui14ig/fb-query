@@ -21,6 +21,7 @@ export class MonitoringService {
   postIdRunning: string[] = []
   postsPublic: IPostStarted[] = []
   postsPrivate: IPostStarted[] = []
+  isHandleUrl: boolean = false
 
   constructor(
     @InjectRepository(LinkEntity)
@@ -124,22 +125,29 @@ export class MonitoringService {
     return Promise.all(postHandle)
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async cronjobHandleProfileUrl() {
-    const links = await this.getLinksWithoutProfile()
-    if (links.length === 0) return;
-    const proxy = await this.getRandomProxy()
-    if (!proxy) return
+    if (!this.isHandleUrl) {
+      const links = await this.getLinksWithoutProfile()
+      if (links.length === 0) return;
+      const proxy = await this.getRandomProxy()
+      if (!proxy) return
 
-    for (const link of links) {
-      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {}
-      if (!link.linkName || link.linkName.length === 0) {
-        link.linkName = name
-      }
-      link.process = true;
-      link.type = type
-      link.postId = postId
-      await this.linkRepository.save(link)
+      const tasks = links.map(async (link) => {
+        const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
+
+        if (!link.linkName || link.linkName.length === 0) {
+          link.linkName = name;
+        }
+        link.process = true;
+        link.type = type;
+        link.postId = postId;
+
+        await this.linkRepository.save(link);
+      });
+
+      await Promise.all(tasks);
+      this.isHandleUrl = true
     }
   }
 
