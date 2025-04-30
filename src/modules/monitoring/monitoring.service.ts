@@ -6,7 +6,8 @@ import { CommentEntity } from '../comments/entities/comment.entity';
 import { FacebookService } from '../facebook/facebook.service';
 import {
   LinkEntity,
-  LinkStatus
+  LinkStatus,
+  LinkType
 } from '../links/entities/links.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
@@ -217,7 +218,7 @@ export class MonitoringService {
     return this.linkRepository
       .createQueryBuilder("link")
       .select("link.postId as postId, link.status, link.type")
-      .where("link.status = :status", { status: LinkStatus.Started })
+      .where("link.status = :status AND link.type != :type", { status: LinkStatus.Started, type: LinkType.DIE })
       .andWhere("link.postId IS NOT NULL")
       .groupBy("link.postId, link.status, link.type")
       .getRawMany();

@@ -13,7 +13,7 @@ import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
 import { Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { LinkEntity, LinkType } from '../links/entities/links.entity';
+import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import {
   getBodyComment,
@@ -535,7 +535,8 @@ export class FacebookService {
     return this.linkRepository.save(links.map((item) => {
       return {
         ...item,
-        errorMessage: `PostId: ${postId} NotFound.`
+        errorMessage: `PostId: ${postId} NotFound.`,
+        type: LinkType.DIE
       }
     }))
   }
