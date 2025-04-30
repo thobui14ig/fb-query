@@ -83,6 +83,7 @@ export class LinkService {
     const response = await this.connection.query(`
         SELECT 
             l.id,
+            l.error_message as errorMessage,
             l.link_name as linkName,
             l.link_url as linkUrl,
             l.like,
