@@ -37,7 +37,7 @@ export class LinkService {
         const entity: Partial<LinkEntity> = {
           userId: params.userId,
           linkUrl: link.url,
-          delayTime: link.delayTime,
+          delayTime: 3,
           status: params.status,
           linkName: link.name
         }
