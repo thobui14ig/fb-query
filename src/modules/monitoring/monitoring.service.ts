@@ -147,7 +147,9 @@ export class MonitoringService {
   async handlePostsPrivate() {
     if (this.postsPrivate.length === 0) return;
     const token = await this.getTokenActiveFromDb()
-    if (!token) return
+    if (!token) {
+      return this.updateActiveAllToken()
+    }
     const proxy = await this.getRandomProxy()
     if (!proxy) return
 
@@ -282,5 +284,11 @@ export class MonitoringService {
     const randomProxy = proxies[randomIndex];
 
     return randomProxy
+  }
+
+  updateActiveAllToken() {
+    return this.tokenRepository.createQueryBuilder().update({
+      status: TokenStatus.ACTIVE
+    })
   }
 }
