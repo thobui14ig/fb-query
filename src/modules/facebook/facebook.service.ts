@@ -479,13 +479,13 @@ export class FacebookService {
       }
       return null
     } catch (error) {
-      console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
+      console.log("🚀 ~ getUuidByCookie ~ error:", error)
       if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
 
         return
       }
-      await this.updateCookieDie(cookieEntity)
+      // await this.updateCookieDie(cookieEntity)
       return null
     }
   }
