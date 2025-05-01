@@ -170,11 +170,11 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, proxy: ProxyEntity, cookie: CookieEntity) {
+  async getCmtPublic(postId: string, proxy: ProxyEntity, cookie: CookieEntity, type = 'RECENT_ACTIVITY_INTENT_V1') {
     console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
-    const body = getBodyComment(postId);
+    const body = getBodyComment(postId, type);
 
     try {
       const response = await firstValueFrom(
@@ -184,12 +184,18 @@ export class FacebookService {
         }),
       )
 
-      let { commentId,
+      let dataComment = await this.handleDataComment(response, proxy, cookie)
+      if (!dataComment) {
+        return this.getCmtPublic(postId, proxy, cookie, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
+      }
+
+      const { commentId,
         userNameComment,
         commentMessage,
         phoneNumber,
         userIdComment,
-        commentCreatedAt, } = await this.handleDataComment(response, proxy, cookie)
+        commentCreatedAt, } = dataComment
+
 
       const res = {
         commentId,
@@ -287,6 +293,7 @@ export class FacebookService {
     const comment =
       response?.data?.data?.node?.comment_rendering_instance_for_feed_location
         ?.comments.edges?.[0]?.node;
+    if (!comment) return null
     const commentId = comment?.id
     const commentMessage =
       comment?.preferred_body && comment?.preferred_body?.text
@@ -366,7 +373,6 @@ export class FacebookService {
         }),
       );
       const htmlContentV1 = responseV1.data
-      writeFile(htmlContentV1, 'a')
       const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
       if (match1 && match1[1]) {
         const postId = match1[1]
@@ -433,29 +439,31 @@ export class FacebookService {
   //   return null
   // }
 
-  // async getInfoAccountsByCookie(httpsAgent, cookie) {
-  //   const cookies = this.changeCookiesFb(cookie);
-  //   const dataUser = await firstValueFrom(
-  //     this.httpService.get('https://www.facebook.com', {
-  //       headers: {
-  //         Cookie: this.formatCookies(cookies)
-  //       },
-  //       httpsAgent
-  //     }),
-  //   );
+  async getInfoAccountsByCookie(httpsAgent, cookie) {
+    const cookies = this.changeCookiesFb(cookie);
+    const dataUser = await firstValueFrom(
+      this.httpService.get('https://www.facebook.com', {
+        headers: {
+          Cookie: this.formatCookies(cookies)
+        },
+        httpsAgent
+      }),
+    );
 
-  //   const dtsgMatch = dataUser.data.match(/DTSGInitialData",\[\],{"token":"(.*?)"}/);
-  //   const jazoestMatch = dataUser.data.match(/&jazoest=(.*?)"/);
-  //   const userIdMatch = dataUser.data.match(/"USER_ID":"(.*?)"/);
+    const dtsgMatch = dataUser.data.match(/DTSGInitialData",\[\],{"token":"(.*?)"}/);
+    const jazoestMatch = dataUser.data.match(/&jazoest=(.*?)"/);
+    const userIdMatch = dataUser.data.match(/"USER_ID":"(.*?)"/);
 
-  //   if (dtsgMatch && jazoestMatch && userIdMatch) {
-  //     const fbDtsg = dtsgMatch[1];
-  //     const jazoest = jazoestMatch[1];
-  //     const facebookId = userIdMatch[1];
+    if (dtsgMatch && jazoestMatch && userIdMatch) {
+      const fbDtsg = dtsgMatch[1];
+      const jazoest = jazoestMatch[1];
+      const facebookId = userIdMatch[1];
 
-  //     return { fbDtsg, jazoest, facebookId }
-  //   }
-  // }
+      return { fbDtsg, jazoest, facebookId }
+    }
+
+    return null
+  }
 
   async getUuidByCookie(uuid: string, proxy: ProxyEntity, cookieEntity: CookieEntity) {
     try {
@@ -477,6 +485,8 @@ export class FacebookService {
         console.log("🚀 ~ getUuidByCookie ~ userID:", userID)
         return userID
       }
+
+      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error)
@@ -486,7 +496,7 @@ export class FacebookService {
         return
       }
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
-        await this.updateCookieDie(cookieEntity)
+        await this.updateStatusCookieDie(cookieEntity, CookieStatus.DIE)
       }
       return null
     }
@@ -551,9 +561,9 @@ export class FacebookService {
     return this.tokenRepository.save({ ...token, status: TokenStatus.DIE })
   }
 
-  updateCookieDie(cookie: CookieEntity) {
+  updateStatusCookieDie(cookie: CookieEntity, status: CookieStatus) {
     console.log("🚀 ~ updateCookieDie ~ cookie:", cookie)
-    return this.cookieRepository.save({ ...cookie, status: CookieStatus.DIE })
+    return this.cookieRepository.save({ ...cookie, status })
   }
 
   updateProxyDie(proxy: ProxyEntity) {

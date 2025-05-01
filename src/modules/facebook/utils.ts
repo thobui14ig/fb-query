@@ -26,7 +26,7 @@ export const getHeaderComment = (fbUrl: string) => {
   };
 };
 
-export const getBodyComment = (postId: string) => {
+export const getBodyComment = (postId: string, type: string) => {
   return {
     av: '0',
     __aaid: '0',
@@ -51,7 +51,7 @@ export const getBodyComment = (postId: string) => {
     fb_api_caller_class: 'RelayModern',
     fb_api_req_friendly_name: 'CommentListComponentsRootQuery',
     variables: `{
-        "commentsIntentToken": "RECENT_ACTIVITY_INTENT_V1",
+        "commentsIntentToken": "${type}",
         "feedLocation": "PERMALINK",
         "feedbackSource": 2,
         "focusCommentID": null,
