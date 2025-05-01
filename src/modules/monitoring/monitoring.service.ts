@@ -246,7 +246,7 @@ export class MonitoringService {
     const token = await this.getTokenActiveFromDb()
     if (!token) {
       this.isHandleUrl = false
-      return this.updateActiveAllToken()
+      return
     }
     this.isHandleUrl = true
     const tasks = links.map(async (link) => {
@@ -268,6 +268,11 @@ export class MonitoringService {
 
     await Promise.all(tasks);
     this.isHandleUrl = false
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  updateLimitToken() {
+    return this.updateActiveAllToken()
   }
 
   private getPostStarted(): Promise<LinkEntity[]> {
@@ -358,7 +363,7 @@ export class MonitoringService {
     console.log("🚀 ~ MonitoringService ~ updateActiveAllToken ~ updateActiveAllToken:")
     const allToken = await this.tokenRepository.find({
       where: {
-        retryCount: LessThan(4)
+        status: TokenStatus.LIMIT
       }
     })
 
