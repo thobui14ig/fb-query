@@ -583,7 +583,7 @@ export class FacebookService {
   async getUuidByCookie(uuid: string, proxy: ProxyEntity) {
     const cookieEntity = await this.cookieRepository.findOne({
       where: {
-        status: Not(CookieStatus.DIE)
+        status: Not(CookieStatus.ACTIVE)
       }
     })
     if (!cookieEntity) return null
