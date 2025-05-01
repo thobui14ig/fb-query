@@ -263,6 +263,7 @@ export class FacebookService {
         }),
       );
       const res = dataCommentToken.data?.data[0]
+      console.log("🚀 ~ getCommentByToken ~ res:", res)
       if (!res?.message?.length) return
 
       return {
