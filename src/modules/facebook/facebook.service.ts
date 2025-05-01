@@ -607,7 +607,7 @@ export class FacebookService {
         return userID
       }
 
-      // await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
+      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error)
