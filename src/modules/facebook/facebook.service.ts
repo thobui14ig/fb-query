@@ -395,7 +395,7 @@ export class FacebookService {
       return dataComment
     } catch (error) {
       console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
-      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
+      // await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     }
   }
