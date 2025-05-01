@@ -485,7 +485,9 @@ export class FacebookService {
 
         return
       }
-      // await this.updateCookieDie(cookieEntity)
+      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+        await this.updateCookieDie(cookieEntity)
+      }
       return null
     }
   }
