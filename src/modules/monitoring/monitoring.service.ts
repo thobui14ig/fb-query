@@ -173,6 +173,12 @@ export class MonitoringService {
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
 
+          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId) || {}
+
+          console.log("🚀 ~ MonitoringService ~ process ~ getCommentByCookie:", dataComment)
+          if (!dataComment || !(dataComment as any)?.commentId) {
+            dataComment = await this.facebookService.getCommentByToken(link.postId, proxy, token) || {}
+          }
           const {
             commentId,
             commentMessage,
@@ -180,7 +186,8 @@ export class MonitoringService {
             userIdComment,
             userNameComment,
             commentCreatedAt
-          } = await this.facebookService.getCommentByToken(link.postId, proxy, token) || {}
+          } = dataComment as any
+          console.log("🚀 ~ MonitoringService ~ process ~ dataComment:", dataComment)
 
           if (!commentId || !userIdComment) continue;
           const links = await this.selectLinkUpdate(link.postId)
@@ -230,17 +237,25 @@ export class MonitoringService {
     }
 
     const links = await this.getLinksWithoutProfile()
-    if (links.length === 0) return;
+    if (links.length === 0) {
+      this.isHandleUrl = false
+      return
+    };
     const proxy = await this.getRandomProxy()
-    if (!proxy) return
+    if (!proxy) {
+      this.isHandleUrl = false
+      return
+    };
     const token = await this.getTokenActiveFromDb()
     if (!token) {
+      this.isHandleUrl = false
       return this.updateActiveAllToken()
     }
     this.isHandleUrl = true
     const tasks = links.map(async (link) => {
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy, token) || {};
       if (!postId) {
+        this.isHandleUrl = false
         return
       }
 

@@ -218,10 +218,31 @@ export class FacebookService {
     }
   }
 
+  handleCookie(rawCookie) {
+    // Danh sách các key cookie cần giữ lại và theo thứ tự mong muốn
+    const keysOrder = ['fr', 'c_user', 'datr', 'sb', 'presence', 'wd', 'xs', 'ps_n', 'ps_l'];
+
+    // Chuyển cookie thành object
+    const cookieObj = Object.fromEntries(
+      rawCookie.split('; ').map(pair => {
+        const [key, ...val] = pair.split('=');
+        return [key, val.join('=')];
+      })
+    );
+
+    // Lọc và sắp xếp cookie
+    const filteredSortedCookie = keysOrder
+      .filter(key => cookieObj[key] !== undefined)
+      .map(key => `${key}=${cookieObj[key]}`)
+      .join('; ');
+
+    return filteredSortedCookie
+  }
+
   async getCommentByToken(postId: string, proxy: ProxyEntity, token: TokenEntity) {
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     try {
-
+      const httpsAgent = this.getHttpAgent(proxy)
       const languages = [
         'en-US,en;q=0.9',
         'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -230,7 +251,6 @@ export class FacebookService {
 
       const userAgent = faker.internet.userAgent()
       const apceptLanguage = languages[Math.floor(Math.random() * languages.length)]
-      const httpsAgent = this.getHttpAgent(proxy)
 
       const headers = {
         'authority': 'graph.facebook.com',
@@ -291,6 +311,87 @@ export class FacebookService {
       }
 
       return {}
+    }
+  }
+
+  async getCommentByCookie(proxy: ProxyEntity, postId: string) {
+    console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
+    const cookieEntity = await this.getCookieActiveFromDb()
+    if (!cookieEntity) return null
+    try {
+      const id = `feedback:${postId}`;
+      const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
+      const httpsAgent = this.getHttpAgent(proxy)
+
+      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie)
+      const cookies = this.changeCookiesFb(cookieEntity.cookie)
+
+      const data = {
+        av: facebookId,
+        __aaid: '0',
+        __user: facebookId,
+        __a: '1',
+        __req: '13',
+        __hs: '20209.HYP:comet_pkg.2.1...0',
+        dpr: '1',
+        __ccg: 'EXCELLENT',
+        __rev: '1022417048',
+        __s: '5j9f2a:6aicy4:1wsr8e',
+        __hsi: '7499382864565808594',
+        __dyn: '7xeUmwlEnwn8yEqxemh0no6u5U4e1Nxt3odEc8co2qwJyE24wJwpUe8hw2nVE4W0qa321Rw8G11wBz83WwgEcEhwGwQw9m1YwBgao6C0Mo2swlo5qfK0zEkxe2GewbS2SU4i5oe85nxm16waCm260lCq2-azo3iwPwbS16xi4UdUcobUak0KU566E6C13G1-wkE627E4-8wLwHwea',
+        __csr: 'gjMVMFljjPl5OqmDuAXRlAp4L9ZtrQiQb-eypFUB4gyaCiC_xHz9KGDgKboJ2ErBgSvxym5EjyFayVVXUSiEC9Bz-qGDyuu6GgzmaHUmBBDK5GGaUpy8J4CxmcwxUjx20Q87207qA59kRQQ0gd0jA0sHwcW02Jq0c7Q0ME0jNweJ0bqE2Bw28WU0z2E7q0iW6U3yw2kE0p762U03jSwHw7Oo0gfm2C0WFOiw33o9S1mw5Owbq0uW0qWfwJylg35wBw9208qwWo1960dKw6Nw30QU225VHmg905lCabzE3Axmi0Jpk0Uo27xq0P41TzoC0ge0N9o0tyw9Ci3m0Qo2bKjO082hwSwpk2O3K6Q0ruz011a034Yw35w37o1rOwnU460cPw9J2oF3o3Yg1ho3vwnA9yAdDo3mg0zxw26Gxt1G4E3qw4FwjobE0Kq1-xWaQ0g-aOwOw4Hoog1bU0L20oO08Cw',
+        __comet_req: '15',
+        fb_dtsg: fbDtsg,
+        jazoest: jazoest,
+        lsd: 'AVrkziLMLUQ',
+        __spin_r: '1022417048',
+        __spin_b: 'trunk',
+        __spin_t: '1746086138',
+        __crn: 'comet.fbweb.CometTahoeRoute',
+        fb_api_caller_class: 'RelayModern',
+        fb_api_req_friendly_name: 'CommentListComponentsRootQuery',
+        variables: `{"commentsIntentToken":"CHRONOLOGICAL_UNFILTERED_INTENT_V1","feedLocation":"TAHOE","feedbackSource":41,"focusCommentID":null,"scale":1,"useDefaultActor":false,"id":"${encodedPostId}","__relay_internal__pv__IsWorkUserrelayprovider":false}`,
+        server_timestamps: 'true',
+        doc_id: '9221104427994320'
+      };
+
+      const response = await fetch("https://www.facebook.com/api/graphql/", {
+        "headers": {
+          "accept": "*/*",
+          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+          "content-type": "application/x-www-form-urlencoded",
+          "priority": "u=1, i",
+          "sec-ch-prefers-color-scheme": "light",
+          "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+          "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.115\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.115\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-model": "\"\"",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-ch-ua-platform-version": "\"10.0.0\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+          "x-asbd-id": "359341",
+          "x-fb-friendly-name": "CommentListComponentsRootQuery",
+          "x-fb-lsd": data.lsd,
+          "cookie": this.formatCookies(cookies),
+          "Referrer-Policy": "strict-origin-when-cross-origin"
+        },
+        "body": new URLSearchParams(data).toString(),
+        "method": "POST"
+      });
+
+      const dataJson = await response.json()
+      let dataComment = await this.handleDataComment({
+        data: dataJson
+      }, proxy, cookieEntity)
+
+      return dataComment
+    } catch (error) {
+      console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
+      //update cookie die
+      await this.updateStatusCookieDie(cookieEntity, CookieStatus.DIE)
+      return null
     }
   }
 
@@ -511,60 +612,6 @@ export class FacebookService {
     }
   }
 
-  // getCommentByCookie() {
-  // const cookie = `fr=09Oi55QtN1FWwNy4O.AWf4VuytTZ4thllQVja-_HgKa1hDNUf6aZV6TWe8-zXuvGbdk8w.BoDclZ..AAA.0.0.BoDclt.AWf8oEN13t-Thok6uPGAX59L874;c_user=61575338380915;xs=23%3ArWsaFthQ78yaug%3A2%3A1745733995%3A-1%3A-1;presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1745734003338%2C%22v%22%3A1%7D;wd=383x491;sb=WckNaI9fnGyYgbWPDj9kgyHs;datr=WckNaMY9vCqr-QDAHQQdr6mD;`
-  // const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookie)
-
-
-  // const data = {
-  //   av: facebookId,
-  //   __aaid: "0",
-  //   __user: facebookId,
-  //   __a: "1",
-  //   __req: "17",
-  //   __hs: "20083.HYP:comet_loggedout_pkg.2.1.0.0.0",
-  //   dpr: "1",
-  //   __ccg: "EXCELLENT",
-  //   __rev: "1019077343",
-  //   __s: "ew02ta:bsck7x:9vkuon",
-  //   __hsi: "7452585136370389220",
-  //   fb_dtsg: fbDtsg,
-  //   jazoest: jazoest,
-  //   __comet_req: "15",
-  //   lsd: "AVpOnNuOsK0",
-  //   __spin_r: "1019077343",
-  //   __spin_b: "trunk",
-  //   fb_api_caller_class: "RelayModern",
-  //   fb_api_req_friendly_name: "CommentListComponentsRootQuery",
-  //   variables: JSON.stringify({
-  //     commentsIntentToken: "RECENT_ACTIVITY_INTENT_V1",
-  //     feedLocation: "PERMALINK",
-  //     feedbackSource: 2,
-  //     focusCommentID: null,
-  //     scale: 1,
-  //     useDefaultActor: false,
-  //     id: postId,
-  //     __relay_internal__pv__IsWorkUserrelayprovider: false
-  //   }),
-  //   server_timestamps: "true",
-  //   doc_id: "9051058151623566"
-  // };
-  // const ck = this.changeCookiesFb(cookie)
-
-  // const test = await firstValueFrom(
-  //   this.httpService.post('https://www.facebook.com/api/graphql/', data, {
-  //     httpsAgent,
-  //     headers: {
-  //       'content-type': 'application/x-www-form-urlencoded',
-  //       'Cookie': this.formatCookies(ck), // nếu cần auth
-  //       // Các headers khác nếu Facebook yêu cầu
-  //     }
-  //   }),
-  // );
-  // console.log("🚀 ~ getCmt ~ test:", test)
-  // writeFile(test.data, '222')
-  // }
-
   updateStatusTokenDie(token: TokenEntity, status: TokenStatus) {
     console.log("🚀 ~ updateTokenDie ~ token:", token)
     return this.tokenRepository.save({ ...token, status })
@@ -603,5 +650,13 @@ export class FacebookService {
     const httpsAgent = new HttpsProxyAgent(agent);
 
     return httpsAgent;
+  }
+
+  getCookieActiveFromDb(): Promise<CookieEntity> {
+    return this.cookieRepository.findOne({
+      where: {
+        status: CookieStatus.ACTIVE
+      }
+    })
   }
 }
