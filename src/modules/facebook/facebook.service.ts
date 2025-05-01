@@ -610,7 +610,7 @@ export class FacebookService {
       await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
-      console.log("🚀 ~ getUuidByCookie ~ error:", error)
+      console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
       if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
 
