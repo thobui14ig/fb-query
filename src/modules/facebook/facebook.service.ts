@@ -263,7 +263,6 @@ export class FacebookService {
         }),
       );
       const res = dataCommentToken.data?.data[0]
-      console.log("🚀 ~ getCommentByToken ~ res:", res)
       if (!res?.message?.length) return
 
       return {
@@ -275,7 +274,7 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
+      console.log("🚀 ~ getCommentByToken ~ error:", error.message)
       if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
       }
@@ -283,7 +282,12 @@ export class FacebookService {
         return
       }
       if (error?.response?.status == 400) {
-        await this.updateTokenDie(token)
+        if (error.response?.data?.error?.code === 368) {
+          await this.updateStatusTokenDie(token, TokenStatus.LIMIT)
+        }
+        if (error.response?.data?.error?.code === 190) {
+          await this.updateStatusTokenDie(token, TokenStatus.DIE)
+        }
       }
 
       return {}
@@ -395,8 +399,12 @@ export class FacebookService {
         return
       }
       if (error?.response?.status == 400) {
-        await this.updateTokenDie(token)
-        return
+        if (error.response?.data?.error?.code === 368) {
+          await this.updateStatusTokenDie(token, TokenStatus.LIMIT)
+        }
+        if (error.response?.data?.error?.code === 190) {
+          await this.updateStatusTokenDie(token, TokenStatus.DIE)
+        }
       }
     }
   }
@@ -557,9 +565,9 @@ export class FacebookService {
   // writeFile(test.data, '222')
   // }
 
-  updateTokenDie(token: TokenEntity) {
+  updateStatusTokenDie(token: TokenEntity, status: TokenStatus) {
     console.log("🚀 ~ updateTokenDie ~ token:", token)
-    return this.tokenRepository.save({ ...token, status: TokenStatus.DIE })
+    return this.tokenRepository.save({ ...token, status })
   }
 
   updateStatusCookieDie(cookie: CookieEntity, status: CookieStatus) {
