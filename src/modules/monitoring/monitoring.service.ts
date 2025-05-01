@@ -101,8 +101,6 @@ export class MonitoringService {
         try {
 
           if (!currentLink) break;
-          const cookie = await this.getCookieActiveFromDb()
-          if (!cookie) continue
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
           const postId = `feedback:${link.postId}`;
@@ -114,7 +112,7 @@ export class MonitoringService {
             userIdComment,
             userNameComment,
             commentCreatedAt
-          } = await this.facebookService.getCmtPublic(encodedPostId, proxy, cookie) || {}
+          } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
 
 
           if (!commentId || !userIdComment) continue;
@@ -187,7 +185,6 @@ export class MonitoringService {
             userNameComment,
             commentCreatedAt
           } = dataComment as any
-          console.log("🚀 ~ MonitoringService ~ process ~ dataComment:", dataComment)
 
           if (!commentId || !userIdComment) continue;
           const links = await this.selectLinkUpdate(link.postId)
