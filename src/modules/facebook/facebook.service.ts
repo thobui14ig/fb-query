@@ -11,7 +11,7 @@ import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
@@ -576,7 +576,11 @@ export class FacebookService {
   }
 
   async getUuidByCookie(uuid: string, proxy: ProxyEntity) {
-    const cookieEntity = await this.getCookieActiveFromDb()
+    const cookieEntity = await this.cookieRepository.findOne({
+      where: {
+        status: Not(CookieStatus.DIE)
+      }
+    })
     if (!cookieEntity) return null
     try {
       const httpsAgent = this.getHttpAgent(proxy)
