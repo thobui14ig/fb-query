@@ -323,7 +323,13 @@ export class FacebookService {
       const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
       const httpsAgent = this.getHttpAgent(proxy)
 
-      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie)
+      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
+
+      if (!facebookId) {
+        await this.updateStatusCookieDie(cookieEntity, CookieStatus.DIE)
+
+        return null
+      }
       const cookies = this.changeCookiesFb(cookieEntity.cookie)
 
       const data = {
@@ -389,8 +395,7 @@ export class FacebookService {
       return dataComment
     } catch (error) {
       console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
-      //update cookie die
-      await this.updateStatusCookieDie(cookieEntity, CookieStatus.DIE)
+      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     }
   }
@@ -602,7 +607,7 @@ export class FacebookService {
         return userID
       }
 
-      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
+      // await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error)
