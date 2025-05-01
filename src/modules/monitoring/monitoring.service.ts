@@ -169,10 +169,7 @@ export class MonitoringService {
           })
           if (!currentLink) break;
           const token = await this.getTokenActiveFromDb()
-          if (!token) {
-            await this.updateActiveAllToken()
-            continue
-          }
+          if (!token) continue
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
 
