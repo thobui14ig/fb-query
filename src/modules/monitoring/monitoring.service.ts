@@ -227,8 +227,8 @@ export class MonitoringService {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
+    console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ cronjobHandleProfileUrl:")
     if (this.isHandleUrl) {
-      console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ this.isHandleUrl:", this.isHandleUrl)
       return
     }
 
