@@ -97,7 +97,6 @@ export class MonitoringService {
             id: link.id
           }
         })
-        if (!currentLink) continue;
         try {
 
           if (!currentLink) break;
@@ -166,16 +165,16 @@ export class MonitoringService {
             }
           })
           if (!currentLink) break;
-          const token = await this.getTokenActiveFromDb()
-          if (!token) continue
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
 
-          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId) || {}
-
-          console.log("🚀 ~ MonitoringService ~ process ~ getCommentByCookie:", dataComment)
+          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1) || {}
           if (!dataComment || !(dataComment as any)?.commentId) {
-            dataComment = await this.facebookService.getCommentByToken(link.postId, proxy, token) || {}
+            dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId) || {}
+          }
+
+          if (!dataComment || !(dataComment as any)?.commentId) {
+            dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
           }
           const {
             commentId,
@@ -262,7 +261,7 @@ export class MonitoringService {
       link.process = true;
       link.type = type;
       link.postId = postId;
-
+      link.postIdV1 = type === LinkType.PRIVATE ? (await this.facebookService.getPostIdV2(link.linkUrl) || null) : null
       await this.linkRepository.save(link);
     });
 

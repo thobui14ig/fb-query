@@ -196,7 +196,6 @@ export class FacebookService {
         userIdComment,
         commentCreatedAt, } = dataComment
 
-
       const res = {
         commentId,
         userNameComment,
@@ -239,8 +238,15 @@ export class FacebookService {
     return filteredSortedCookie
   }
 
-  async getCommentByToken(postId: string, proxy: ProxyEntity, token: TokenEntity) {
+  async getCommentByToken(postId: string, proxy: ProxyEntity) {
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
+    const token = await this.getTokenActiveFromDb()
+    if (!token) {
+      console.log("🚀 ~ Stop getCommentByToken because token not found:")
+
+      return
+    }
+
     try {
       const httpsAgent = this.getHttpAgent(proxy)
       const languages = [
@@ -322,7 +328,6 @@ export class FacebookService {
       const id = `feedback:${postId}`;
       const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
       const httpsAgent = this.getHttpAgent(proxy)
-
       const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
 
       if (!facebookId) {
@@ -356,7 +361,7 @@ export class FacebookService {
         __crn: 'comet.fbweb.CometTahoeRoute',
         fb_api_caller_class: 'RelayModern',
         fb_api_req_friendly_name: 'CommentListComponentsRootQuery',
-        variables: `{"commentsIntentToken":"CHRONOLOGICAL_UNFILTERED_INTENT_V1","feedLocation":"TAHOE","feedbackSource":41,"focusCommentID":null,"scale":1,"useDefaultActor":false,"id":"${encodedPostId}","__relay_internal__pv__IsWorkUserrelayprovider":false}`,
+        variables: `{"commentsIntentToken":"RECENT_ACTIVITY_INTENT_V1","feedLocation":"TAHOE","feedbackSource":41,"focusCommentID":null,"scale":1,"useDefaultActor":false,"id":"${encodedPostId}","__relay_internal__pv__IsWorkUserrelayprovider":false}`,
         server_timestamps: 'true',
         doc_id: '9221104427994320'
       };
@@ -388,6 +393,7 @@ export class FacebookService {
       });
 
       const dataJson = await response.json()
+
       let dataComment = await this.handleDataComment({
         data: dataJson
       }, proxy)
@@ -395,7 +401,7 @@ export class FacebookService {
       return dataComment
     } catch (error) {
       console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
-      // await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
+      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
       return null
     }
   }
@@ -415,7 +421,7 @@ export class FacebookService {
     const commentCreatedAt = dayjs(comment?.created_time * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
-    userIdComment = isNumeric(userIdComment) ? userIdComment : await this.getUuidByCookie(comment?.author.id, proxy)
+    userIdComment = isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment
 
     return {
       commentId,
@@ -429,6 +435,7 @@ export class FacebookService {
 
   async getProfileLink(url: string, proxy: ProxyEntity, token: TokenEntity) {
     try {
+      console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ this.isHandleUrl:", url)
       const httpsAgent = this.getHttpAgent(proxy)
       console.log("----------Đang lấy thông tin url:", url)
       const { headers, cookies } = getHeaderProfileLink()
@@ -440,7 +447,6 @@ export class FacebookService {
         }),
       );
       const htmlContent = response.data
-
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
       //case 1: video, post public
       if (matchVideoPublic && matchVideoPublic[1]) {
@@ -553,6 +559,49 @@ export class FacebookService {
 
   //   return null
   // }
+
+  async getPostIdV2(url: string) {
+    try {
+      const cookieEntity = await this.getCookieActiveFromDb()
+      if (!cookieEntity) return null
+      const cookies = this.changeCookiesFb(cookieEntity.cookie)
+
+      const response = await fetch(url, {
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+          "dpr": "1",
+          "priority": "u=0, i",
+          "sec-ch-prefers-color-scheme": "light",
+          "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+          "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.116\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.116\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-model": "\"\"",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-ch-ua-platform-version": "\"10.0.0\"",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "same-origin",
+          "upgrade-insecure-requests": "1",
+          "viewport-width": "856",
+          "cookie": this.formatCookies(cookies),
+          "Referrer-Policy": "strict-origin-when-cross-origin"
+        },
+        "body": null,
+        "method": "GET"
+      });
+      const match = (await response.text()).match(/"post_id":"(.*?)"/);
+
+      if (match && match[1]) {
+        return match[1]
+      }
+
+      return null
+    } catch (error) {
+      console.log("🚀 ~ getPostIdV2 ~ error:", error?.message)
+      return null
+    }
+  }
 
   async getInfoAccountsByCookie(httpsAgent, cookie) {
     const cookies = this.changeCookiesFb(cookie);
@@ -667,6 +716,14 @@ export class FacebookService {
     return this.cookieRepository.findOne({
       where: {
         status: CookieStatus.ACTIVE
+      }
+    })
+  }
+
+  getTokenActiveFromDb(): Promise<TokenEntity> {
+    return this.tokenRepository.findOne({
+      where: {
+        status: TokenStatus.ACTIVE
       }
     })
   }
