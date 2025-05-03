@@ -18,11 +18,11 @@ services:
       dockerfile: Dockerfile
     container_name: backend
     restart: always
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
     environment:
       - DB_TYPE=mysql
-      - DB_HOST=db
+      - DB_HOST=91.99.31.157
       - DB_PORT=3306
       - DB_USER_NAME=root
       - DB_PASSWORD=HoangChuong@1111
@@ -30,4 +30,3 @@ services:
       - NODE_OPTIONS=--max-old-space-size=4096  
     ports:
       - '9000:9000'
-
