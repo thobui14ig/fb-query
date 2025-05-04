@@ -273,7 +273,6 @@ export class MonitoringService {
 
     await Promise.all(tasks);
     this.isHandleUrl = false
-    console.log(55555)
   }
 
   @Cron(CronExpression.EVERY_HOUR)
