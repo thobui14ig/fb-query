@@ -515,8 +515,8 @@ export class FacebookService {
         type: LinkType.PRIVATE,
       }
     } catch (error) {
-      console.log("🚀 ~ getProfileLink ~ error:", error)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
+      console.log("🚀 ~ getProfileLink ~ error:", error?.message)
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407) {
         await this.updateProxyDie(proxy)
         return
       }
