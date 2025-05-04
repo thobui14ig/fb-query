@@ -233,23 +233,29 @@ export class MonitoringService {
     }
 
     const links = await this.getLinksWithoutProfile()
+    console.log(11111111)
     if (links.length === 0) {
       this.isHandleUrl = false
       return
     };
+    console.log(222222)
     const proxy = await this.getRandomProxy()
     if (!proxy) {
       this.isHandleUrl = false
       return
     };
+    console.log(33333)
     const token = await this.getTokenActiveFromDb()
     if (!token) {
       this.isHandleUrl = false
       return
     }
+    console.log(44444)
     this.isHandleUrl = true
     const tasks = links.map(async (link) => {
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy, token) || {};
+      console.log(`🚀 ~ MonitoringService ~ tasks ~ { type, name, postId } :`, { type, name, postId })
+
       if (!postId) {
         this.isHandleUrl = false
         return
@@ -267,6 +273,7 @@ export class MonitoringService {
 
     await Promise.all(tasks);
     this.isHandleUrl = false
+    console.log(55555)
   }
 
   @Cron(CronExpression.EVERY_HOUR)
