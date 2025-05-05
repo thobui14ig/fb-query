@@ -275,6 +275,11 @@ export class MonitoringService {
     return this.updateActiveAllToken()
   }
 
+  @Cron(CronExpression.EVERY_HOUR)
+  updateLimitCookie() {
+    return this.updateActiveAllCookie()
+  }
+
   private getPostStarted(): Promise<LinkEntity[]> {
     return this.linkRepository.find({
       where: {
@@ -381,6 +386,22 @@ export class MonitoringService {
         ...item,
         status: TokenStatus.ACTIVE,
         retryCount: item.retryCount + 1
+      }
+    }))
+  }
+
+  async updateActiveAllCookie() {
+    console.log("🚀 ~ MonitoringService ~ updateActiveAllCookie ~ updateActiveAllCookie:")
+    const allCookie = await this.cookieRepository.find({
+      where: {
+        status: CookieStatus.LIMIT
+      }
+    })
+
+    return this.tokenRepository.save(allCookie.map((item) => {
+      return {
+        ...item,
+        status: TokenStatus.ACTIVE,
       }
     }))
   }
