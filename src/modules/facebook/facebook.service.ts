@@ -245,7 +245,6 @@ export class FacebookService {
   async getCommentByToken(postId: string, proxy: ProxyEntity) {
     const token = await this.getTokenActiveFromDb()
     if (!token) {
-      console.log("🚀 ~ Stop getCommentByToken because token not found:")
       return
     }
     console.log("🚀 ~ getCommentByToken ~ postId:", postId)
