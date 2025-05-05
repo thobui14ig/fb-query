@@ -11,7 +11,7 @@ import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { In, Not, Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
@@ -728,7 +728,7 @@ export class FacebookService {
   async getCookieActiveFromDb(): Promise<CookieEntity> {
     const cookies = await this.cookieRepository.find({
       where: {
-        status: Not(In([CookieStatus.DIE, CookieStatus.INACTIVE]))
+        status: CookieStatus.ACTIVE
       }
     })
     const randomIndex = Math.floor(Math.random() * cookies.length);
