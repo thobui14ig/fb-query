@@ -397,7 +397,6 @@ export class FacebookService {
       });
 
       const dataJson = await response.json()
-      console.log("🚀 ~ getCommentByCookie ~ error:", await response.text())
       let dataComment = await this.handleDataComment({
         data: dataJson
       }, proxy)
@@ -406,6 +405,10 @@ export class FacebookService {
     } catch (error) {
       console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return
+      }
+      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
         return
       }
