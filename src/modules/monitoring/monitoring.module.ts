@@ -8,9 +8,10 @@ import { MonitoringController } from './monitoring.controller';
 import { MonitoringService } from './monitoring.service';
 import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { ProxyEntity } from '../proxy/entities/proxy.entity';
+import { DelayEntity } from '../setting/entities/delay.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LinkEntity, CommentEntity, TokenEntity, CookieEntity, ProxyEntity]), FacebookModule],
+  imports: [TypeOrmModule.forFeature([LinkEntity, CommentEntity, TokenEntity, CookieEntity, ProxyEntity, DelayEntity]), FacebookModule],
   controllers: [MonitoringController],
   providers: [MonitoringService],
   exports: [MonitoringService],

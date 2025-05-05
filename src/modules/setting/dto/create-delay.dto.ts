@@ -2,11 +2,11 @@ import { IsNumber } from "class-validator";
 
 export class CreateDelayDTO {
     @IsNumber()
-    delayCheck: number;
+    refreshToken: number;
 
     @IsNumber()
-    delayLinkOn: number;
+    refreshCookie: number;
 
     @IsNumber()
-    delayLinkOff: number;
+    refreshProxy: number;
 }

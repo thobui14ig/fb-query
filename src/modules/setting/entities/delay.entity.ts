@@ -13,15 +13,15 @@ export class DelayEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ name: 'delaycheck', type: 'int', default: 0 })
-    delayCheck: number;
+    @Column({ name: 'refresh_cookie', type: 'int', default: 0 })
+    refreshCookie: number;
 
     @Column({ name: 'updated_at', type: 'datetime' })
     updatedAt: Date;
 
-    @Column({ name: 'delaylinkon', type: 'int', default: 0 })
-    delayLinkOn: number;
+    @Column({ name: 'refresh_token', type: 'int', default: 0 })
+    refreshToken: number;
 
-    @Column({ name: 'delaylinkoff', type: 'int', default: 0 })
-    delayLinkOff: number;
+    @Column({ name: 'refresh_proxy', type: 'int', default: 0 })
+    refreshProxy: number;
 }

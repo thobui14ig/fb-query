@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, LessThan, Not, Repository } from 'typeorm';
@@ -16,13 +16,26 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
+import { DelayEntity } from '../setting/entities/delay.entity';
 
+type RefreshKey = 'refreshToken' | 'refreshCookie' | 'refreshProxy';
 @Injectable()
-export class MonitoringService {
+export class MonitoringService implements OnModuleInit {
   postIdRunning: string[] = []
   linksPublic: LinkEntity[] = []
   linksPrivate: LinkEntity[] = []
   isHandleUrl: boolean = false
+  private jobIntervalHandlers: Record<RefreshKey, NodeJS.Timeout> = {
+    refreshToken: null,
+    refreshCookie: null,
+    refreshProxy: null,
+  };
+
+  private currentRefreshMs: Record<RefreshKey, number> = {
+    refreshToken: 0,
+    refreshCookie: 0,
+    refreshProxy: 0,
+  };
 
   constructor(
     @InjectRepository(LinkEntity)
@@ -35,8 +48,51 @@ export class MonitoringService {
     @InjectRepository(CookieEntity)
     private cookieRepository: Repository<CookieEntity>,
     @InjectRepository(ProxyEntity)
-    private proxyRepository: Repository<ProxyEntity>
+    private proxyRepository: Repository<ProxyEntity>,
+    @InjectRepository(DelayEntity)
+    private delayRepository: Repository<DelayEntity>,
+
   ) { }
+
+  async onModuleInit() {
+    // Bắt đầu kiểm tra định kỳ từng loại
+    ['refreshToken', 'refreshCookie', 'refreshProxy'].forEach((key: RefreshKey) => {
+      setInterval(() => this.checkAndUpdateScheduler(key), 10 * 1000);
+      this.checkAndUpdateScheduler(key); // gọi ngay lúc khởi động
+    });
+  }
+
+  private async checkAndUpdateScheduler(key: RefreshKey) {
+    const config = await this.delayRepository.find();
+    if (!config.length) return;
+    const newRefreshMs = (config[0][key] ?? 60) * 60 * 1000;
+
+    if (newRefreshMs !== this.currentRefreshMs[key]) {
+      this.currentRefreshMs[key] = newRefreshMs;
+
+      if (this.jobIntervalHandlers[key]) {
+        clearInterval(this.jobIntervalHandlers[key]);
+      }
+
+      this.jobIntervalHandlers[key] = setInterval(() => {
+        this.doScheduledJob(key);
+      }, newRefreshMs);
+
+      console.log(`🔄 Đặt lại job "${key}" mỗi ${newRefreshMs / 1000}s`);
+    }
+  }
+
+  private async doScheduledJob(key: RefreshKey) {
+    if (key === "refreshToken") {
+      return this.updateActiveAllToken()
+    }
+    if (key === "refreshCookie") {
+      return this.updateActiveAllCookie()
+    }
+    if (key === "refreshProxy") {
+      return this.updateActiveAllProxy()
+    }
+  }
 
   async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
     if (level === LEVEL.USER) {
@@ -387,6 +443,22 @@ export class MonitoringService {
       return {
         ...item,
         status: TokenStatus.ACTIVE,
+      }
+    }))
+  }
+
+  async updateActiveAllProxy() {
+    console.log("🚀 ~ MonitoringService ~ updateActiveAllProxy ~ updateActiveAllProxy:")
+    const allProxy = await this.proxyRepository.find({
+      where: {
+        status: ProxyStatus.IN_ACTIVE
+      }
+    })
+
+    return this.proxyRepository.save(allProxy.map((item) => {
+      return {
+        ...item,
+        status: ProxyStatus.ACTIVE,
       }
     }))
   }
