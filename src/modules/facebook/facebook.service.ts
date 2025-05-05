@@ -404,8 +404,12 @@ export class FacebookService {
 
       return dataComment
     } catch (error) {
+      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return
+      }
       console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
-      await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       return null
     }
   }
@@ -679,7 +683,7 @@ export class FacebookService {
         return
       }
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
       return null
     }
