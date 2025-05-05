@@ -185,7 +185,11 @@ export class FacebookService {
       )
 
       let dataComment = await this.handleDataComment(response, proxy)
+
       if (!dataComment) {
+        if (type === "CHRONOLOGICAL_UNFILTERED_INTENT_V1") {
+          return null
+        }
         return this.getCmtPublic(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
       }
 
@@ -213,7 +217,7 @@ export class FacebookService {
         return
       }
 
-      return
+      return null
     }
   }
 

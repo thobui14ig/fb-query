@@ -3,7 +3,7 @@ import { CreateCookieDto } from './dto/create-cookie.dto';
 import { UpdateCookieDto } from './dto/update-cookie.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CookieEntity } from './entities/cookie.entity';
+import { CookieEntity, CookieStatus } from './entities/cookie.entity';
 
 @Injectable()
 export class CookieService {
@@ -15,7 +15,8 @@ export class CookieService {
   create(params: CreateCookieDto) {
     const cookies = params.cookies.map((cookie) => {
       return {
-        cookie
+        cookie,
+        status: CookieStatus.INACTIVE
       }
     })
     return this.repo.save(cookies)

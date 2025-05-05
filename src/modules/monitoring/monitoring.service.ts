@@ -98,7 +98,6 @@ export class MonitoringService {
           }
         })
         try {
-
           if (!currentLink) break;
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
@@ -112,7 +111,6 @@ export class MonitoringService {
             userNameComment,
             commentCreatedAt
           } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
-
 
           if (!commentId || !userIdComment) continue;
           const links = await this.selectLinkUpdate(link.postId)
@@ -168,10 +166,7 @@ export class MonitoringService {
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
 
-          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1) || {}
-          if (!dataComment || !(dataComment as any)?.commentId) {
-            dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId) || {}
-          }
+          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
 
           if (!dataComment || !(dataComment as any)?.commentId) {
             dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
@@ -227,7 +222,6 @@ export class MonitoringService {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
-    console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ cronjobHandleProfileUrl:")
     if (this.isHandleUrl) {
       return
     }
@@ -256,7 +250,7 @@ export class MonitoringService {
         link.linkName = name;
       }
       link.process = true;
-      link.type = type;
+      link.type = postId ? type : LinkType.DIE;
       link.postId = postId;
       link.postIdV1 = type === LinkType.PRIVATE ? (await this.facebookService.getPostIdV2(link.linkUrl) || null) : null
       await this.linkRepository.save(link);
