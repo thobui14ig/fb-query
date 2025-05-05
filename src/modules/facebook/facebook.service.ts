@@ -243,13 +243,12 @@ export class FacebookService {
   }
 
   async getCommentByToken(postId: string, proxy: ProxyEntity) {
-    console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     const token = await this.getTokenActiveFromDb()
     if (!token) {
       console.log("🚀 ~ Stop getCommentByToken because token not found:")
-
       return
     }
+    console.log("🚀 ~ getCommentByToken ~ postId:", postId)
 
     try {
       const httpsAgent = this.getHttpAgent(proxy)
@@ -325,9 +324,10 @@ export class FacebookService {
   }
 
   async getCommentByCookie(proxy: ProxyEntity, postId: string) {
-    console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
     const cookieEntity = await this.getCookieActiveFromDb()
     if (!cookieEntity) return null
+    console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
+
     try {
       const id = `feedback:${postId}`;
       const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
@@ -673,7 +673,7 @@ export class FacebookService {
         return userID
       }
 
-      await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
