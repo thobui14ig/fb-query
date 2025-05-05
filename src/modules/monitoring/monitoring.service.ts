@@ -233,28 +233,23 @@ export class MonitoringService {
     }
 
     const links = await this.getLinksWithoutProfile()
-    console.log(11111111)
     if (links.length === 0) {
       this.isHandleUrl = false
       return
     };
-    console.log(222222)
     const proxy = await this.getRandomProxy()
     if (!proxy) {
       this.isHandleUrl = false
       return
     };
-    console.log(33333)
     const token = await this.getTokenActiveFromDb()
     if (!token) {
       this.isHandleUrl = false
       return
     }
-    console.log(44444)
     this.isHandleUrl = true
     const tasks = links.map(async (link) => {
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy, token) || {};
-      console.log(`🚀 ~ MonitoringService ~ tasks ~ { type, name, postId } :`, { type, name, postId })
 
       if (!postId) {
         this.isHandleUrl = false
@@ -336,20 +331,29 @@ export class MonitoringService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  getTokenActiveFromDb(): Promise<TokenEntity> {
-    return this.tokenRepository.findOne({
+  async getTokenActiveFromDb(): Promise<TokenEntity> {
+    const tokens = await this.tokenRepository.find({
       where: {
         status: TokenStatus.ACTIVE
       }
     })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
   }
 
-  getCookieActiveFromDb(): Promise<CookieEntity> {
-    return this.cookieRepository.findOne({
+  async getCookieActiveFromDb(): Promise<CookieEntity> {
+    const cookies = await this.cookieRepository.find({
       where: {
         status: CookieStatus.ACTIVE
       }
     })
+    const randomIndex = Math.floor(Math.random() * cookies.length);
+    const randomCookie = cookies[randomIndex];
+
+    return randomCookie
   }
 
   async getRandomProxy() {

@@ -448,7 +448,6 @@ export class FacebookService {
       );
       const htmlContent = response.data
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
-      console.log(55555)
 
       //case 1: video, post public
       if (matchVideoPublic && matchVideoPublic[1]) {
@@ -463,7 +462,6 @@ export class FacebookService {
           }
         }
       }
-      console.log(666)
 
       //case 3: story
       const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
@@ -477,7 +475,6 @@ export class FacebookService {
           }
         }
       }
-      console.log(7777)
 
       //case 2: cần token
       const params = {
@@ -496,7 +493,6 @@ export class FacebookService {
       );
       const htmlContentV1 = responseV1.data
       const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
-      console.log(888)
 
       if (match1 && match1[1]) {
         const postId = match1[1]
@@ -508,8 +504,6 @@ export class FacebookService {
           postId: postId,
         }
       }
-
-      console.log(999)
 
       return {
         type: LinkType.PRIVATE,
@@ -722,19 +716,28 @@ export class FacebookService {
     return httpsAgent;
   }
 
-  getCookieActiveFromDb(): Promise<CookieEntity> {
-    return this.cookieRepository.findOne({
+  async getCookieActiveFromDb(): Promise<CookieEntity> {
+    const cookies = await this.cookieRepository.find({
       where: {
         status: CookieStatus.ACTIVE
       }
     })
+    const randomIndex = Math.floor(Math.random() * cookies.length);
+    const randomCookie = cookies[randomIndex];
+
+    return randomCookie
   }
 
-  getTokenActiveFromDb(): Promise<TokenEntity> {
-    return this.tokenRepository.findOne({
+  async getTokenActiveFromDb(): Promise<TokenEntity> {
+    const tokens = await this.tokenRepository.find({
       where: {
         status: TokenStatus.ACTIVE
       }
     })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
   }
 }
