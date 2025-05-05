@@ -11,7 +11,7 @@ import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { Not, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
@@ -335,7 +335,7 @@ export class FacebookService {
       const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
 
       if (!facebookId) {
-        await this.updateStatusCookieDie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
 
         return null
       }
@@ -405,7 +405,7 @@ export class FacebookService {
       return dataComment
     } catch (error) {
       console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
-      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       return null
     }
   }
@@ -669,7 +669,7 @@ export class FacebookService {
         return userID
       }
 
-      await this.updateStatusCookieDie(cookieEntity, CookieStatus.LIMIT)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
@@ -679,7 +679,7 @@ export class FacebookService {
         return
       }
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
-        await this.updateStatusCookieDie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       }
       return null
     }
@@ -690,8 +690,8 @@ export class FacebookService {
     return this.tokenRepository.save({ ...token, status })
   }
 
-  updateStatusCookieDie(cookie: CookieEntity, status: CookieStatus) {
-    console.log("🚀 ~ updateCookieDie ~ cookie:", cookie)
+  updateStatusCookie(cookie: CookieEntity, status: CookieStatus) {
+    console.log("🚀 ~ updateStatusCookie ~ cookie:", status, cookie)
     return this.cookieRepository.save({ ...cookie, status })
   }
 
@@ -728,7 +728,7 @@ export class FacebookService {
   async getCookieActiveFromDb(): Promise<CookieEntity> {
     const cookies = await this.cookieRepository.find({
       where: {
-        status: CookieStatus.ACTIVE
+        status: Not(In([CookieStatus.DIE, CookieStatus.INACTIVE]))
       }
     })
     const randomIndex = Math.floor(Math.random() * cookies.length);
