@@ -433,7 +433,9 @@ export class FacebookService {
     };
   }
 
-  async getProfileLink(url: string, proxy: ProxyEntity, token: TokenEntity) {
+  async getProfileLink(url: string, proxy: ProxyEntity) {
+    const token = await this.getTokenActiveFromDb()
+
     try {
       console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ this.isHandleUrl:", url)
       const httpsAgent = this.getHttpAgent(proxy)
@@ -477,6 +479,9 @@ export class FacebookService {
       }
 
       //case 2: cần token
+      if (!token) {
+        return null
+      }
       const params = {
         "order": "reverse_chronological",
         "limit": "1000",

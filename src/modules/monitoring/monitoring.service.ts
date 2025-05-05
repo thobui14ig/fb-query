@@ -242,14 +242,10 @@ export class MonitoringService {
       this.isHandleUrl = false
       return
     };
-    const token = await this.getTokenActiveFromDb()
-    if (!token) {
-      this.isHandleUrl = false
-      return
-    }
+
     this.isHandleUrl = true
     const tasks = links.map(async (link) => {
-      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy, token) || {};
+      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
 
       if (!postId) {
         this.isHandleUrl = false
