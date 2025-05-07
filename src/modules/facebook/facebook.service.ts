@@ -11,7 +11,7 @@ import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { Not, Repository } from 'typeorm';
+import { Like, Not, Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
@@ -28,6 +28,7 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { faker } from '@faker-js/faker';
 import { writeFile } from 'src/common/utils/file';
 import fetch from 'node-fetch';
+import { CommentEntity } from '../comments/entities/comment.entity';
 
 
 dayjs.extend(utc);
@@ -48,7 +49,9 @@ export class FacebookService {
     @InjectRepository(ProxyEntity)
     private proxyRepository: Repository<ProxyEntity>,
     @InjectRepository(LinkEntity)
-    private linkRepository: Repository<LinkEntity>
+    private linkRepository: Repository<LinkEntity>,
+    @InjectRepository(CommentEntity)
+    private commentRepository: Repository<CommentEntity>,
   ) { }
 
   async getDataProfileFb(
@@ -899,5 +902,31 @@ export class FacebookService {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async updateUUIDUser() {
+    const comments = await this.commentRepository.find({
+      where: {
+        uid: Like('pfbid%')  // Tìm tất cả các bản ghi có `uid` bắt đầu với "pfbid"
+      }
+    })
+    for (const comment of comments) {
+      const proxy = await this.getRandomProxy()
+      const uid = await this.getUuidByCookie(comment.uid, proxy)
+      comment.uid = uid
+      await this.commentRepository.save(uid)
+    }
+  }
+
+  async getRandomProxy() {
+    const proxies = await this.proxyRepository.find({
+      where: {
+        status: ProxyStatus.ACTIVE
+      }
+    })
+    const randomIndex = Math.floor(Math.random() * proxies.length);
+    const randomProxy = proxies[randomIndex];
+
+    return randomProxy
   }
 }

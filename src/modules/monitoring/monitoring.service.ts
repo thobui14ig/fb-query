@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Not, Repository } from 'typeorm';
+import { IsNull, LessThan, Like, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { FacebookService } from '../facebook/facebook.service';
 import {
@@ -311,15 +311,11 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = false
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
-  updateLimitToken() {
-    return this.updateActiveAllToken()
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async updateUUIDUser() {
+    return this.facebookService.updateUUIDUser()
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
-  updateLimitCookie() {
-    return this.updateActiveAllCookie()
-  }
 
   private getPostStarted(): Promise<LinkEntity[]> {
     return this.linkRepository.find({

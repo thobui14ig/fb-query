@@ -6,9 +6,10 @@ import { FacebookService } from './facebook.service';
 import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { ProxyEntity } from '../proxy/entities/proxy.entity';
 import { LinkEntity } from '../links/entities/links.entity';
+import { CommentEntity } from '../comments/entities/comment.entity';
 
 @Module({
-  imports: [HttpModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity, ProxyEntity, LinkEntity])],
+  imports: [HttpModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity, ProxyEntity, LinkEntity, CommentEntity])],
   controllers: [],
   providers: [FacebookService],
   exports: [FacebookService],
