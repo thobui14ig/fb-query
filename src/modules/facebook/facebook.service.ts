@@ -547,7 +547,9 @@ export class FacebookService {
         return
       }
       if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+
         return
       }
 
