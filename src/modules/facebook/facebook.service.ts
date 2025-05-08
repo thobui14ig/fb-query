@@ -606,7 +606,7 @@ export class FacebookService {
       //     httpsAgent,
       //   }),
       // );
-      const response = await fetch(url, {
+      const response = await fetch("https://www.facebook.com/permalink.php?story_fbid=pfbid02jdjpUs9stEzG58BLUDjUuFY5xbd2Hok7YL5dbWyWdJsUi4MKsN2bcSEDdmTWNoeLl&id=100090162483564", {
         "headers": {
           "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
           "accept-language": "en-US,en;q=0.9,vi;q=0.8",
@@ -625,7 +625,8 @@ export class FacebookService {
           "sec-fetch-site": "same-origin",
           "sec-fetch-user": "?1",
           "upgrade-insecure-requests": "1",
-          "viewport-width": "856"
+          "viewport-width": "856",
+          "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=19BHVWBa8y77ototV.AWfu1CaAT932LMdYQE3-FUC3yv6z4h5ed5DMd94n37k4izCTyYE.BoHKHN..AAA.0.0.BoHLSG.AWefgBmRnG3H_or89wBKzhSHSEc; wd=856x953"
         },
         "referrerPolicy": "origin-when-cross-origin",
         "body": null,
