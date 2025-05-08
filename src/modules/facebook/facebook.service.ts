@@ -13,7 +13,7 @@ import fetch from 'node-fetch';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { Like, Not, Repository } from 'typeorm';
+import { IsNull, Like, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkType } from '../links/entities/links.entity';
@@ -456,9 +456,9 @@ export class FacebookService {
         if (error.response?.data?.error?.code === 190) {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
-        // if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
-        //   await this.updateLinkPostIdInvalid(postId)
-        // }
+        if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
+          await this.updateLinkPostIdInvalid(postId)
+        }
       }
 
       return {}
@@ -860,7 +860,8 @@ export class FacebookService {
     console.log("🚀 ~ updateLinkPostIdInvalid ~ updateLinkPostIdInvalid:", postId, "Does not exit")
     const links = await this.linkRepository.find({
       where: {
-        postId
+        postId,
+        lastCommentTime: IsNull()
       }
     })
 
