@@ -1,19 +1,23 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { faker } from '@faker-js/faker';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
-import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import fetch from 'node-fetch';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
 import { Like, Not, Repository } from 'typeorm';
+import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
+import { LinkEntity, LinkType } from '../links/entities/links.entity';
+import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import {
   getBodyComment,
@@ -23,12 +27,7 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
-import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import { faker } from '@faker-js/faker';
 import { writeFile } from 'src/common/utils/file';
-import fetch from 'node-fetch';
-import { CommentEntity } from '../comments/entities/comment.entity';
 
 
 dayjs.extend(utc);
@@ -193,9 +192,11 @@ export class FacebookService {
       if (!dataComment && typeof response.data === 'string') {
         //story
         const text = response.data
-        const lines = text ?? "".trim().split('\n');
+        const lines = text.trim().split('\n');
         const data = JSON.parse(lines[0])
+
         dataComment = await this.handleDataComment({ data }, proxy)
+
       }
 
       if (!dataComment) {
@@ -208,7 +209,7 @@ export class FacebookService {
         commentMessage,
         phoneNumber,
         userIdComment,
-        commentCreatedAt, } = dataComment || {}
+        commentCreatedAt, totalCount } = dataComment || {}
 
       const res = {
         commentId,
@@ -217,6 +218,7 @@ export class FacebookService {
         phoneNumber,
         userIdComment,
         commentCreatedAt,
+        totalCount
       };
 
       return res;
@@ -349,6 +351,7 @@ export class FacebookService {
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
     userIdComment = isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment
+    const totalCount = responsExpected?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
 
     return {
       commentId,
@@ -357,6 +360,7 @@ export class FacebookService {
       phoneNumber,
       userIdComment,
       commentCreatedAt,
+      totalCount
     };
   }
   handleCookie(rawCookie) {
@@ -573,6 +577,7 @@ export class FacebookService {
     const commentCreatedAt = dayjs(comment?.created_time * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
+    const totalCount = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
     userIdComment = isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment
 
     return {
@@ -582,6 +587,7 @@ export class FacebookService {
       phoneNumber,
       userIdComment,
       commentCreatedAt,
+      totalCount
     };
   }
 

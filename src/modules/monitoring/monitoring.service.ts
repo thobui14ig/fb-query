@@ -165,7 +165,8 @@ export class MonitoringService implements OnModuleInit {
             phoneNumber,
             userIdComment,
             userNameComment,
-            commentCreatedAt
+            commentCreatedAt,
+            totalCount
           } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
 
           if (!commentId || !userIdComment) continue;
@@ -183,12 +184,12 @@ export class MonitoringService implements OnModuleInit {
               message: commentMessage,
               phoneNumber,
               name: userNameComment,
-              timeCreated: commentCreatedAt as any
+              timeCreated: commentCreatedAt as any,
             }
             const comment = await this.getComment(link.id, link.userId, commentId)
             commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
 
-            const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
+            const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any, commentCount: totalCount ? totalCount - (link.commentCount ?? 0) : link.commentCount }
             linkEntities.push(linkEntity)
           }
 
