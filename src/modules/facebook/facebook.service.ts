@@ -632,6 +632,11 @@ export class FacebookService {
         "method": "GET"
       });
       const htmlContent = await response.text()
+
+      const matches = [...htmlContent.matchAll(/href="([^"]+)"/g)];
+      const expectedUrl = matches[1] ? matches[1][1].replace('amp;', '') : null;
+      console.log("🚀 ~ getProfileLink ~ expectedUrl:", expectedUrl)
+
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
 
       //case 1: video, post public
@@ -696,13 +701,6 @@ export class FacebookService {
         }
       }
 
-      const matches = [...htmlContent.matchAll(/href="([^"]+)"/g)];
-      const expectedUrl = matches[1] ? matches[1][1].replace('amp;', '') : null;
-
-      if (expectedUrl) {
-        console.log("🚀 ~ getProfileLink ~ expectedUrl:", expectedUrl)
-        return this.getProfileLink(expectedUrl, proxy)
-      }
 
       return {
         type: LinkType.DIE,
