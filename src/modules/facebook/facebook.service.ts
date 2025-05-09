@@ -759,6 +759,7 @@ export class FacebookService {
             "method": "GET"
           });
           const matchpublic = (await responseWithCookie.text() as string).match(/"post_id":"(.*?)"/);
+          console.log("🚀 ~ getProfileLink ~ matchpublic:", matchpublic)
 
           if (matchpublic && matchpublic[1]) {
             const postId = matchpublic[1]
