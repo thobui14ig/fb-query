@@ -187,8 +187,8 @@ export class FacebookService {
           httpsAgent
         }),
       )
-
       let dataComment = await this.handleDataComment(response, proxy)
+
       if (!dataComment && typeof response.data === 'string') {
         //story
         const text = response.data
@@ -632,7 +632,7 @@ export class FacebookService {
         "method": "GET"
       });
       const htmlContent = await response.text()
-
+      // writeFile(htmlContent, '2')
       // const matches = [...htmlContent.matchAll(/href="([^"]+)"/g)];
       // const expectedUrl = matches[1] ? matches[1][1].replace('amp;', '') : null;
       // console.log("🚀 ~ getProfileLink ~ expectedUrl:", expectedUrl)
@@ -657,6 +657,20 @@ export class FacebookService {
       const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
       if (matchStoryPublic && matchStoryPublic[1]) {
         const postId = matchStoryPublic[1]
+        if (postId) {
+          return {
+            type: LinkType.PUBLIC,
+            name: url,
+            postId: postId,
+          }
+        }
+      }
+
+      //case 3: reel public
+      const matchVideopublic = htmlContent.match(/"post_id":"(.*?)"/);
+
+      if (matchVideopublic && matchVideopublic[1]) {
+        const postId = matchVideopublic[1]
         if (postId) {
           return {
             type: LinkType.PUBLIC,
