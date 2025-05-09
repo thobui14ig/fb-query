@@ -95,7 +95,7 @@ export class LinkService {
             l.process,
             l.type,
             u.email, 
-            COUNT(*) AS commentCount
+            l.comment_count AS commentCount
         FROM 
             links l
         JOIN 
