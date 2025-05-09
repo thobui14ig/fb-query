@@ -756,7 +756,6 @@ export class FacebookService {
               "cookie": this.formatCookies(newCookies)
             },
             "referrerPolicy": "strict-origin-when-cross-origin",
-            "body": null,
             "method": "GET"
           });
           const matchpublic = (await responseWithCookie.text() as string).match(/"post_id":"(.*?)"/);
