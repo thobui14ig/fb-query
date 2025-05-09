@@ -732,6 +732,7 @@ export class FacebookService {
         {
           const newCookies = this.changeCookiesFb(cookieEntity.cookie);
 
+
           const responseWithCookie = await fetch(url, {
             "headers": {
               "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -759,7 +760,7 @@ export class FacebookService {
             "method": "GET"
           });
           const matchpublic = (await responseWithCookie.text() as string).match(/"post_id":"(.*?)"/);
-          console.log("🚀 ~ getProfileLink ~ matchpublic:", matchpublic)
+          console.log("🚀 ~ getProfileLink ~ matchpublic:", await responseWithCookie.text())
 
           if (matchpublic && matchpublic[1]) {
             const postId = matchpublic[1]
