@@ -456,9 +456,9 @@ export class FacebookService {
         if (error.response?.data?.error?.code === 190) {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
-        if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
-          await this.updateLinkPostIdInvalid(postId)
-        }
+        // if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
+        //   await this.updateLinkPostIdInvalid(postId)
+        // }
       }
 
       return {}
@@ -572,6 +572,8 @@ export class FacebookService {
 
     if (!comment) return null
     const commentId = comment?.id
+
+
     const commentMessage =
       comment?.preferred_body && comment?.preferred_body?.text
         ? comment?.preferred_body?.text
@@ -583,7 +585,15 @@ export class FacebookService {
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
     const totalCount = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
-    userIdComment = isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment
+
+    const isCommentExit = await this.commentRepository.findOne({
+      where: {
+        name: userNameComment,
+        timeCreated: commentCreatedAt as any
+      }
+    })
+
+    userIdComment = !isCommentExit ? isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment : isCommentExit.cmtId
 
     return {
       commentId,
