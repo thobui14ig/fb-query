@@ -204,9 +204,11 @@ export class FacebookService {
       }
 
       if (!dataComment) {
+
         //bai viet ko co cmt moi nhat => lay all
         dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
       }
+
 
       const { commentId,
         userNameComment,
@@ -597,7 +599,7 @@ export class FacebookService {
       }
     })
 
-    userIdComment = !isCommentExit ? isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment : isCommentExit.cmtId
+    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment) : isCommentExit.uid
 
     return {
       commentId,
@@ -888,6 +890,7 @@ export class FacebookService {
         status: Not(CookieStatus.DIE)
       }
     })
+    console.log("🚀 ~ getUuidByCookie ~ cookieEntity:", cookieEntity)
     if (!cookieEntity) return null
     try {
       const httpsAgent = this.getHttpAgent(proxy)
@@ -1006,14 +1009,15 @@ export class FacebookService {
   async updateUUIDUser() {
     const comments = await this.commentRepository.find({
       where: {
-        uid: Like('pfbid%')  // Tìm tất cả các bản ghi có `uid` bắt đầu với "pfbid"
+        uid: Like('Y29tb%')  // Tìm tất cả các bản ghi có `uid` bắt đầu với "pfbid"
       }
     })
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       const uid = await this.getUuidByCookie(comment.uid, proxy)
-      comment.uid = uid
-      await this.commentRepository.save(uid)
+      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
+      // comment.uid = uid
+      // await this.commentRepository.save(uid)
     }
   }
 

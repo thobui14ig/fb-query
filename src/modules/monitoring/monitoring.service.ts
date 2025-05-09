@@ -328,10 +328,10 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = false
   }
 
-  // @Cron(CronExpression.EVERY_10_MINUTES)
-  // async updateUUIDUser() {
-  //   return this.facebookService.updateUUIDUser()
-  // }
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async updateUUIDUser() {
+    return this.facebookService.updateUUIDUser()
+  }
 
 
   private getPostStarted(): Promise<LinkEntity[]> {
