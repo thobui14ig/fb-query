@@ -10,11 +10,11 @@ export class MonitoringController {
 
   @Post('/process')
   updateProcess(@Req() req: Request, @Body() processDTO: ProcessDTO) {
-    const user = getUser(req);
-    return this.monitoringService.updateProcess(
-      processDTO,
-      user.level,
-      user.id,
-    );
+    // const user = getUser(req);
+    // return this.monitoringService.updateProcess(
+    //   processDTO,
+    //   user.level,
+    //   user.id,
+    // );
   }
 }

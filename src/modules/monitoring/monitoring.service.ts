@@ -94,36 +94,52 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
-    if (level === LEVEL.USER) {
-      const link = await this.linkRepository.findOne({
-        where: {
-          userId,
-        },
-      });
-
-      if (!link) {
-        throw new HttpException(`Bạn không có quyền.`, HttpStatus.CONFLICT);
-      }
-    }
-
-    const response = await this.linkRepository.save(processDTO);
-
-    throw new HttpException(
-      `${response.status === LinkStatus.Started ? 'Start' : 'Stop'} monitoring for link_id ${processDTO.id}`,
-      HttpStatus.OK,
-    );
-  }
-
   @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
 
-    return Promise.all([this.handle((groupPost.public || []), LinkType.PUBLIC), this.handle((groupPost.private || []), LinkType.PRIVATE)])
+    return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
 
-  handle(links: LinkEntity[], type: LinkType) {
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async startProcessTotalCount() {
+    const postsStarted = await this.getPostStarted()
+    const groupPost = this.groupPostsByType(postsStarted || []);
+
+    const processLinksPulic = async () => {
+      for (const link of groupPost.public ?? []) {
+        const proxy = await this.getRandomProxy()
+        if (!proxy) continue
+        const postId = `feedback:${link.postId}`;
+        const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
+        const {
+          totalCount
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
+        if (totalCount) {
+          link.commentCount = totalCount - (link.commentCount ?? 0)
+          await this.linkRepository.save(link)
+        }
+      }
+    }
+
+    const processLinksPrivate = async () => {
+      for (const link of groupPost.private ?? []) {
+        const proxy = await this.getRandomProxy()
+        if (!proxy) continue
+
+        let { totalCount } = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
+        if (totalCount) {
+          link.commentCount = totalCount - (link.commentCount ?? 0)
+          await this.linkRepository.save(link)
+        }
+      }
+    }
+
+    return Promise.all([processLinksPulic(), processLinksPrivate()])
+  }
+
+  handleStartMonitoring(links: LinkEntity[], type: LinkType) {
     let oldLinksRunning = []
     if (type === LinkType.PUBLIC) {
       oldLinksRunning = this.linksPublic
@@ -143,135 +159,137 @@ export class MonitoringService implements OnModuleInit {
       return this.handlePostsPrivate(linksRunning)
     }
   }
-  async handlePostsPublic(linksRunning: LinkEntity[]) {
-    const process = async (link: LinkEntity) => {
-      while (true) {
-        const isCheckRuning = this.linksPublic.find(item => item.id === link.id)// check còn nằm trong link
-        if (!isCheckRuning) { break };
-        const currentLink = await this.linkRepository.findOne({
-          where: {
-            id: link.id
-          }
-        })
-        try {
-          if (!currentLink) break;
-          const proxy = await this.getRandomProxy()
-          if (!proxy) continue
-          const postId = `feedback:${link.postId}`;
-          const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
-          const {
-            commentId,
-            commentMessage,
-            phoneNumber,
-            userIdComment,
-            userNameComment,
-            commentCreatedAt,
-            totalCount
-          } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
 
-          if (!commentId || !userIdComment) continue;
-          const links = await this.selectLinkUpdate(link.postId)
-          const commentEntities: CommentEntity[] = []
-          const linkEntities: LinkEntity[] = []
-
-          for (const link of links) {
-            const commentEntity: Partial<CommentEntity> = {
-              cmtId: commentId,
-              linkId: link.id,
-              postId: link.postId,
-              userId: link.userId,
-              uid: userIdComment,
-              message: commentMessage,
-              phoneNumber,
-              name: userNameComment,
-              timeCreated: commentCreatedAt as any,
-            }
-            const comment = await this.getComment(link.id, link.userId, commentId)
-            commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
-
-            const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any, commentCount: totalCount ? totalCount - (link.commentCount ?? 0) : link.commentCount }
-            linkEntities.push(linkEntity)
-          }
-
-          await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
-        } catch (error) {
-          console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
-        } finally {
-          await this.delay(link.delayTime * 1000)
+  async processLinkPublic(link: LinkEntity) {
+    while (true) {
+      const isCheckRuning = this.linksPublic.find(item => item.id === link.id)// check còn nằm trong link
+      if (!isCheckRuning) { break };
+      const currentLink = await this.linkRepository.findOne({
+        where: {
+          id: link.id
         }
+      })
+      try {
+        if (!currentLink) break;
+        const proxy = await this.getRandomProxy()
+        if (!proxy) continue
+        const postId = `feedback:${link.postId}`;
+        const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
+        const {
+          commentId,
+          commentMessage,
+          phoneNumber,
+          userIdComment,
+          userNameComment,
+          commentCreatedAt,
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
+
+        if (!commentId || !userIdComment) continue;
+        const links = await this.selectLinkUpdate(link.postId)
+        const commentEntities: CommentEntity[] = []
+        const linkEntities: LinkEntity[] = []
+
+        for (const link of links) {
+          const commentEntity: Partial<CommentEntity> = {
+            cmtId: commentId,
+            linkId: link.id,
+            postId: link.postId,
+            userId: link.userId,
+            uid: userIdComment,
+            message: commentMessage,
+            phoneNumber,
+            name: userNameComment,
+            timeCreated: commentCreatedAt as any,
+          }
+          const comment = await this.getComment(link.id, link.userId, commentId)
+          commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
+
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
+          linkEntities.push(linkEntity)
+        }
+
+        await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
+      } catch (error) {
+        console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
+      } finally {
+        await this.delay(link.delayTime * 1000)
       }
     }
+  }
+
+  async handlePostsPublic(linksRunning: LinkEntity[]) {
     const postHandle = linksRunning.map((link) => {
-      return process(link)
+      return this.processLinkPublic(link)
     })
 
     return Promise.all(postHandle)
   }
 
-  async handlePostsPrivate(linksRunning: LinkEntity[]) {
-    const process = async (link: LinkEntity) => {
-      while (true) {
-        const isCheckRuning = this.linksPrivate.find(item => item.id === link.id)// check còn nằm trong link
-        if (!isCheckRuning) { break };
-        try {
-          const currentLink = await this.linkRepository.findOne({
-            where: {
-              id: link.id
-            }
-          })
-          if (!currentLink) break;
-          const proxy = await this.getRandomProxy()
-          if (!proxy) continue
-
-          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
-
-          if (!dataComment || !(dataComment as any)?.commentId) {
-            dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
+  async processLinkPrivate(link: LinkEntity) {
+    while (true) {
+      const isCheckRuning = this.linksPrivate.find(item => item.id === link.id)// check còn nằm trong link
+      if (!isCheckRuning) { break };
+      try {
+        const currentLink = await this.linkRepository.findOne({
+          where: {
+            id: link.id
           }
-          const {
-            commentId,
-            commentMessage,
-            phoneNumber,
-            userIdComment,
-            userNameComment,
-            commentCreatedAt
-          } = dataComment as any
+        })
+        if (!currentLink) break;
+        const proxy = await this.getRandomProxy()
+        if (!proxy) continue
 
-          if (!commentId || !userIdComment) continue;
-          const links = await this.selectLinkUpdate(link.postId)
-          const commentEntities: CommentEntity[] = []
-          const linkEntities: LinkEntity[] = []
+        let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
 
-          for (const link of links) {
-            const commentEntity: Partial<CommentEntity> = {
-              cmtId: commentId,
-              linkId: link.id,
-              postId: link.postId,
-              userId: link.userId,
-              uid: userIdComment,
-              message: commentMessage,
-              phoneNumber,
-              name: userNameComment,
-              timeCreated: commentCreatedAt as any
-            }
-            const comment = await this.getComment(link.id, link.userId, commentId)
-            commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
-
-            const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
-            linkEntities.push(linkEntity)
-          }
-
-          await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
-        } catch (error) {
-          console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
-        } finally {
-          await this.delay(link.delayTime * 1000)
+        if (!dataComment || !(dataComment as any)?.commentId) {
+          dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
         }
-      }
+        const {
+          commentId,
+          commentMessage,
+          phoneNumber,
+          userIdComment,
+          userNameComment,
+          commentCreatedAt
+        } = dataComment as any
 
+        if (!commentId || !userIdComment) continue;
+        const links = await this.selectLinkUpdate(link.postId)
+        const commentEntities: CommentEntity[] = []
+        const linkEntities: LinkEntity[] = []
+
+        for (const link of links) {
+          const commentEntity: Partial<CommentEntity> = {
+            cmtId: commentId,
+            linkId: link.id,
+            postId: link.postId,
+            userId: link.userId,
+            uid: userIdComment,
+            message: commentMessage,
+            phoneNumber,
+            name: userNameComment,
+            timeCreated: commentCreatedAt as any
+          }
+          const comment = await this.getComment(link.id, link.userId, commentId)
+          commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
+
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
+          linkEntities.push(linkEntity)
+        }
+
+        await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
+      } catch (error) {
+        console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
+      } finally {
+        await this.delay(link.delayTime * 1000)
+      }
     }
+
+  }
+
+  async handlePostsPrivate(linksRunning: LinkEntity[]) {
     const postHandle = linksRunning.map((link) => {
-      return process(link)
+      return this.processLinkPrivate(link)
     })
 
     return Promise.all(postHandle)
