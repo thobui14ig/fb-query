@@ -795,6 +795,7 @@ export class FacebookService {
           "body": null,
           "method": "GET"
         });
+        console.log("🚀 ~ responeAlolike ~ responeAlolike:", ((await responeAlolike.json()) as any).layid,)
 
         return {
           type: LinkType.PUBLIC,
