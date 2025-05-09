@@ -551,6 +551,11 @@ export class FacebookService {
         return
       }
       if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return
+      }
+
+      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return
       }
@@ -721,7 +726,7 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getProfileLink ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407) {
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
         return
       }
@@ -844,11 +849,12 @@ export class FacebookService {
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
-      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
         return
       }
-      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
+
+      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return
       }

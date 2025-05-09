@@ -161,14 +161,15 @@ export class MonitoringService implements OnModuleInit {
   }
 
   async processLinkPublic(link: LinkEntity) {
+    const currentLink = await this.linkRepository.findOne({
+      where: {
+        id: link.id
+      }
+    })
     while (true) {
       const isCheckRuning = this.linksPublic.find(item => item.id === link.id)// check còn nằm trong link
       if (!isCheckRuning) { break };
-      const currentLink = await this.linkRepository.findOne({
-        where: {
-          id: link.id
-        }
-      })
+
       try {
         if (!currentLink) break;
         const proxy = await this.getRandomProxy()
@@ -212,7 +213,7 @@ export class MonitoringService implements OnModuleInit {
       } catch (error) {
         console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
       } finally {
-        await this.delay(link.delayTime * 1000)
+        await this.delay((currentLink.delayTime ?? 5) * 1000)
       }
     }
   }
@@ -229,12 +230,13 @@ export class MonitoringService implements OnModuleInit {
     while (true) {
       const isCheckRuning = this.linksPrivate.find(item => item.id === link.id)// check còn nằm trong link
       if (!isCheckRuning) { break };
+      const currentLink = await this.linkRepository.findOne({
+        where: {
+          id: link.id
+        }
+      })
       try {
-        const currentLink = await this.linkRepository.findOne({
-          where: {
-            id: link.id
-          }
-        })
+
         if (!currentLink) break;
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
@@ -281,7 +283,7 @@ export class MonitoringService implements OnModuleInit {
       } catch (error) {
         console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
       } finally {
-        await this.delay(link.delayTime * 1000)
+        await this.delay((currentLink.delayTime ?? 5) * 1000)
       }
     }
 
