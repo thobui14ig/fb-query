@@ -728,6 +728,7 @@ export class FacebookService {
       }
 
       if (cookieEntity) {
+        console.log("🚀 ~ getProfileLink ~ cookieEntity:", cookieEntity)
         {
           const newCookies = this.changeCookiesFb(cookieEntity.cookie);
 
