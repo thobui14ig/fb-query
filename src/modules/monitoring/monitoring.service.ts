@@ -299,6 +299,10 @@ export class MonitoringService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
+    if (this.isHandleUrl) {
+      return
+    }
+
     const links = await this.getLinksWithoutProfile()
     if (links.length === 0) {
       this.isHandleUrl = false
