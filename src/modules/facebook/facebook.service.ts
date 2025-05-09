@@ -551,11 +551,11 @@ export class FacebookService {
         return
       }
       if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return
       }
 
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      // await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       return null
     }
   }
@@ -829,6 +829,14 @@ export class FacebookService {
       }
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      }
+      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return
+      }
+      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        return
       }
       return null
     }
