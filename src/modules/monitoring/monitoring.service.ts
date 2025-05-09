@@ -324,7 +324,7 @@ export class MonitoringService implements OnModuleInit {
       })
 
       if (exitLink) {
-        await this.linkRepository.delete(link)
+        await this.linkRepository.delete(link.id)
         continue
       }
 
