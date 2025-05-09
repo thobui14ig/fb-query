@@ -761,6 +761,7 @@ export class FacebookService {
 
           if (matchpublic && matchpublic[1]) {
             const postId = matchpublic[1]
+            console.log("🚀 ~ getProfileLink ~ postId:", postId)
             if (postId) {
               return {
                 type: LinkType.PRIVATE,
@@ -782,7 +783,7 @@ export class FacebookService {
         type: LinkType.DIE,
       }
     } catch (error) {
-      console.log("🚀 ~ getProfileLink ~ error:", error?.message)
+      console.log("🚀 ~ getProfileLink ~ error:", error.message)
       if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
         return
@@ -793,6 +794,11 @@ export class FacebookService {
         }
         if (error.response?.data?.error?.code === 190) {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
+        }
+      }
+      if (error?.status === 404) {
+        return {
+          type: LinkType.DIE,
         }
       }
       return {
