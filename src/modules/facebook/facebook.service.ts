@@ -224,7 +224,7 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
+      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
         return
       }
