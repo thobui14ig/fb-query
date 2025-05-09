@@ -115,7 +115,7 @@ export class MonitoringService implements OnModuleInit {
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
         const {
           totalCount
-        } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {}
         if (totalCount) {
           link.commentCount = totalCount - (link.commentCount ?? 0)
           await this.linkRepository.save(link)
@@ -183,7 +183,7 @@ export class MonitoringService implements OnModuleInit {
           userIdComment,
           userNameComment,
           commentCreatedAt,
-        } = await this.facebookService.getCmtPublic(encodedPostId, proxy) || {}
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {}
 
         if (!commentId || !userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)

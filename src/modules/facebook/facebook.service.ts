@@ -174,7 +174,7 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, proxy: ProxyEntity, type = 'RECENT_ACTIVITY_INTENT_V1') {
+  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, type = 'RECENT_ACTIVITY_INTENT_V1') {
     console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
@@ -187,6 +187,10 @@ export class FacebookService {
           httpsAgent
         }),
       )
+      if (!response?.data?.data?.node) {
+        await this.updateLinkPostIdInvalid(postIdNumber)
+        return null
+      }
       let dataComment = await this.handleDataComment(response, proxy)
 
       if (!dataComment && typeof response.data === 'string') {
