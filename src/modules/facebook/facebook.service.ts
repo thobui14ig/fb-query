@@ -738,6 +738,9 @@ export class FacebookService {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
       }
+      return {
+        type: LinkType.UNDEFINED,
+      }
     }
   }
 
