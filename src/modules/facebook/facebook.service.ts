@@ -881,7 +881,6 @@ export class FacebookService {
         status: Not(CookieStatus.DIE)
       }
     })
-    console.log("🚀 ~ getUuidByCookie ~ cookieEntity:", cookieEntity)
     if (!cookieEntity) return null
     try {
       const httpsAgent = this.getHttpAgent(proxy)
