@@ -315,8 +315,18 @@ export class MonitoringService implements OnModuleInit {
     };
 
     this.isHandleUrl = true
-    const tasks = links.map(async (link) => {
+    for (const link of links) {
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
+      const exitLink = await this.linkRepository.findOne({
+        where: {
+          postId
+        }
+      })
+
+      if (exitLink) {
+        await this.linkRepository.delete(link)
+        continue
+      }
 
       if (!link.linkName || link.linkName.length === 0) {
         link.linkName = name;
@@ -326,9 +336,8 @@ export class MonitoringService implements OnModuleInit {
       link.postId = postId;
       link.postIdV1 = type === LinkType.PRIVATE ? (await this.facebookService.getPostIdV2(link.linkUrl) || null) : null
       await this.linkRepository.save(link);
-    });
+    }
 
-    await Promise.all(tasks);
     this.isHandleUrl = false
   }
 
