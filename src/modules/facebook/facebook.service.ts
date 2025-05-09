@@ -622,12 +622,6 @@ export class FacebookService {
       console.log("----------Đang lấy thông tin url:", url)
       const { headers, cookies } = getHeaderProfileLink()
 
-      // const response = await firstValueFrom(
-      //   this.httpService.get(url, {
-      //     headers: { ...headers, Cookie: this.formatCookies(cookies) },
-      //     httpsAgent,
-      //   }),
-      // );
       const response = await fetch(url, {
         "headers": {
           "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -780,6 +774,34 @@ export class FacebookService {
           }
         }
       }
+
+      try {
+        const responeAlolike = await fetch(`https://alolike.vn/api/v1/tools/get-uid?link=${encodeURIComponent(url)}`, {
+          "headers": {
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "priority": "u=1, i",
+            "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest",
+            "cookie": "_ga_B9NQV4B1NF=GS2.1.s1746804372$o1$g0$t1746804372$j0$l0$h0; _ga=GA1.1.1487781836.1746804372; googtrans=/vi/en; googtrans=/vi/en",
+            "Referer": "https://alolike.vn/get-id-fb/",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+          },
+          "body": null,
+          "method": "GET"
+        });
+
+        return {
+          type: LinkType.PUBLIC,
+          name: url,
+          postId: ((await responeAlolike.json()) as any).layid,
+        }
+      } catch (error) { }
 
       if (!token || !cookieEntity) {
         return {
