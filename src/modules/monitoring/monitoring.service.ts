@@ -417,6 +417,28 @@ export class MonitoringService implements OnModuleInit {
     })
   }
 
+
+  async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
+    if (level === LEVEL.USER) {
+      const link = await this.linkRepository.findOne({
+        where: {
+          userId,
+        },
+      });
+
+      if (!link) {
+        throw new HttpException(`Bạn không có quyền.`, HttpStatus.CONFLICT);
+      }
+    }
+
+    const response = await this.linkRepository.save(processDTO);
+
+    throw new HttpException(
+      `${response.status === LinkStatus.Started ? 'Start' : 'Stop'} monitoring for link_id ${processDTO.id}`,
+      HttpStatus.OK,
+    );
+  }
+
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
