@@ -201,6 +201,7 @@ export class FacebookService {
 
         //bai viet ko co cmt moi nhat => lay all
         dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
+        console.log("🚀 ~ getCmtPublic ~ dataComment:", dataComment)
       }
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
         await this.updateLinkPostIdInvalid(postIdNumber)
@@ -327,6 +328,8 @@ export class FacebookService {
 
     while (hasNextPage) {
       const response = await fetchCm(after);
+      console.log("🚀 ~ getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1 ~ response:", response?.data?.data?.node?.comment_rendering_instance_for_feed_location
+        ?.comments.edges?.reverse()?.[0]?.node.preferred_body?.text)
       const pageInfo = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.page_info || {};
       hasNextPage = pageInfo.has_next_page;
       after = pageInfo.end_cursor;
