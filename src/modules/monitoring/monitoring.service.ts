@@ -325,15 +325,16 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = true
     for (const link of links) {
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
-      const exitLink = await this.linkRepository.findOne({
-        where: {
-          postId
+      if (postId) {
+        const exitLink = await this.linkRepository.findOne({
+          where: {
+            postId
+          }
+        })
+        if (exitLink) {
+          await this.linkRepository.delete(link.id)
+          continue
         }
-      })
-
-      if (exitLink) {
-        await this.linkRepository.delete(link.id)
-        continue
       }
 
       if (!link.linkName || link.linkName.length === 0) {
