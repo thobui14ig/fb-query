@@ -176,6 +176,18 @@ export class MonitoringService implements OnModuleInit {
         if (!proxy) continue
         const postId = `feedback:${link.postId}`;
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
+        let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {} as any
+
+        if (!res.commentId || !res.userIdComment) {
+          const postId = `feedback:${link.postIdV1}`;
+          const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
+          res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1) || {} as any
+        }
+
+        if (!res?.commentId || !res?.userIdComment) continue;
+        const links = await this.selectLinkUpdate(link.postId)
+        const commentEntities: CommentEntity[] = []
+        const linkEntities: LinkEntity[] = []
         const {
           commentId,
           commentMessage,
@@ -183,12 +195,7 @@ export class MonitoringService implements OnModuleInit {
           userIdComment,
           userNameComment,
           commentCreatedAt,
-        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {}
-
-        if (!commentId || !userIdComment) continue;
-        const links = await this.selectLinkUpdate(link.postId)
-        const commentEntities: CommentEntity[] = []
-        const linkEntities: LinkEntity[] = []
+        } = res
 
         for (const link of links) {
           const commentEntity: Partial<CommentEntity> = {
@@ -335,7 +342,8 @@ export class MonitoringService implements OnModuleInit {
       link.process = type === LinkType.UNDEFINED ? false : true;
       link.type = type;
       link.postId = postId;
-      link.postIdV1 = type === LinkType.PRIVATE ? (await this.facebookService.getPostIdV2(link.linkUrl) || null) : null
+      link.postIdV1 = type === LinkType.PRIVATE ? (await this.facebookService.getPostIdV2(link.linkUrl) || null) : (await this.facebookService.getPostIdPublicV2(link.linkUrl) || null)
+
       await this.linkRepository.save(link);
     }
 
