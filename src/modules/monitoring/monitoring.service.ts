@@ -346,11 +346,29 @@ export class MonitoringService implements OnModuleInit {
     return this.facebookService.updateUUIDUser()
   }
 
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async handlePostIdV1WithCookie() {
+    const links = await this.linkRepository.find({
+      where: {
+        type: LinkType.PRIVATE,
+        postIdV1: IsNull()
+      }
+    })
+    for (const link of links) {
+      const cookie = await this.getCookieActiveFromDb()
+      if (!cookie) return
+      const postIdV1 = await this.facebookService.getPostIdV2(link.linkUrl)
+      if (postIdV1) {
+        link.postIdV1 = postIdV1
+        await this.linkRepository.save(link)
+      }
+    }
+  }
 
   private getPostStarted(): Promise<LinkEntity[]> {
     return this.linkRepository.find({
       where: {
-        status: LinkStatus.Started,
+        // status: LinkStatus.Started,
         type: Not(LinkType.DIE)
       }
     })
