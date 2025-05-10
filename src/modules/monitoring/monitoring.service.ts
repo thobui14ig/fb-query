@@ -178,7 +178,7 @@ export class MonitoringService implements OnModuleInit {
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
         let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {} as any
 
-        if (!res.commentId || !res.userIdComment) {
+        if ((!res.commentId || !res.userIdComment) && link.postIdV1) {
           const postId = `feedback:${link.postIdV1}`;
           const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
           res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1) || {} as any
