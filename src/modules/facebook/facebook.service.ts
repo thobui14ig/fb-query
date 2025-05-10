@@ -313,7 +313,7 @@ export class FacebookService {
           httpsAgent
         }),
       )
-      console.log("🚀 ~ fetchCm ~ res:", res.data)
+
       let data = null
       if (typeof res.data === "string") {
         const lines = res.data.trim().split('\n');
@@ -334,8 +334,6 @@ export class FacebookService {
 
     while (hasNextPage) {
       const response = await fetchCm(after);
-      console.log("🚀 ~ getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1 ~ response:", response?.data?.data?.node?.comment_rendering_instance_for_feed_location
-        ?.comments.edges?.reverse()?.[0]?.node.preferred_body?.text)
       const pageInfo = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.page_info || {};
       hasNextPage = pageInfo.has_next_page;
       after = pageInfo.end_cursor;
