@@ -215,6 +215,7 @@ export class MonitoringService implements OnModuleInit {
       } finally {
         await this.delay((currentLink.delayTime ?? 5) * 1000)
       }
+
     }
   }
 
@@ -388,7 +389,7 @@ export class MonitoringService implements OnModuleInit {
     return this.linkRepository.find({
       where: {
         postId,
-        status: LinkStatus.Started
+        // status: LinkStatus.Started
       }
     })
   }

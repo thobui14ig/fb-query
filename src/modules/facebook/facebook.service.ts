@@ -187,10 +187,6 @@ export class FacebookService {
           httpsAgent
         }),
       )
-      if (!response?.data?.data?.node) {
-        await this.updateLinkPostIdInvalid(postIdNumber)
-        return null
-      }
       let dataComment = await this.handleDataComment(response, proxy)
 
       if (!dataComment && typeof response.data === 'string') {
@@ -198,17 +194,17 @@ export class FacebookService {
         const text = response.data
         const lines = text.trim().split('\n');
         const data = JSON.parse(lines[0])
-
         dataComment = await this.handleDataComment({ data }, proxy)
-
       }
 
       if (!dataComment) {
 
         //bai viet ko co cmt moi nhat => lay all
         dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
+      } else if (typeof response.data != 'string' && response?.data?.data?.node) {
+        await this.updateLinkPostIdInvalid(postIdNumber)
+        return null
       }
-
 
       const { commentId,
         userNameComment,
@@ -997,17 +993,18 @@ export class FacebookService {
   }
 
   async updateUUIDUser() {
-    const comments = await this.commentRepository.find({
-      where: {
-        uid: Like('Y29tb%')  // Tìm tất cả các bản ghi có `uid` bắt đầu với "pfbid"
-      }
-    })
+    const comments = await this.commentRepository.createQueryBuilder('comment')
+      .where('comment.uid LIKE :like1', { like1: 'Y29tb%' })
+      .orWhere('comment.uid LIKE :like2', { like2: '%pfbid%' })
+      .getMany();
+
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       const uid = await this.getUuidByCookie(comment.uid, proxy)
-      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
-      // comment.uid = uid
-      // await this.commentRepository.save(uid)
+      if (uid) {
+        comment.uid = uid
+        await this.commentRepository.save(uid)
+      }
     }
   }
 
