@@ -239,6 +239,7 @@ export class FacebookService {
 
   async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, type: string) {
     const fetchCm = async (after = null) => {
+      console.log("🚀 ~ fetchCm ~ after:", after)
 
       if (!after) {
         const httpsAgent = this.getHttpAgent(proxy)
