@@ -311,6 +311,7 @@ export class FacebookService {
           },
         }),
       )
+      console.log("🚀 ~ fetchCm ~ res:", res.data)
       let data = null
       if (typeof res.data === "string") {
         const lines = res.data.trim().split('\n');
