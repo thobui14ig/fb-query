@@ -651,6 +651,7 @@ export class FacebookService {
         }),
       );
       const htmlContent = response.data
+      console.log("🚀 ~ getProfileLink ~ htmlContent:", htmlContent)
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
 
       //case 1: video, post public
