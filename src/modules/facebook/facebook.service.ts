@@ -199,10 +199,10 @@ export class FacebookService {
       }
 
       if (!dataComment) {
-
         //bai viet ko co cmt moi nhat => lay all
         dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
       }
+
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
         await this.updateLinkPostIdInvalid(postIdNumber)
         return null

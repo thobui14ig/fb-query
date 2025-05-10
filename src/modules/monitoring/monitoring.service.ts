@@ -171,6 +171,7 @@ export class MonitoringService implements OnModuleInit {
       if (!isCheckRuning) { break };
 
       try {
+        let isPrivate = false
         if (!currentLink) break;
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
@@ -182,6 +183,16 @@ export class MonitoringService implements OnModuleInit {
           const postId = `feedback:${link.postIdV1}`;
           const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
           res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1) || {} as any
+        }
+
+        if (!res.commentId || !res.userIdComment) {
+          res = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
+          isPrivate = true
+        }
+
+        if (!res.commentId || !res.userIdComment) {
+          res = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
+          isPrivate = true
         }
 
         if (!res?.commentId || !res?.userIdComment) continue;
@@ -211,6 +222,9 @@ export class MonitoringService implements OnModuleInit {
           }
           const comment = await this.getComment(link.id, link.userId, commentId)
           commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
+          if (isPrivate) {
+            link.type = LinkType.PRIVATE
+          }
 
           const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
           linkEntities.push(linkEntity)
