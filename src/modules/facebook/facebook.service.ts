@@ -238,9 +238,10 @@ export class FacebookService {
   }
 
   async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, type: string) {
+    const httpsAgent = this.getHttpAgent(proxy)
+
     const fetchCm = async (after = null) => {
       if (!after) {
-        const httpsAgent = this.getHttpAgent(proxy)
         const headers = getHeaderComment(this.fbUrl);
         let body = {
           av: '0',
@@ -309,6 +310,7 @@ export class FacebookService {
             "x-fb-lsd": "AVori-u58Do",
             "Referrer-Policy": "strict-origin-when-cross-origin"
           },
+          httpsAgent
         }),
       )
       console.log("🚀 ~ fetchCm ~ res:", res.data)
