@@ -239,8 +239,6 @@ export class FacebookService {
 
   async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, type: string) {
     const fetchCm = async (after = null) => {
-      console.log("🚀 ~ fetchCm ~ after:", after)
-
       if (!after) {
         const httpsAgent = this.getHttpAgent(proxy)
         const headers = getHeaderComment(this.fbUrl);
@@ -316,6 +314,7 @@ export class FacebookService {
       const text = await res.text()
       const lines = text.trim().split('\n');
       const data = JSON.parse(lines[0])
+      console.log("🚀 ~ fetchCm ~ data:", data)
 
       return {
         data
