@@ -634,8 +634,8 @@ export class FacebookService {
             "dpr": "1",
             "priority": "u=0, i",
             "sec-ch-prefers-color-scheme": "light",
-            "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
-            "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.116\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.116\"",
+            "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
+            "sec-ch-ua-full-version-list": "\"Chromium\";v=\"136.0.7103.93\", \"Google Chrome\";v=\"136.0.7103.93\", \"Not.A/Brand\";v=\"99.0.0.0\"",
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-model": "\"\"",
             "sec-ch-ua-platform": "\"Windows\"",
@@ -645,13 +645,14 @@ export class FacebookService {
             "sec-fetch-site": "same-origin",
             "sec-fetch-user": "?1",
             "upgrade-insecure-requests": "1",
-            "viewport-width": "856"
+            "viewport-width": "856",
+            "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=1UkVxZvyucxVG78mk.AWevqY9nf_vHWJzPoe3hBWtadWsJ80XJ0HFGnqPtdNh439ijAVg.BoHzIp..AAA.0.0.BoH3O0.AWfmrWmPXac1pUoDOR6Hlr4s3r0; wd=856x953",
+            "Referrer-Policy": "origin-when-cross-origin"
           },
           httpsAgent,
         }),
       );
       const htmlContent = response.data
-      console.log("🚀 ~ getProfileLink ~ htmlContent:", htmlContent)
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
 
       //case 1: video, post public
