@@ -187,7 +187,6 @@ export class FacebookService {
           httpsAgent
         }),
       )
-      console.log("🚀 ~ getCmtPublic ~ response:", response.data)
 
       let dataComment = await this.handleDataComment(response, proxy)
 
