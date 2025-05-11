@@ -1154,6 +1154,7 @@ export class FacebookService {
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       const uid = await this.getUuidByCookie(comment.uid, proxy)
+      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
 
       if (uid) {
         comment.uid = uid
