@@ -1076,6 +1076,7 @@ export class FacebookService {
   }
 
   async getUuidPublic(uuid: string, proxy: ProxyEntity) {
+    console.log("🚀 ~ getUuidPublic ~ getUuidPublic:111111111111111111111")
     try {
       const httpsAgent = this.getHttpAgent(proxy)
 
@@ -1109,6 +1110,7 @@ export class FacebookService {
 
       const html = dataUser.data
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
+      console.log("🚀 ~ getUuidPublic ~ match:", match)
       if (match) {
         const userID = match[1];
         console.log("🚀 ~ getUuidPublic ~ userID:", userID)
