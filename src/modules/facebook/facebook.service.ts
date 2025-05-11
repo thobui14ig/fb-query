@@ -1043,7 +1043,6 @@ export class FacebookService {
       );
 
       const html = dataUser.data
-      console.log("🚀 ~ getUuidByCookie ~ html11111111111111111111111111111111111111111111:", html)
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
       if (match) {
         const userID = match[1];
@@ -1108,6 +1107,7 @@ export class FacebookService {
       );
 
       const html = dataUser.data
+      console.log("🚀 ~ getUuidPublic ~ html11111111111111111111111111111111111111111111:", html)
 
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
       if (match) {
