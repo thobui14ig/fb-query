@@ -1024,7 +1024,6 @@ export class FacebookService {
   }
 
   async getUuidByCookie(uuid: string, proxy: ProxyEntity) {
-    console.log("🚀 ~ getUuidByCookie ~ getUuidByCookie:", uuid)
     const cookieEntity = await this.cookieRepository.findOne({
       where: {
         status: Not(CookieStatus.DIE)
@@ -1037,25 +1036,6 @@ export class FacebookService {
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
           headers: {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-            "cache-control": "max-age=0",
-            "dpr": "1",
-            "priority": "u=0, i",
-            "sec-ch-prefers-color-scheme": "light",
-            "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
-            "sec-ch-ua-full-version-list": "\"Chromium\";v=\"136.0.7103.93\", \"Google Chrome\";v=\"136.0.7103.93\", \"Not.A/Brand\";v=\"99.0.0.0\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-model": "\"\"",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-ch-ua-platform-version": "\"10.0.0\"",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-            "viewport-width": "856",
-            "Referrer-Policy": "strict-origin-when-cross-origin",
             Cookie: this.formatCookies(cookies)
           },
           httpsAgent
@@ -1094,6 +1074,54 @@ export class FacebookService {
       return null
     }
   }
+
+  async getUuidPublic(uuid: string, proxy: ProxyEntity) {
+    try {
+      const httpsAgent = this.getHttpAgent(proxy)
+
+      const dataUser = await firstValueFrom(
+        this.httpService.get(`https://www.facebook.com/${uuid}`, {
+          headers: {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "cache-control": "max-age=0",
+            "dpr": "1",
+            "priority": "u=0, i",
+            "sec-ch-prefers-color-scheme": "light",
+            "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
+            "sec-ch-ua-full-version-list": "\"Chromium\";v=\"136.0.7103.93\", \"Google Chrome\";v=\"136.0.7103.93\", \"Not.A/Brand\";v=\"99.0.0.0\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-model": "\"\"",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-ch-ua-platform-version": "\"10.0.0\"",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-user": "?1",
+            "upgrade-insecure-requests": "1",
+            "viewport-width": "856",
+            "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=1Xto735zUPU2OEu0c.AWflQ0D_5CuaOWaOjYbz_rvh5wi_VEPLz1PnU4bPFw3P1QEiCUw.BoIMDi..AAA.0.0.BoINC4.AWc2m4manpDm55bav08ZEuzPD4A; wd=856x953"
+          },
+          // httpsAgent
+        }),
+      );
+
+
+      const html = dataUser.data
+      const match = html.match(/"userID"\s*:\s*"(\d+)"/);
+      if (match) {
+        const userID = match[1];
+        console.log("🚀 ~ getUuidPublic ~ userID:", userID)
+        return userID
+      }
+
+      return null
+    } catch (error) {
+      console.log("🚀 ~ getUuidPublic ~ error:", error?.message)
+      return null
+    }
+  }
+
 
   updateStatusTokenDie(token: TokenEntity, status: TokenStatus) {
     console.log("🚀 ~ updateTokenDie ~ token:", token)
@@ -1173,8 +1201,10 @@ export class FacebookService {
 
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
-      const uid = await this.getUuidByCookie(comment.uid, proxy)
-      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
+      let uid = await this.getUuidPublic(comment.uid, proxy)
+      if (!uid) {
+        uid = await this.getUuidByCookie(comment.uid, proxy)
+      }
 
       if (uid) {
         comment.uid = uid
