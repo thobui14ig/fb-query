@@ -115,7 +115,7 @@ export class MonitoringService implements OnModuleInit {
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
         const {
           totalCount
-        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {}
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link) || {}
         if (totalCount) {
           link.commentCount = totalCount - (link.commentCount ?? 0)
           await this.linkRepository.save(link)
@@ -177,23 +177,23 @@ export class MonitoringService implements OnModuleInit {
         if (!proxy) continue
         const postId = `feedback:${link.postId}`;
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
-        let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId) || {} as any
+        let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link) || {} as any
 
         if ((!res.commentId || !res.userIdComment) && link.postIdV1) {
           const postId = `feedback:${link.postIdV1}`;
           const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
-          res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1) || {} as any
+          res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
         }
 
-        if (!res.commentId || !res.userIdComment) {
-          res = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
-          isPrivate = true
-        }
+        // if (!res.commentId || !res.userIdComment) {
+        //   res = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
+        //   isPrivate = true
+        // }
 
-        if (!res.commentId || !res.userIdComment) {
-          res = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
-          isPrivate = true
-        }
+        // if (!res.commentId || !res.userIdComment) {
+        //   res = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
+        //   isPrivate = true
+        // }
 
         if (!res?.commentId || !res?.userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)

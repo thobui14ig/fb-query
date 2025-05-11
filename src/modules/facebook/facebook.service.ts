@@ -174,7 +174,7 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, type = 'RECENT_ACTIVITY_INTENT_V1') {
+  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, type = 'RECENT_ACTIVITY_INTENT_V1') {
     console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
@@ -204,8 +204,7 @@ export class FacebookService {
       }
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
-        await this.updateLinkPostIdInvalid(postIdNumber)
-        return null
+        await this.convertPublicToPrivate(proxy, postIdNumber, link)
       }
 
       const { commentId,
@@ -234,6 +233,105 @@ export class FacebookService {
       }
 
       return null
+    }
+  }
+
+
+  async convertPublicToPrivate(proxy: ProxyEntity, postId: string, link: LinkEntity) {
+    const cookieEntity = await this.getCookieActiveFromDb()
+    if (!cookieEntity) return true
+
+    try {
+      const id = `feedback:${postId}`;
+      const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
+      const httpsAgent = this.getHttpAgent(proxy)
+      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
+
+      if (!facebookId) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+
+        return true
+      }
+      const cookies = this.changeCookiesFb(cookieEntity.cookie)
+
+      const data = {
+        av: facebookId,
+        __aaid: '0',
+        __user: facebookId,
+        __a: '1',
+        __req: '13',
+        __hs: '20209.HYP:comet_pkg.2.1...0',
+        dpr: '1',
+        __ccg: 'EXCELLENT',
+        __rev: '1022417048',
+        __s: '5j9f2a:6aicy4:1wsr8e',
+        __hsi: '7499382864565808594',
+        __dyn: '7xeUmwlEnwn8yEqxemh0no6u5U4e1Nxt3odEc8co2qwJyE24wJwpUe8hw2nVE4W0qa321Rw8G11wBz83WwgEcEhwGwQw9m1YwBgao6C0Mo2swlo5qfK0zEkxe2GewbS2SU4i5oe85nxm16waCm260lCq2-azo3iwPwbS16xi4UdUcobUak0KU566E6C13G1-wkE627E4-8wLwHwea',
+        __csr: 'gjMVMFljjPl5OqmDuAXRlAp4L9ZtrQiQb-eypFUB4gyaCiC_xHz9KGDgKboJ2ErBgSvxym5EjyFayVVXUSiEC9Bz-qGDyuu6GgzmaHUmBBDK5GGaUpy8J4CxmcwxUjx20Q87207qA59kRQQ0gd0jA0sHwcW02Jq0c7Q0ME0jNweJ0bqE2Bw28WU0z2E7q0iW6U3yw2kE0p762U03jSwHw7Oo0gfm2C0WFOiw33o9S1mw5Owbq0uW0qWfwJylg35wBw9208qwWo1960dKw6Nw30QU225VHmg905lCabzE3Axmi0Jpk0Uo27xq0P41TzoC0ge0N9o0tyw9Ci3m0Qo2bKjO082hwSwpk2O3K6Q0ruz011a034Yw35w37o1rOwnU460cPw9J2oF3o3Yg1ho3vwnA9yAdDo3mg0zxw26Gxt1G4E3qw4FwjobE0Kq1-xWaQ0g-aOwOw4Hoog1bU0L20oO08Cw',
+        __comet_req: '15',
+        fb_dtsg: fbDtsg,
+        jazoest: jazoest,
+        lsd: 'AVrkziLMLUQ',
+        __spin_r: '1022417048',
+        __spin_b: 'trunk',
+        __spin_t: '1746086138',
+        __crn: 'comet.fbweb.CometTahoeRoute',
+        fb_api_caller_class: 'RelayModern',
+        fb_api_req_friendly_name: 'CommentListComponentsRootQuery',
+        variables: `{"commentsIntentToken":"RECENT_ACTIVITY_INTENT_V1","feedLocation":"TAHOE","feedbackSource":41,"focusCommentID":null,"scale":1,"useDefaultActor":false,"id":"${encodedPostId}","__relay_internal__pv__IsWorkUserrelayprovider":false}`,
+        server_timestamps: 'true',
+        doc_id: '9221104427994320'
+      };
+
+      const response = await fetch("https://www.facebook.com/api/graphql/", {
+        "headers": {
+          "accept": "*/*",
+          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+          "content-type": "application/x-www-form-urlencoded",
+          "priority": "u=1, i",
+          "sec-ch-prefers-color-scheme": "light",
+          "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+          "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.115\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.115\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-model": "\"\"",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-ch-ua-platform-version": "\"10.0.0\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+          "x-asbd-id": "359341",
+          "x-fb-friendly-name": "CommentListComponentsRootQuery",
+          "x-fb-lsd": data.lsd,
+          "cookie": this.formatCookies(cookies),
+          "Referrer-Policy": "strict-origin-when-cross-origin"
+        },
+        "body": new URLSearchParams(data).toString(),
+        "method": "POST"
+      });
+      const dataJson = await response.json() as any
+
+      if (dataJson?.data?.node) {
+        link.type = LinkType.PRIVATE
+        await this.linkRepository.save(link)
+        return true
+      } else {
+        await this.updateLinkPostIdInvalid(postId)
+        return null
+      }
+    } catch (error) {
+      console.log("🚀 ~ convertPublicToPrivate ~ error:", error.message)
+      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      }
+      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      }
+
+      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      }
+
+      return true
     }
   }
 
@@ -373,6 +471,7 @@ export class FacebookService {
       totalCount
     };
   }
+
   handleCookie(rawCookie) {
     // Danh sách các key cookie cần giữ lại và theo thứ tự mong muốn
     const keysOrder = ['fr', 'c_user', 'datr', 'sb', 'presence', 'wd', 'xs', 'ps_n', 'ps_l'];
