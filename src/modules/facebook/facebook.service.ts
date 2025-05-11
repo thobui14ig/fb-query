@@ -1150,12 +1150,14 @@ export class FacebookService {
       .orWhere('comment.uid LIKE :like2', { like2: '%pfbid%' })
       .getMany();
 
+
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       const uid = await this.getUuidByCookie(comment.uid, proxy)
+
       if (uid) {
         comment.uid = uid
-        await this.commentRepository.save(uid)
+        await this.commentRepository.save(comment)
       }
     }
   }

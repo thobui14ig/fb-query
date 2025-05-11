@@ -56,7 +56,7 @@ export class MonitoringService implements OnModuleInit {
 
   async onModuleInit() {
     // Bắt đầu kiểm tra định kỳ từng loại
-    ['refreshToken', 'refreshCookie', 'refreshProxy'].forEach((key: RefreshKey) => {
+    ['refreshToken', 'refreshCookie', 'refreshProxy', 'delayCommentCount'].forEach((key: RefreshKey) => {
       setInterval(() => this.checkAndUpdateScheduler(key), 10 * 1000);
       this.checkAndUpdateScheduler(key); // gọi ngay lúc khởi động
     });
@@ -92,6 +92,9 @@ export class MonitoringService implements OnModuleInit {
     if (key === "refreshProxy") {
       return this.updateActiveAllProxy()
     }
+    if (key === "delayCommentCount") {
+      return this.startProcessTotalCount()
+    }
   }
 
   @Cron(CronExpression.EVERY_5_SECONDS)
@@ -102,7 +105,6 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
   async startProcessTotalCount() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -365,12 +367,12 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = false
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async updateUUIDUser() {
     return this.facebookService.updateUUIDUser()
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handlePostIdV1WithCookie() {
     const links = await this.linkRepository.find({
       where: {
@@ -455,7 +457,10 @@ export class MonitoringService implements OnModuleInit {
       }
     }
 
-    const response = await this.linkRepository.save(processDTO);
+    const setting = await this.delayRepository.find()
+    const dataUpdate = { ...processDTO, delayTime: processDTO.status === LinkStatus.Started ? setting[0].delayOn : setting[0].delayOff }
+
+    const response = await this.linkRepository.save(dataUpdate);
 
     throw new HttpException(
       `${response.status === LinkStatus.Started ? 'Start' : 'Stop'} monitoring for link_id ${processDTO.id}`,

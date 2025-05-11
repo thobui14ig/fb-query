@@ -24,4 +24,13 @@ export class DelayEntity {
 
     @Column({ name: 'refresh_proxy', type: 'int', default: 0 })
     refreshProxy: number;
+
+    @Column({ name: 'delay_on', type: 'int', default: 0 })
+    delayOn: number;
+
+    @Column({ name: 'delay_off', type: 'int', default: 0 })
+    delayOff: number;
+
+    @Column({ name: 'delay_comment_count', type: 'int', default: 0 })
+    delayCommentCount: number;
 }
