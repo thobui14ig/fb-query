@@ -1205,6 +1205,7 @@ export class FacebookService {
       if (!uid) {
         uid = await this.getUuidByCookie(comment.uid, proxy)
       }
+      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
 
       if (uid) {
         comment.uid = uid
