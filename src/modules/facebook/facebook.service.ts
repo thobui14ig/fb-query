@@ -1107,10 +1107,10 @@ export class FacebookService {
         }),
       );
 
-
+      console.log("🚀 ~ getUuidPublic ~ match33333333333333333333333333333333:")
       const html = dataUser.data
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
-      console.log("🚀 ~ getUuidPublic ~ match:", match)
+      console.log("🚀 ~ getUuidPublic ~ match2222222222222222222222222222222222222222222222:", match)
       if (match) {
         const userID = match[1];
         console.log("🚀 ~ getUuidPublic ~ userID:", userID)
