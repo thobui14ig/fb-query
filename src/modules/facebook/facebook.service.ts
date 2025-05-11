@@ -1043,6 +1043,7 @@ export class FacebookService {
       );
 
       const html = dataUser.data
+      console.log("🚀 ~ getUuidByCookie ~ html11111111111111111111111111111111111111111111:", html)
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
       if (match) {
         const userID = match[1];
@@ -1076,7 +1077,6 @@ export class FacebookService {
   }
 
   async getUuidPublic(uuid: string, proxy: ProxyEntity) {
-    console.log("🚀 ~ getUuidPublic ~ getUuidPublic:111111111111111111111")
     try {
       const httpsAgent = this.getHttpAgent(proxy)
 
@@ -1103,12 +1103,11 @@ export class FacebookService {
             "viewport-width": "856",
             "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=1Xto735zUPU2OEu0c.AWflQ0D_5CuaOWaOjYbz_rvh5wi_VEPLz1PnU4bPFw3P1QEiCUw.BoIMDi..AAA.0.0.BoINC4.AWc2m4manpDm55bav08ZEuzPD4A; wd=856x953"
           },
-          // httpsAgent
+          httpsAgent
         }),
       );
 
       const html = dataUser.data
-      console.log("🚀 ~ getUuidPublic ~ match33333333333333333333333333333333:", html)
 
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
       if (match) {
