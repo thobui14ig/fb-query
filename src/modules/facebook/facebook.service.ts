@@ -1257,9 +1257,7 @@ export class FacebookService {
   }
   async getUuidPuppeteer() {
     console.log("🚀 ~ getUuidPuppeteer:")
-    const browser = await puppeteer.launch({
-      headless: false
-    });
+    const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
     // Navigate the page to a URL.
