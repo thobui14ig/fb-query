@@ -394,7 +394,7 @@ export class MonitoringService implements OnModuleInit {
   private getPostStarted(): Promise<LinkEntity[]> {
     return this.linkRepository.find({
       where: {
-        // status: LinkStatus.Started,
+        status: LinkStatus.Started,
         type: Not(LinkType.DIE)
       }
     })
