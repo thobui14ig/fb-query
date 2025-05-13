@@ -1,22 +1,21 @@
 import { HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Like, Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
+import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { FacebookService } from '../facebook/facebook.service';
 import {
   LinkEntity,
   LinkStatus,
   LinkType
 } from '../links/entities/links.entity';
-import { LEVEL } from '../user/entities/user.entity';
-import { ProcessDTO } from './dto/process.dto';
-import { GroupedLinksByType, IPostStarted } from './monitoring.service.i';
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
-import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
+import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
+import { LEVEL } from '../user/entities/user.entity';
+import { ProcessDTO } from './dto/process.dto';
+import { GroupedLinksByType } from './monitoring.service.i';
 
 type RefreshKey = 'refreshToken' | 'refreshCookie' | 'refreshProxy';
 @Injectable()
@@ -52,7 +51,8 @@ export class MonitoringService implements OnModuleInit {
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
 
-  ) { }
+  ) {
+  }
 
   async onModuleInit() {
     // Bắt đầu kiểm tra định kỳ từng loại
@@ -97,7 +97,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);

@@ -13,7 +13,7 @@ import fetch from 'node-fetch';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { IsNull, Like, Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkType } from '../links/entities/links.entity';
@@ -27,8 +27,10 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
-import { writeFile } from 'src/common/utils/file';
-
+const chrome = require('selenium-webdriver/chrome');
+const proxyChain = require('proxy-chain');
+const { Builder, Browser } = require('selenium-webdriver')
+const proxy = require('selenium-webdriver/proxy');
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -39,6 +41,7 @@ export class FacebookService {
   fbUrl = 'https://www.facebook.com';
   fbGraphql = `https://www.facebook.com/api/graphql`;
   ukTimezone = 'Asia/Bangkok';
+  browser = null
 
   constructor(private readonly httpService: HttpService,
     @InjectRepository(TokenEntity)
@@ -1208,6 +1211,7 @@ export class FacebookService {
       .orWhere('comment.uid LIKE :like2', { like2: '%pfbid%' })
       .getMany();
 
+    const browser = await this.getBrowser()
 
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
@@ -1215,7 +1219,16 @@ export class FacebookService {
       if (!uid) {
         uid = await this.getUuidByCookie(comment.uid, proxy)
       }
-      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
+
+      if (!uid) {
+        await browser.get(`https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl`)
+        let pageSource = await browser.getPageSource();
+        const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+        if (match) {
+          uid = match[1];
+          console.log("🚀 ~ updateUUIDUser-puppeteer ~ userID:", uid)
+        }
+      }
 
       if (uid) {
         comment.uid = uid
@@ -1234,5 +1247,36 @@ export class FacebookService {
     const randomProxy = proxies[randomIndex];
 
     return randomProxy
+  }
+  async getBrowser() {
+    console.log("🚀 ~ getBrowser ~ getBrowser:")
+    if (!this.browser) {
+      const proxyUrl = 'http://tcbfhn10313:frto8@42.96.12.206:10313';
+      const anonymizedProxy = await proxyChain.anonymizeProxy(proxyUrl);
+      // parse anonymized proxy URL
+      const parsedUrl = new URL(anonymizedProxy);
+      // extract the host and port
+      const proxyHost = parsedUrl.hostname;
+      const proxyPort = parsedUrl.port;
+      const newProxyString = `${proxyHost}:${proxyPort}`;
+      let options = new chrome.Options();
+      // options.addArguments('--headless');
+      options.addArguments('--disable-gpu'); // Để tăng hiệu suất nếu cần
+      options.addArguments("--remote-debugging-pipe");
+      options.addArguments("--no-sandbox", "--disable-dev-shm-usage");
+
+      let driver = await new Builder()
+        .forBrowser(Browser.CHROME)
+        // .setProxy(proxy.manual({
+        //   http: newProxyString,
+        //   https: newProxyString,
+        // }))
+        .setChromeOptions(options)
+        .build();
+
+      this.browser = driver
+    }
+
+    return this.browser
   }
 }
