@@ -270,8 +270,6 @@ export class MonitoringService implements OnModuleInit {
 
         if ((!dataComment || !(dataComment as any)?.commentId) && link.postIdV1) {
           dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
-          console.log("🚀 ~ MonitoringService ~ processLinkPrivate ~ dataComment:", dataComment)
-
         }
 
         if (!dataComment || !(dataComment as any)?.commentId) {
