@@ -327,7 +327,7 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all(postHandle)
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
     if (this.isHandleUrl) {
       return
