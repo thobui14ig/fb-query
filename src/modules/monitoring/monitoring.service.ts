@@ -24,6 +24,7 @@ export class MonitoringService implements OnModuleInit {
   linksPublic: LinkEntity[] = []
   linksPrivate: LinkEntity[] = []
   isHandleUrl: boolean = false
+  isHandleUuid: boolean = false
   private jobIntervalHandlers: Record<RefreshKey, NodeJS.Timeout> = {
     refreshToken: null,
     refreshCookie: null,
@@ -374,7 +375,11 @@ export class MonitoringService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_30_SECONDS)
   async updateUUIDUser() {
-    return this.facebookService.updateUUIDUser()
+    if (!this.isHandleUuid) {
+      this.isHandleUuid = true
+      await this.facebookService.updateUUIDUser()
+      this.isHandleUuid = false
+    }
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)

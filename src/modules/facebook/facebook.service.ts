@@ -1222,7 +1222,7 @@ export class FacebookService {
       }
 
       if (!uid) {
-        uid = await this.getUuidPuppeteer()
+        uid = await this.getUuidPuppeteer(comment.uid)
       }
       console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
@@ -1243,7 +1243,7 @@ export class FacebookService {
 
     return randomProxy
   }
-  async getUuidPuppeteer() {
+  async getUuidPuppeteer(uid: string) {
     console.log("🚀 ~ getUuidPuppeteer:")
     const proxyURL = 'http://ip.mproxy.vn:12370';
     const proxyUsername = 'chuongndh';
@@ -1257,7 +1257,7 @@ export class FacebookService {
       password: proxyPassword,
     });
     // Navigate the page to a URL.
-    await page.goto('https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl');
+    await page.goto(`https://www.facebook.com/${uid}`);
     const pageSource = await page.content()
     const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
     if (match) {
