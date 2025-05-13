@@ -27,11 +27,6 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
-const chrome = require('selenium-webdriver/chrome');
-const proxyChain = require('proxy-chain');
-const { Builder, Browser } = require('selenium-webdriver')
-const proxy = require('selenium-webdriver/proxy');
-import puppeteer from 'puppeteer';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -1089,6 +1084,56 @@ export class FacebookService {
     }
   }
 
+  async getUuidByCookieV2(uuid: string) {
+    const cookieEntity = await this.cookieRepository.findOne({
+      where: {
+        status: Not(CookieStatus.DIE)
+      }
+    })
+    if (!cookieEntity) return null
+    try {
+      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      const proxyArr = proxyhard.split(':')
+      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      const httpsAgent = new HttpsProxyAgent(agent);
+      const cookies = this.changeCookiesFb(cookieEntity.cookie);
+      const dataUser = await firstValueFrom(
+        this.httpService.get(`https://www.facebook.com/${uuid}`, {
+          headers: {
+            Cookie: this.formatCookies(cookies)
+          },
+          httpsAgent
+        }),
+      );
+
+      const html = dataUser.data
+      const match = html.match(/"userID"\s*:\s*"(\d+)"/);
+      if (match) {
+        const userID = match[1];
+        console.log("🚀 ~ getUuidByCookie ~ userID:", userID)
+        return userID
+      }
+
+      // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      return null
+    } catch (error) {
+      console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
+      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+      }
+      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return
+      }
+
+      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        return
+      }
+      return null
+    }
+  }
+
   async getUuidPublic(uuid: string, proxy: ProxyEntity) {
     try {
       const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
@@ -1124,7 +1169,6 @@ export class FacebookService {
       );
 
       const html = dataUser.data
-
       const match = html.match(/"userID"\s*:\s*"(\d+)"/);
       if (match) {
         const userID = match[1];
@@ -1210,6 +1254,7 @@ export class FacebookService {
   }
 
   async updateUUIDUser() {
+    console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
     const comments = await this.commentRepository.createQueryBuilder('comment')
       .where('comment.uid LIKE :like1', { like1: 'Y29tb%' })
       .orWhere('comment.uid LIKE :like2', { like2: '%pfbid%' })
@@ -1224,11 +1269,14 @@ export class FacebookService {
       if (!uid) {
         uid = await this.getUuidByCookie(comment.uid, proxy)
       }
+      if (!uid) {
+        uid = await this.getUuidByCookieV2(comment.uid)
+      }
 
       // if (!uid) {
       //   uid = await this.getUuidPuppeteer(comment.uid)
       // }
-      // console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
+      console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
@@ -1246,32 +1294,5 @@ export class FacebookService {
     const randomProxy = proxies[randomIndex];
 
     return randomProxy
-  }
-
-  async getUuidPuppeteer(uid: string) {
-    console.log("🚀 ~ getUuidPuppeteer:")
-    const proxyURL = 'http://ip.mproxy.vn:12370';
-    const proxyUsername = 'chuongndh';
-    const proxyPassword = 'LOKeNCbTGeI1t';
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`]
-    });
-    const page = await browser.newPage();
-    await page.authenticate({
-      username: proxyUsername,
-      password: proxyPassword,
-    });
-    // Navigate the page to a URL.
-    await page.goto(`https://www.facebook.com/${uid}`);
-    const pageSource = await page.content()
-    const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
-    if (match) {
-      console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
-
-      return match[1];
-    }
-
-    browser.close()
-    return null
   }
 }
