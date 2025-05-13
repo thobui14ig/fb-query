@@ -1261,7 +1261,7 @@ export class FacebookService {
     const proxyUsername = 'chuongndh';
     const proxyPassword = 'LOKeNCbTGeI1t';
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`]
     });
     const page = await browser.newPage();
     await page.authenticate({
