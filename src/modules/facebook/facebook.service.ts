@@ -1229,7 +1229,7 @@ export class FacebookService {
           console.log("🚀 ~ updateUUIDUser-puppeteer ~ userID:", uid)
         }
       }
-
+      console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", null)
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
