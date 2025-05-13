@@ -1266,6 +1266,7 @@ export class FacebookService {
     await page.goto('https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl');
     const pageSource = await page.content()
     const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+    console.log("🚀 ~ getUuidPuppeteer ~ match:", match)
     if (match) {
       console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
 
