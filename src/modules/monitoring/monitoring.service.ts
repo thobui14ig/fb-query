@@ -372,7 +372,7 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = false
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async updateUUIDUser() {
     return this.facebookService.updateUUIDUser()
   }

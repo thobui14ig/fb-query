@@ -31,6 +31,7 @@ const chrome = require('selenium-webdriver/chrome');
 const proxyChain = require('proxy-chain');
 const { Builder, Browser } = require('selenium-webdriver')
 const proxy = require('selenium-webdriver/proxy');
+import puppeteer from 'puppeteer';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -1211,8 +1212,7 @@ export class FacebookService {
       .orWhere('comment.uid LIKE :like2', { like2: '%pfbid%' })
       .getMany();
 
-    const browser = await this.getBrowser()
-    console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------111111111')
+
 
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
@@ -1222,17 +1222,19 @@ export class FacebookService {
       }
 
       if (!uid) {
-        console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------222222')
+        const browser = await this.getUuidPuppeteer()
+        console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------111111111')
+        // console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------222222')
 
-        await browser.get(`https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl`)
-        let pageSource = await browser.getPageSource();
-        console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------333333333')
+        // await browser.get(`https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl`)
+        // let pageSource = await browser.getPageSource();
+        // console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------333333333')
 
-        const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
-        if (match) {
-          uid = match[1];
-          console.log("🚀 ~ updateUUIDUser-puppeteer ~ userID:", uid)
-        }
+        // const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+        // if (match) {
+        //   uid = match[1];
+        //   console.log("🚀 ~ updateUUIDUser-puppeteer ~ userID:", uid)
+        // }
       }
       console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
@@ -1253,35 +1255,24 @@ export class FacebookService {
 
     return randomProxy
   }
-  async getBrowser() {
-    console.log("🚀 ~ getBrowser ~ getBrowser:")
-    if (!this.browser) {
-      const proxyUrl = 'http://chuongndh:LOKeNCbTGeI1t@ip.mproxy.vn:12370';
-      const anonymizedProxy = await proxyChain.anonymizeProxy(proxyUrl);
-      // parse anonymized proxy URL
-      const parsedUrl = new URL(anonymizedProxy);
-      // extract the host and port
-      const proxyHost = parsedUrl.hostname;
-      const proxyPort = parsedUrl.port;
-      const newProxyString = `${proxyHost}:${proxyPort}`;
-      let options = new chrome.Options();
-      options.addArguments('--headless');
-      options.addArguments('--disable-gpu'); // Để tăng hiệu suất nếu cần
-      options.addArguments("--remote-debugging-pipe");
-      options.addArguments("--no-sandbox", "--disable-dev-shm-usage");
+  async getUuidPuppeteer() {
+    console.log("🚀 ~ getUuidPuppeteer:")
+    const browser = await puppeteer.launch({
+      headless: false
+    });
+    const page = await browser.newPage();
 
-      let driver = await new Builder()
-        .forBrowser(Browser.CHROME)
-        .setProxy(proxy.manual({
-          http: newProxyString,
-          https: newProxyString,
-        }))
-        .setChromeOptions(options)
-        .build();
+    // Navigate the page to a URL.
+    await page.goto('https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl');
+    const pageSource = await page.content()
+    const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+    if (match) {
+      console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
 
-      this.browser = driver
+      return match[1];
     }
 
-    return this.browser
+    browser.close()
+    return null
   }
 }
