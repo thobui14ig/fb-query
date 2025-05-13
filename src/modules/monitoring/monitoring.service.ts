@@ -350,7 +350,8 @@ export class MonitoringService implements OnModuleInit {
       if (postId) {
         const exitLink = await this.linkRepository.findOne({
           where: {
-            postId
+            postId,
+            userId: link.userId
           }
         })
         if (exitLink) {
