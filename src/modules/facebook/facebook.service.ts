@@ -1212,6 +1212,7 @@ export class FacebookService {
       .getMany();
 
     const browser = await this.getBrowser()
+    console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------111111111')
 
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
@@ -1221,15 +1222,19 @@ export class FacebookService {
       }
 
       if (!uid) {
+        console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------222222')
+
         await browser.get(`https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl`)
         let pageSource = await browser.getPageSource();
+        console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------333333333')
+
         const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
         if (match) {
           uid = match[1];
           console.log("🚀 ~ updateUUIDUser-puppeteer ~ userID:", uid)
         }
       }
-      console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", null)
+      console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
@@ -1251,7 +1256,7 @@ export class FacebookService {
   async getBrowser() {
     console.log("🚀 ~ getBrowser ~ getBrowser:")
     if (!this.browser) {
-      const proxyUrl = 'http://tcbfhn10313:frto8@42.96.12.206:10313';
+      const proxyUrl = 'http://chuongndh:LOKeNCbTGeI1t@ip.mproxy.vn:12370';
       const anonymizedProxy = await proxyChain.anonymizeProxy(proxyUrl);
       // parse anonymized proxy URL
       const parsedUrl = new URL(anonymizedProxy);
@@ -1260,17 +1265,17 @@ export class FacebookService {
       const proxyPort = parsedUrl.port;
       const newProxyString = `${proxyHost}:${proxyPort}`;
       let options = new chrome.Options();
-      // options.addArguments('--headless');
+      options.addArguments('--headless');
       options.addArguments('--disable-gpu'); // Để tăng hiệu suất nếu cần
       options.addArguments("--remote-debugging-pipe");
       options.addArguments("--no-sandbox", "--disable-dev-shm-usage");
 
       let driver = await new Builder()
         .forBrowser(Browser.CHROME)
-        // .setProxy(proxy.manual({
-        //   http: newProxyString,
-        //   https: newProxyString,
-        // }))
+        .setProxy(proxy.manual({
+          http: newProxyString,
+          https: newProxyString,
+        }))
         .setChromeOptions(options)
         .build();
 
