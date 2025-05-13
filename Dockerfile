@@ -1,6 +1,12 @@
 # Base image
 FROM node:lts
 
+# Install chromium-browser and necessary dependencies
+RUN apt-get update && \
+    apt-get install -y chromium-browser --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create app directory
 WORKDIR /usr/src/app
 
