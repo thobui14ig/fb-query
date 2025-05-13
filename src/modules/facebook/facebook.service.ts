@@ -1257,11 +1257,17 @@ export class FacebookService {
   }
   async getUuidPuppeteer() {
     console.log("🚀 ~ getUuidPuppeteer:")
+    const proxyURL = 'http://ip.mproxy.vn:12370';
+    const proxyUsername = 'chuongndh';
+    const proxyPassword = 'LOKeNCbTGeI1t';
     const browser = await puppeteer.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
-
+    await page.authenticate({
+      username: proxyUsername,
+      password: proxyPassword,
+    });
     // Navigate the page to a URL.
     await page.goto('https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl');
     const pageSource = await page.content()
