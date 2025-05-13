@@ -1091,7 +1091,10 @@ export class FacebookService {
 
   async getUuidPublic(uuid: string, proxy: ProxyEntity) {
     try {
-      const httpsAgent = this.getHttpAgent(proxy)
+      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      const proxyArr = proxyhard.split(':')
+      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      const httpsAgent = new HttpsProxyAgent(agent);
 
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -1217,14 +1220,15 @@ export class FacebookService {
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       let uid = await this.getUuidPublic(comment.uid, proxy)
+
       if (!uid) {
         uid = await this.getUuidByCookie(comment.uid, proxy)
       }
 
-      if (!uid) {
-        uid = await this.getUuidPuppeteer(comment.uid)
-      }
-      console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
+      // if (!uid) {
+      //   uid = await this.getUuidPuppeteer(comment.uid)
+      // }
+      // console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
@@ -1243,6 +1247,7 @@ export class FacebookService {
 
     return randomProxy
   }
+
   async getUuidPuppeteer(uid: string) {
     console.log("🚀 ~ getUuidPuppeteer:")
     const proxyURL = 'http://ip.mproxy.vn:12370';
