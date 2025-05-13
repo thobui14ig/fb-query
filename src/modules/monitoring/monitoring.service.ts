@@ -354,6 +354,7 @@ export class MonitoringService implements OnModuleInit {
             userId: link.userId
           }
         })
+        console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ exitLink:", exitLink)
         if (exitLink) {
           await this.linkRepository.delete(link.id)
           continue
