@@ -1257,7 +1257,9 @@ export class FacebookService {
   }
   async getUuidPuppeteer() {
     console.log("🚀 ~ getUuidPuppeteer:")
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
 
     // Navigate the page to a URL.
