@@ -188,19 +188,19 @@ export class FacebookService {
         }),
       )
 
-      let dataComment = await this.handleDataComment(response, proxy)
+      let dataComment = await this.handleDataComment(response, proxy, link)
 
       if (!dataComment && typeof response.data === 'string') {
         //story
         const text = response.data
         const lines = text.trim().split('\n');
         const data = JSON.parse(lines[0])
-        dataComment = await this.handleDataComment({ data }, proxy)
+        dataComment = await this.handleDataComment({ data }, proxy, link)
       }
 
       if (!dataComment) {
         //bai viet ko co cmt moi nhat => lay all
-        dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1')
+        dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1', link)
       }
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
@@ -335,7 +335,7 @@ export class FacebookService {
     }
   }
 
-  async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, type: string) {
+  async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, type: string, link: LinkEntity) {
     const httpsAgent = this.getHttpAgent(proxy)
 
     const fetchCm = async (after = null) => {
@@ -458,7 +458,16 @@ export class FacebookService {
     const commentCreatedAt = dayjs(comment?.created_time * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
-    userIdComment = isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment
+
+    const isCommentExit = await this.commentRepository.findOne({
+      where: {
+        name: userNameComment,
+        timeCreated: commentCreatedAt as any,
+        linkId: link.id
+      }
+    })
+
+    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment) : isCommentExit.uid
     const totalCount = responsExpected?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
 
     return {
@@ -574,7 +583,7 @@ export class FacebookService {
     }
   }
 
-  async getCommentByCookie(proxy: ProxyEntity, postId: string) {
+  async getCommentByCookie(proxy: ProxyEntity, postId: string, link: LinkEntity) {
     const cookieEntity = await this.getCookieActiveFromDb()
     if (!cookieEntity) return null
     console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
@@ -650,7 +659,7 @@ export class FacebookService {
       const dataJson = await response.json() as any
       let dataComment = await this.handleDataComment({
         data: dataJson
-      }, proxy)
+      }, proxy, link)
 
       return dataComment
     } catch (error) {
@@ -674,7 +683,7 @@ export class FacebookService {
     }
   }
 
-  async handleDataComment(response, proxy: ProxyEntity) {
+  async handleDataComment(response, proxy: ProxyEntity, link: LinkEntity) {
     const comment =
       response?.data?.data?.node?.comment_rendering_instance_for_feed_location
         ?.comments.edges?.[0]?.node;
@@ -698,7 +707,8 @@ export class FacebookService {
     const isCommentExit = await this.commentRepository.findOne({
       where: {
         name: userNameComment,
-        timeCreated: commentCreatedAt as any
+        timeCreated: commentCreatedAt as any,
+        linkId: link.id
       }
     })
 

@@ -130,7 +130,7 @@ export class MonitoringService implements OnModuleInit {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
 
-        let { totalCount } = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
+        let { totalCount } = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId, link) || {}
         if (totalCount) {
           link.commentCount = totalCount - (link.commentCount ?? 0)
           await this.linkRepository.save(link)
@@ -265,7 +265,7 @@ export class MonitoringService implements OnModuleInit {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
 
-        let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
+        let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId, link) || {}
 
         if (!dataComment || !(dataComment as any)?.commentId) {
           dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
