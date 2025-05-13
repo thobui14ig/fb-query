@@ -264,8 +264,15 @@ export class MonitoringService implements OnModuleInit {
         if (!currentLink) break;
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
+        let dataComment = null
 
-        let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId, link) || {}
+        if (link.postId) {
+          dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
+        }
+
+        if (!dataComment || !(dataComment as any)?.commentId) {
+          dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId, link) || {}
+        }
 
         if (!dataComment || !(dataComment as any)?.commentId) {
           dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
