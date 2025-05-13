@@ -18,11 +18,12 @@ import { LinkStatus } from './entities/links.entity';
 
 @Controller('links')
 export class LinkController {
-  constructor(private readonly linkService: LinkService) {}
+  constructor(private readonly linkService: LinkService) { }
 
   @Post()
   create(@Req() req: Request, @Body() createLinkDto: CreateLinkDTO) {
     const user = getUser(req);
+    console.log("🚀 ~ LinkController ~ create ~ user:", user)
     return this.linkService.create({
       ...createLinkDto,
       userId: user.id,
