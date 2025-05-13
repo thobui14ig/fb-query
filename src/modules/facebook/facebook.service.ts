@@ -1222,19 +1222,7 @@ export class FacebookService {
       }
 
       if (!uid) {
-        const browser = await this.getUuidPuppeteer()
-        console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------111111111')
-        // console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------222222')
-
-        // await browser.get(`https://www.facebook.com/pfbid0PZa59BHZHnaYomWm3tx8ed6NS2FVsBJX3dHRPxUBZSYoG6YuzGsh41ZkANJSw2tbl`)
-        // let pageSource = await browser.getPageSource();
-        // console.log("🚀 ~ updateUUIDUser ~ uid:", '---------------333333333')
-
-        // const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
-        // if (match) {
-        //   uid = match[1];
-        //   console.log("🚀 ~ updateUUIDUser-puppeteer ~ userID:", uid)
-        // }
+        uid = await this.getUuidPuppeteer()
       }
       console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
