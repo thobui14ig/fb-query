@@ -629,33 +629,61 @@ export class FacebookService {
         doc_id: '9221104427994320'
       };
 
-      const response = await fetch("https://www.facebook.com/api/graphql/", {
-        "headers": {
-          "accept": "*/*",
-          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-          "content-type": "application/x-www-form-urlencoded",
-          "priority": "u=1, i",
-          "sec-ch-prefers-color-scheme": "light",
-          "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
-          "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.115\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.115\"",
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-model": "\"\"",
-          "sec-ch-ua-platform": "\"Windows\"",
-          "sec-ch-ua-platform-version": "\"10.0.0\"",
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "same-origin",
-          "x-asbd-id": "359341",
-          "x-fb-friendly-name": "CommentListComponentsRootQuery",
-          "x-fb-lsd": data.lsd,
-          "cookie": this.formatCookies(cookies),
-          "Referrer-Policy": "strict-origin-when-cross-origin"
-        },
-        "body": new URLSearchParams(data).toString(),
-        "method": "POST"
-      });
+      const response = await firstValueFrom(
+        this.httpService.post("https://www.facebook.com/api/graphql/", new URLSearchParams(data).toString(), {
+          "headers": {
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "content-type": "application/x-www-form-urlencoded",
+            "priority": "u=1, i",
+            "sec-ch-prefers-color-scheme": "light",
+            "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+            "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.115\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.115\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-model": "\"\"",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-ch-ua-platform-version": "\"10.0.0\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-asbd-id": "359341",
+            "x-fb-friendly-name": "CommentListComponentsRootQuery",
+            "x-fb-lsd": data.lsd,
+            "cookie": this.formatCookies(cookies),
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+          },
+          httpsAgent,
+        }),
+      );
 
-      const dataJson = await response.json() as any
+      // const response = await fetch("https://www.facebook.com/api/graphql/", {
+      //   "headers": {
+      //     "accept": "*/*",
+      //     "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+      //     "content-type": "application/x-www-form-urlencoded",
+      //     "priority": "u=1, i",
+      //     "sec-ch-prefers-color-scheme": "light",
+      //     "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+      //     "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.115\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.115\"",
+      //     "sec-ch-ua-mobile": "?0",
+      //     "sec-ch-ua-model": "\"\"",
+      //     "sec-ch-ua-platform": "\"Windows\"",
+      //     "sec-ch-ua-platform-version": "\"10.0.0\"",
+      //     "sec-fetch-dest": "empty",
+      //     "sec-fetch-mode": "cors",
+      //     "sec-fetch-site": "same-origin",
+      //     "x-asbd-id": "359341",
+      //     "x-fb-friendly-name": "CommentListComponentsRootQuery",
+      //     "x-fb-lsd": data.lsd,
+      //     "cookie": this.formatCookies(cookies),
+      //     "Referrer-Policy": "strict-origin-when-cross-origin"
+      //   },
+      //   "body": new URLSearchParams(data).toString(),
+      //   "method": "POST"
+      // });
+
+
+      const dataJson = response.data as any
       let dataComment = await this.handleDataComment({
         data: dataJson
       }, proxy, link)
