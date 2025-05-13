@@ -274,7 +274,6 @@ export class MonitoringService implements OnModuleInit {
         if (!dataComment || !(dataComment as any)?.commentId) {
           dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
         }
-        console.log("🚀 ~ MonitoringService ~ processLinkPrivate ~ dataComment:", dataComment)
 
         const {
           commentId,
