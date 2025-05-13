@@ -346,6 +346,7 @@ export class MonitoringService implements OnModuleInit {
 
     this.isHandleUrl = true
     for (const link of links) {
+      console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ link:", link)
       const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
       if (postId) {
         const exitLink = await this.linkRepository.findOne({
