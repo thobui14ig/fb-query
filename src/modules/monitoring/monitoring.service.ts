@@ -327,7 +327,7 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all(postHandle)
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async cronjobHandleProfileUrl() {
     if (this.isHandleUrl) {
       return
@@ -355,7 +355,6 @@ export class MonitoringService implements OnModuleInit {
             userId: link.userId
           }
         })
-        console.log("🚀 ~ MonitoringService ~ cronjobHandleProfileUrl ~ exitLink:", exitLink)
         if (exitLink) {
           await this.linkRepository.delete(link.id)
           continue
@@ -451,7 +450,8 @@ export class MonitoringService implements OnModuleInit {
       select: {
         linkUrl: true,
         id: true,
-        postId: true
+        postId: true,
+        userId: true
       }
     })
   }
