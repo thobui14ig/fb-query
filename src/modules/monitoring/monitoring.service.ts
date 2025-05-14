@@ -188,16 +188,6 @@ export class MonitoringService implements OnModuleInit {
           res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
         }
 
-        // if (!res.commentId || !res.userIdComment) {
-        //   res = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId) || {}
-        //   isPrivate = true
-        // }
-
-        // if (!res.commentId || !res.userIdComment) {
-        //   res = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
-        //   isPrivate = true
-        // }
-
         if (!res?.commentId || !res?.userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)
         const commentEntities: CommentEntity[] = []
@@ -266,14 +256,32 @@ export class MonitoringService implements OnModuleInit {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
 
-        let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId, link) || {}
+        const getWithCookie = async () => {
+          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId, link) || {}
 
-        if ((!dataComment || !(dataComment as any)?.commentId) && link.postIdV1) {
-          dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
+          if ((!dataComment || !(dataComment as any)?.commentId) && link.postIdV1) {
+            dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
+          }
         }
 
-        if (!dataComment || !(dataComment as any)?.commentId) {
-          dataComment = await this.facebookService.getCommentByToken(link.postId, proxy) || {}
+        const getWithToken = async () => {
+          return await this.facebookService.getCommentByToken(link.postId, proxy) || {}
+        }
+
+        let dataComment = null;
+        const random = this.getRandomNumber()
+        if (random % 2 === 0) {
+          dataComment = await getWithCookie()
+
+          if ((!dataComment || !(dataComment as any)?.commentId)) {
+            dataComment = await getWithToken()
+          }
+        } else {
+          dataComment = await getWithToken()
+
+          if ((!dataComment || !(dataComment as any)?.commentId)) {
+            dataComment = await getWithCookie()
+          }
         }
 
         const {
@@ -283,7 +291,7 @@ export class MonitoringService implements OnModuleInit {
           userIdComment,
           userNameComment,
           commentCreatedAt
-        } = dataComment as any
+        } = dataComment || {}
 
         if (!commentId || !userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)
@@ -317,6 +325,10 @@ export class MonitoringService implements OnModuleInit {
       }
     }
 
+  }
+
+  getRandomNumber() {
+    return Math.floor(Math.random() * 1000) + 1;
   }
 
   async handlePostsPrivate(linksRunning: LinkEntity[]) {
