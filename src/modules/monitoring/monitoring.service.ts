@@ -345,30 +345,42 @@ export class MonitoringService implements OnModuleInit {
     };
 
     this.isHandleUrl = true
-    for (const link of links) {
-      const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
-      if (postId) {
-        const exitLink = await this.linkRepository.findOne({
-          where: {
-            postId,
-            userId: link.userId
+    const BATCH_SIZE = 10;
+
+    for (let i = 0; i < links.length; i += BATCH_SIZE) {
+      const batch = links.slice(i, i + BATCH_SIZE);
+
+      await Promise.all(batch.map(async (link) => {
+        const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
+
+        if (postId) {
+          const exitLink = await this.linkRepository.findOne({
+            where: {
+              postId,
+              userId: link.userId
+            }
+          });
+          if (exitLink) {
+            await this.linkRepository.delete(link.id);
+            return; // skip saving
           }
-        })
-        if (exitLink) {
-          await this.linkRepository.delete(link.id)
-          continue
         }
-      }
 
-      if (!link.linkName || link.linkName.length === 0) {
-        link.linkName = name;
-      }
-      link.process = type === LinkType.UNDEFINED ? false : true;
-      link.type = type;
-      link.postId = postId;
-      link.postIdV1 = type === LinkType.PRIVATE ? (await this.facebookService.getPostIdV2(link.linkUrl) || null) : (await this.facebookService.getPostIdPublicV2(link.linkUrl) || null)
+        if (!link.linkName || link.linkName.length === 0) {
+          link.linkName = name;
+        }
 
-      await this.linkRepository.save(link);
+        link.process = type === LinkType.UNDEFINED ? false : true;
+        link.type = type;
+        link.postId = postId;
+
+        link.postIdV1 =
+          type === LinkType.PRIVATE
+            ? await this.facebookService.getPostIdV2(link.linkUrl) || null
+            : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
+
+        await this.linkRepository.save(link);
+      }));
     }
 
     this.isHandleUrl = false
