@@ -945,11 +945,11 @@ export class FacebookService {
   }
 
   async getPostIdPublicV2(url: string) {
-    const token = await this.getTokenActiveFromDb()
-
     try {
-      const proxy = await this.getRandomProxy()
-      const httpsAgent = this.getHttpAgent(proxy)
+      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      const proxyArr = proxyhard.split(':')
+      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      const httpsAgent = new HttpsProxyAgent(agent);
 
       const response = await firstValueFrom(
         this.httpService.get(url, {
