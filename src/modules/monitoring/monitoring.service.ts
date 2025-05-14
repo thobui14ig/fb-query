@@ -376,7 +376,7 @@ export class MonitoringService implements OnModuleInit {
 
         link.postIdV1 =
           type === LinkType.PRIVATE
-            ? await this.facebookService.getPostIdV2(link.linkUrl) || null
+            ? await this.facebookService.getPostIdV2WithCookie(link.linkUrl) || null
             : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
 
         await this.linkRepository.save(link);
@@ -406,7 +406,7 @@ export class MonitoringService implements OnModuleInit {
     for (const link of links) {
       const cookie = await this.getCookieActiveFromDb()
       if (!cookie) return
-      const postIdV1 = await this.facebookService.getPostIdV2(link.linkUrl)
+      const postIdV1 = await this.facebookService.getPostIdV2WithCookie(link.linkUrl)
       if (postIdV1) {
         link.postIdV1 = postIdV1
         await this.linkRepository.save(link)

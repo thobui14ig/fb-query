@@ -27,6 +27,8 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
+import { writeFile } from 'src/common/utils/file';
+import { isArray } from 'class-validator';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -658,6 +660,10 @@ export class FacebookService {
         }),
       );
 
+      if (isArray(response.data?.errors) && response.data?.errors[0]?.code === 1675004) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return null
+      }
       const dataJson = response.data as any
       let dataComment = await this.handleDataComment({
         data: dataJson
@@ -665,7 +671,7 @@ export class FacebookService {
 
       return dataComment
     } catch (error) {
-      console.log("🚀 ~ getCommentByCookie ~ error:", error.message)
+      console.log("🚀 ~ getCommentByCookie ~ error:", error?.message)
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
         return
@@ -972,7 +978,7 @@ export class FacebookService {
     }
   }
 
-  async getPostIdV2(url: string) {
+  async getPostIdV2WithCookie(url: string) {
     try {
       const proxy = await this.getRandomProxy()
       const httpsAgent = this.getHttpAgent(proxy)
@@ -1267,14 +1273,13 @@ export class FacebookService {
   }
 
   async updateUUIDUser() {
-    console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
     const comments = await this.commentRepository.createQueryBuilder('comment')
       .where('comment.uid LIKE :like1', { like1: 'Y29tb%' })
       .orWhere('comment.uid LIKE :like2', { like2: '%pfbid%' })
       .getMany();
 
-
-
+    if (!comments.length) return
+    console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       let uid = await this.getUuidPublic(comment.uid, proxy)
