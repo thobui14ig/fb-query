@@ -1019,7 +1019,7 @@ export class FacebookService {
 
       return null
     } catch (error) {
-      console.log("🚀 ~ getPostIdV2 ~ error:", error?.message)
+      console.log("🚀 ~ getPostIdV2 ~ error:", error)
       return null
     }
   }
