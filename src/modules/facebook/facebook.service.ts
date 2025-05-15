@@ -1079,7 +1079,7 @@ export class FacebookService {
       // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       return null
     } catch (error) {
-      console.log("🚀 ~ getUuidByCookie ~ error:", error?.message)
+      console.log("🚀 ~ getUuidByCookie ~ error:", error)
       if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
 
@@ -1277,7 +1277,6 @@ export class FacebookService {
       .getMany();
 
     if (!comments.length) return
-    console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       let uid = await this.getUuidPublic(comment.uid, proxy)
@@ -1292,7 +1291,6 @@ export class FacebookService {
       // if (!uid) {
       //   uid = await this.getUuidPuppeteer(comment.uid)
       // }
-      console.log("🚀 ~ updateUUIDUser-puppeteer ~NOO userID:", uid)
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
