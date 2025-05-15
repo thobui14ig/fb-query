@@ -66,6 +66,12 @@ export class LinkEntity {
   @Column({ default: false })
   process: boolean;
 
+  @Column({ name: 'count_before', type: 'int' })
+  countBefore: number;
+
+  @Column({ name: 'count_after', type: 'int' })
+  countAfter: number;
+
   @CreateDateColumn({
     type: 'datetime',
     name: 'created_at',

@@ -16,6 +16,7 @@ import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
 import { GroupedLinksByType } from './monitoring.service.i';
+import { isNumber } from 'class-validator';
 
 type RefreshKey = 'refreshToken' | 'refreshCookie' | 'refreshProxy';
 @Injectable()
@@ -66,7 +67,7 @@ export class MonitoringService implements OnModuleInit {
   private async checkAndUpdateScheduler(key: RefreshKey) {
     const config = await this.delayRepository.find();
     if (!config.length) return;
-    const newRefreshMs = (config[0][key] ?? 60) * 60 * 1000;
+    const newRefreshMs = (config[0][key] ?? 60) * 1000;
 
     if (newRefreshMs !== this.currentRefreshMs[key]) {
       this.currentRefreshMs[key] = newRefreshMs;
@@ -98,7 +99,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -119,8 +120,11 @@ export class MonitoringService implements OnModuleInit {
         const {
           totalCount
         } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link) || {}
-        if (totalCount) {
-          link.commentCount = totalCount - (link.commentCount ?? 0)
+        console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", totalCount)
+
+        if (isNumber(totalCount)) {
+          link.countBefore = totalCount
+          link.countAfter = totalCount - (link.countBefore ?? 0)
           await this.linkRepository.save(link)
         }
       }
@@ -559,7 +563,6 @@ export class MonitoringService implements OnModuleInit {
       return {
         ...item,
         status: TokenStatus.ACTIVE,
-        retryCount: item.retryCount + 1
       }
     }))
   }
@@ -572,10 +575,10 @@ export class MonitoringService implements OnModuleInit {
       }
     })
 
-    return this.tokenRepository.save(allCookie.map((item) => {
+    return this.cookieRepository.save(allCookie.map((item) => {
       return {
         ...item,
-        status: TokenStatus.ACTIVE,
+        status: CookieStatus.ACTIVE,
       }
     }))
   }
