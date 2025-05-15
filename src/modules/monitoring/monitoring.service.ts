@@ -99,7 +99,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -135,9 +135,13 @@ export class MonitoringService implements OnModuleInit {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
 
-        let { totalCount } = await this.facebookService.getCommentByCookie(proxy, link.postIdV1 ?? link.postId, link) || {}
-        if (totalCount) {
-          link.commentCount = totalCount - (link.commentCount ?? 0)
+        let res = await this.facebookService.getCommentByCookie(proxy, link.postId, link) || {} as any
+        if (!res && link.postIdV1) {
+          res = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
+        }
+
+        if (res?.totalCount) {
+          link.commentCount = res.totalCount - (link.commentCount ?? 0)
           await this.linkRepository.save(link)
         }
       }

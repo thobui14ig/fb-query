@@ -670,6 +670,14 @@ export class FacebookService {
         data: dataJson
       }, proxy, link)
 
+      if (!dataComment && typeof response.data === 'string') {
+        //story
+        const text = response.data
+        const lines = text.trim().split('\n');
+        const data = JSON.parse(lines[0])
+        dataComment = await this.handleDataComment({ data }, proxy, link)
+      }
+
       return dataComment
     } catch (error) {
       console.log("🚀 ~ getCommentByCookie ~ error:", error?.message)
@@ -906,7 +914,6 @@ export class FacebookService {
       console.log("🚀 ~ getProfileLink ~ error:", error.message)
       if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
-        return
       }
       if (error?.response?.status == 400) {
         if (error.response?.data?.error?.code === 368) {
@@ -1019,7 +1026,7 @@ export class FacebookService {
 
       return null
     } catch (error) {
-      console.log("🚀 ~ getPostIdV2 ~ error:", error)
+      console.log("🚀 ~ getPostIdV2 ~ error:", error.message)
       return null
     }
   }
