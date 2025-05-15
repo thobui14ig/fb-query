@@ -228,7 +228,7 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
         return
       }
@@ -566,7 +566,7 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error.response?.data?.error?.code)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED')) {
         await this.updateProxyDie(proxy)
       }
 
@@ -904,7 +904,7 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getProfileLink ~ error:", error.message)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
         return
       }
@@ -1084,11 +1084,6 @@ export class FacebookService {
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error.message)
-      // if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
-      //   await this.updateProxyDie(proxy)
-
-      //   return
-      // }
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
