@@ -102,6 +102,7 @@ export class MonitoringService implements OnModuleInit {
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
+    console.log("🚀 ~ MonitoringService ~ startMonitoring ~ groupPost:", groupPost)
 
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
