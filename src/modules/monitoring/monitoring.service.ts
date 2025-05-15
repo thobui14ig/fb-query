@@ -99,7 +99,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -120,7 +120,6 @@ export class MonitoringService implements OnModuleInit {
         const {
           totalCount
         } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link) || {}
-        console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", totalCount)
 
         if (isNumber(totalCount)) {
           link.countBefore = totalCount
