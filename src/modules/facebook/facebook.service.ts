@@ -470,7 +470,7 @@ export class FacebookService {
       }
     })
 
-    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment) : isCommentExit.uid
+    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id)) || userIdComment) : isCommentExit.uid
     const totalCount = responsExpected?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
 
     return {
@@ -665,6 +665,7 @@ export class FacebookService {
         return null
       }
       const dataJson = response.data as any
+
       let dataComment = await this.handleDataComment({
         data: dataJson
       }, proxy, link)
@@ -720,7 +721,7 @@ export class FacebookService {
       }
     })
 
-    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id, proxy)) || userIdComment) : isCommentExit.uid
+    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id)) || userIdComment) : isCommentExit.uid
 
     return {
       commentId,
@@ -1049,7 +1050,8 @@ export class FacebookService {
     return null
   }
 
-  async getUuidByCookie(uuid: string, proxy: ProxyEntity) {
+  async getUuidByCookie(uuid: string) {
+    // const cc = this.handleCookie("sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; c_user=100051755359634; ar_debug=1; wd=1229x953; fr=1kPjTaN6SX5jDoGV9.AWeW_D0C6YdcSAWxsGNLtI1_zevdGyEAXn9z1BQNl5Trgg6WLcE.BoJfHm..AAA.0.0.BoJfHm.AWc--AQTUVmE-tqZ5kQ1S3VrHCI; xs=40%3APFOw20cBd9zaWQ%3A2%3A1747196455%3A-1%3A6267%3A%3AAcXmvkUNwHLLIb5x3ZOuLOb9CMOrpEZuyshadGlITg; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1747317231908%2C%22v%22%3A1%7D")
     const cookieEntity = await this.cookieRepository.findOne({
       where: {
         status: CookieStatus.ACTIVE
@@ -1057,7 +1059,10 @@ export class FacebookService {
     })
     if (!cookieEntity) return null
     try {
-      const httpsAgent = this.getHttpAgent(proxy)
+      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      const proxyArr = proxyhard.split(':')
+      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      const httpsAgent = new HttpsProxyAgent(agent);
       const cookies = this.changeCookiesFb(cookieEntity.cookie);
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -1080,11 +1085,11 @@ export class FacebookService {
       return null
     } catch (error) {
       console.log("🚀 ~ getUuidByCookie ~ error:", error)
-      if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
-        await this.updateProxyDie(proxy)
+      // if ((error?.message as string)?.includes('connect ETIMEDOUT') || (error?.message as string)?.includes('connect ECONNREFUSED')) {
+      //   await this.updateProxyDie(proxy)
 
-        return
-      }
+      //   return
+      // }
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
@@ -1277,16 +1282,19 @@ export class FacebookService {
       .getMany();
 
     if (!comments.length) return
+    console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
+
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       let uid = await this.getUuidPublic(comment.uid, proxy)
 
       if (!uid) {
-        uid = await this.getUuidByCookie(comment.uid, proxy)
+        uid = await this.getUuidByCookie(comment.uid)
       }
       if (!uid) {
         uid = await this.getUuidByCookieV2(comment.uid)
       }
+      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
 
       // if (!uid) {
       //   uid = await this.getUuidPuppeteer(comment.uid)

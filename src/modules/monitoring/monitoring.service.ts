@@ -262,6 +262,8 @@ export class MonitoringService implements OnModuleInit {
           if ((!dataComment || !(dataComment as any)?.commentId) && link.postIdV1) {
             dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
           }
+
+          return dataComment
         }
 
         const getWithToken = async () => {
@@ -398,7 +400,7 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = false
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async updateUUIDUser() {
     if (!this.isHandleUuid) {
       this.isHandleUuid = true
