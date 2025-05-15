@@ -139,6 +139,7 @@ export class MonitoringService implements OnModuleInit {
         if (!res && link.postIdV1) {
           res = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
         }
+        console.log("🚀 ~ MonitoringService ~ processLinksPrivate ~ res:", res)
 
         if (res?.totalCount) {
           link.commentCount = res.totalCount - (link.commentCount ?? 0)
