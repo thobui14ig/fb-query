@@ -1051,7 +1051,6 @@ export class FacebookService {
   }
 
   async getUuidByCookie(uuid: string) {
-    // const cc = this.handleCookie("sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; c_user=100051755359634; ar_debug=1; wd=1229x953; fr=1kPjTaN6SX5jDoGV9.AWeW_D0C6YdcSAWxsGNLtI1_zevdGyEAXn9z1BQNl5Trgg6WLcE.BoJfHm..AAA.0.0.BoJfHm.AWc--AQTUVmE-tqZ5kQ1S3VrHCI; xs=40%3APFOw20cBd9zaWQ%3A2%3A1747196455%3A-1%3A6267%3A%3AAcXmvkUNwHLLIb5x3ZOuLOb9CMOrpEZuyshadGlITg; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1747317231908%2C%22v%22%3A1%7D")
     const cookieEntity = await this.cookieRepository.findOne({
       where: {
         status: CookieStatus.ACTIVE
@@ -1287,14 +1286,18 @@ export class FacebookService {
     for (const comment of comments) {
       const proxy = await this.getRandomProxy()
       let uid = await this.getUuidPublic(comment.uid, proxy)
+      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
+
 
       if (!uid) {
         uid = await this.getUuidByCookie(comment.uid)
+        console.log("🚀 ~ updateUUIDUser ~ getUuidByCookie:", uid)
       }
       if (!uid) {
         uid = await this.getUuidByCookieV2(comment.uid)
+        console.log("🚀 ~ updateUUIDUser ~ getUuidByCookieV2:", uid)
+
       }
-      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
 
       // if (!uid) {
       //   uid = await this.getUuidPuppeteer(comment.uid)
