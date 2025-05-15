@@ -141,7 +141,8 @@ export class MonitoringService implements OnModuleInit {
         console.log("🚀 ~ MonitoringService ~ processLinksPrivate ~ res:", res)
 
         if (res?.totalCount) {
-          link.commentCount = res.totalCount - (link.commentCount ?? 0)
+          link.countBefore = res.totalCount
+          link.countAfter = res.totalCount - (link.countBefore ?? 0)
           await this.linkRepository.save(link)
         }
       }
