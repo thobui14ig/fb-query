@@ -67,7 +67,7 @@ export class MonitoringService implements OnModuleInit {
   private async checkAndUpdateScheduler(key: RefreshKey) {
     const config = await this.delayRepository.find();
     if (!config.length) return;
-    const newRefreshMs = (config[0][key] ?? 60) * 1000;
+    const newRefreshMs = (config[0][key] ?? 60) * 60 * 1000;
 
     if (newRefreshMs !== this.currentRefreshMs[key]) {
       this.currentRefreshMs[key] = newRefreshMs;
