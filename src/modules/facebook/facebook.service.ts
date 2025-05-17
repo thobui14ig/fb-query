@@ -228,7 +228,7 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
         return
       }
@@ -566,7 +566,7 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error.response?.data?.error?.code)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
         await this.updateProxyDie(proxy)
       }
 
@@ -704,10 +704,8 @@ export class FacebookService {
     const comment =
       response?.data?.data?.node?.comment_rendering_instance_for_feed_location
         ?.comments.edges?.[0]?.node;
-
     if (!comment) return null
     const commentId = comment?.id
-
 
     const commentMessage =
       comment?.preferred_body && comment?.preferred_body?.text
