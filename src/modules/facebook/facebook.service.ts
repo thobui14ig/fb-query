@@ -430,10 +430,15 @@ export class FacebookService {
     let after = null;
     let hasNextPage = true;
     let responsExpected = null;
+    let commentCount = null
 
     while (hasNextPage) {
       const response = await fetchCm(after);
       const pageInfo = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.page_info || {};
+      const count = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
+      if (count) {
+        commentCount = count
+      }
       hasNextPage = pageInfo.has_next_page;
       after = pageInfo.end_cursor;
       await this.delay(500)
@@ -469,7 +474,7 @@ export class FacebookService {
     })
 
     userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id)) || userIdComment) : isCommentExit.uid
-    const totalCount = responsExpected?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
+    const totalCount = commentCount
 
     return {
       commentId,
