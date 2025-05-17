@@ -130,18 +130,11 @@ export class MonitoringService implements OnModuleInit {
   }
 
   async startProcessTotalCount() {
-    console.log("🚀 ~1111111111111111111111111111111111111111111111111111111111111111111111111:")
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
 
     const processLinksPulic = async () => {
       for (const link of groupPost.public ?? []) {
-        if (link.linkUrl === 'https://www.facebook.com/share/v/14tGMUq3BzE/?mibextid=WC7FNe') {
-          console.log("🚀 ~2222222222222222222222222222222222222222222222222222222222222222222222222:")
-
-          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", link.id)
-
-        }
         try {
           const proxy = await this.getRandomProxy()
           if (!proxy) continue
@@ -155,8 +148,6 @@ export class MonitoringService implements OnModuleInit {
             res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
           }
           const totalCount = res?.totalCount
-          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", totalCount)
-
 
           if (isNumber(totalCount)) {
             link.countBefore = totalCount
