@@ -243,7 +243,7 @@ export class FacebookService {
       const id = `feedback:${postId}`;
       const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
       const httpsAgent = this.getHttpAgent(proxy)
-      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
+      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
       if (!facebookId) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
@@ -597,11 +597,9 @@ export class FacebookService {
       const id = `feedback:${postId}`;
       const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
       const httpsAgent = this.getHttpAgent(proxy)
-      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
+      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
       if (!facebookId) {
-        console.log("🚀 ~ getCommentByCookie ~ proxy:", proxy)
-
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
 
         return null
@@ -1033,30 +1031,46 @@ export class FacebookService {
     }
   }
 
-  async getInfoAccountsByCookie(httpsAgent, cookie) {
-    const cookies = this.changeCookiesFb(cookie);
-    const dataUser = await firstValueFrom(
-      this.httpService.get('https://www.facebook.com', {
-        headers: {
-          Cookie: this.formatCookies(cookies)
-        },
-        httpsAgent
-      }),
-    );
+  async getInfoAccountsByCookie(cookie) {
+    const maxRetries = 3;
 
-    const dtsgMatch = dataUser.data.match(/DTSGInitialData",\[\],{"token":"(.*?)"}/);
-    const jazoestMatch = dataUser.data.match(/&jazoest=(.*?)"/);
-    const userIdMatch = dataUser.data.match(/"USER_ID":"(.*?)"/);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const proxy = await this.getRandomProxy();
+        if (!proxy) return null
+        const httpsAgent = this.getHttpAgent(proxy);
+        const cookies = this.changeCookiesFb(cookie);
 
-    if (dtsgMatch && jazoestMatch && userIdMatch) {
-      const fbDtsg = dtsgMatch[1];
-      const jazoest = jazoestMatch[1];
-      const facebookId = userIdMatch[1];
+        const dataUser = await firstValueFrom(
+          this.httpService.get('https://www.facebook.com', {
+            headers: {
+              Cookie: this.formatCookies(cookies),
+            },
+            httpsAgent,
+          }),
+        );
 
-      return { fbDtsg, jazoest, facebookId }
+        const dtsgMatch = dataUser.data.match(/DTSGInitialData",\[\],{"token":"(.*?)"}/);
+        const jazoestMatch = dataUser.data.match(/&jazoest=(.*?)"/);
+        const userIdMatch = dataUser.data.match(/"USER_ID":"(.*?)"/);
+
+        if (dtsgMatch && jazoestMatch && userIdMatch) {
+          const fbDtsg = dtsgMatch[1];
+          const jazoest = jazoestMatch[1];
+          const facebookId = userIdMatch[1];
+          return { fbDtsg, jazoest, facebookId };
+        }
+
+      } catch (error) {
+        console.warn(`⚠️ Attempt ${attempt} failed: ${error.message}`);
+      }
+
+      // Optional: delay giữa các lần thử (nếu cần tránh spam)
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 giây
     }
 
-    return null
+    // Sau 3 lần đều fail
+    return null;
   }
 
   async getUuidByCookie(uuid: string) {
