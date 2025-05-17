@@ -327,9 +327,9 @@ export class FacebookService {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
 
-      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-      }
+      // if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+      //   await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      // }
 
       return true
     }
@@ -692,10 +692,10 @@ export class FacebookService {
         return
       }
 
-      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-        return
-      }
+      // if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+      //   await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      //   return
+      // }
 
       // await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       return null
@@ -1099,10 +1099,10 @@ export class FacebookService {
         return
       }
 
-      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-        return
-      }
+      // if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+      //   await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      //   return
+      // }
       return null
     }
   }
@@ -1149,10 +1149,10 @@ export class FacebookService {
         return
       }
 
-      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-        return
-      }
+      // if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+      //   await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      //   return
+      // }
       return null
     }
   }
