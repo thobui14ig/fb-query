@@ -116,7 +116,6 @@ export class MonitoringService implements OnModuleInit {
     const proxyInActive = await this.proxyRepository.find()
 
     for (const proxy of proxyInActive) {
-      console.log("🚀 ~ MonitoringService ~ checkProxyOk ~ proxy:", proxy)
       const httpsAgent = this.getHttpAgent(proxy)
       try {
         const response = await firstValueFrom(
