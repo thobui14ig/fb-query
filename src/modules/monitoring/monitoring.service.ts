@@ -124,6 +124,7 @@ export class MonitoringService implements OnModuleInit {
             httpsAgent
           }),
         );
+        await this.facebookService.updateProxyActive(proxy)
       } catch (error) {
         await this.facebookService.updateProxyDie(proxy)
       }
