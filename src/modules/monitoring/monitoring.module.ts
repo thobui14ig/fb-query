@@ -9,9 +9,10 @@ import { MonitoringService } from './monitoring.service';
 import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { ProxyEntity } from '../proxy/entities/proxy.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LinkEntity, CommentEntity, TokenEntity, CookieEntity, ProxyEntity, DelayEntity]), FacebookModule],
+  imports: [TypeOrmModule.forFeature([LinkEntity, CommentEntity, TokenEntity, CookieEntity, ProxyEntity, DelayEntity]), FacebookModule, HttpModule],
   controllers: [MonitoringController],
   providers: [MonitoringService],
   exports: [MonitoringService],

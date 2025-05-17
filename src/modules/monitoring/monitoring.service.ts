@@ -17,6 +17,10 @@ import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
 import { GroupedLinksByType } from './monitoring.service.i';
 import { isNumber } from 'class-validator';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
 
 type RefreshKey = 'refreshToken' | 'refreshCookie' | 'refreshProxy';
 @Injectable()
@@ -52,7 +56,7 @@ export class MonitoringService implements OnModuleInit {
     private proxyRepository: Repository<ProxyEntity>,
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
-
+    private readonly httpService: HttpService,
   ) {
   }
 
@@ -106,6 +110,26 @@ export class MonitoringService implements OnModuleInit {
 
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async checkProxyOk() {
+    const proxyInActive = await this.proxyRepository.find()
+
+    for (const proxy of proxyInActive) {
+      const httpsAgent = this.getHttpAgent(proxy)
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get('https://ipinfo.io/json', {
+            httpsAgent
+          }),
+        );
+      } catch (error) {
+        await this.facebookService.updateProxyDie(proxy)
+      }
+    }
+  }
+
+
 
   async startProcessTotalCount() {
     const postsStarted = await this.getPostStarted()
@@ -609,5 +633,13 @@ export class MonitoringService implements OnModuleInit {
         status: ProxyStatus.ACTIVE,
       }
     }))
+  }
+
+  getHttpAgent(proxy: ProxyEntity) {
+    const proxyArr = proxy?.proxyAddress.split(':')
+    const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+    const httpsAgent = new HttpsProxyAgent(agent);
+
+    return httpsAgent;
   }
 }

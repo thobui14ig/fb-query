@@ -6,14 +6,14 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
+import { isArray } from 'class-validator';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import fetch from 'node-fetch';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { IsNull, Not, Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkType } from '../links/entities/links.entity';
@@ -27,8 +27,6 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
-import { writeFile } from 'src/common/utils/file';
-import { isArray } from 'class-validator';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -98,7 +96,7 @@ export class FacebookService {
 
       return { login: true, accessToken: accessToken };
     } catch (error) {
-      console.log("🚀 ~ error:", error)
+      console.log("🚀 ~ error:", error?.message)
       return { login: false };
     }
   }
@@ -1216,7 +1214,6 @@ export class FacebookService {
   }
 
   updateProxyDie(proxy: ProxyEntity) {
-    console.log("🚀 ~ updateProxyDie ~ proxy:", proxy)
     return this.proxyRepository.save({ ...proxy, status: ProxyStatus.IN_ACTIVE })
   }
 
