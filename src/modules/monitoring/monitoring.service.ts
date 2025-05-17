@@ -147,6 +147,10 @@ export class MonitoringService implements OnModuleInit {
           res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
         }
         const totalCount = res?.totalCount
+        if (link.linkName === 'https://www.facebook.com/share/v/14tGMUq3BzE/?mibextid=WC7FNe') {
+          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", link.id, totalCount)
+
+        }
 
         if (isNumber(totalCount)) {
           link.countBefore = totalCount
