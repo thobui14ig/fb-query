@@ -1220,6 +1220,9 @@ export class FacebookService {
   updateProxyDie(proxy: ProxyEntity) {
     return this.proxyRepository.save({ ...proxy, status: ProxyStatus.IN_ACTIVE })
   }
+  updateProxyActive(proxy: ProxyEntity) {
+    return this.proxyRepository.save({ ...proxy, status: ProxyStatus.ACTIVE })
+  }
 
   async updateLinkPostIdInvalid(postId: string) {
     const links = await this.linkRepository.find({
