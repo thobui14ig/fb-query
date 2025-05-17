@@ -71,7 +71,7 @@ export class MonitoringService implements OnModuleInit {
   private async checkAndUpdateScheduler(key: RefreshKey) {
     const config = await this.delayRepository.find();
     if (!config.length) return;
-    const newRefreshMs = (config[0][key] ?? 60) * 60 * 1000;
+    const newRefreshMs = (config[0][key] ?? 60) * 1000;
 
     if (newRefreshMs !== this.currentRefreshMs[key]) {
       this.currentRefreshMs[key] = newRefreshMs;
@@ -103,7 +103,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  // @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -129,8 +129,6 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-
-
   async startProcessTotalCount() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -143,7 +141,7 @@ export class MonitoringService implements OnModuleInit {
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
         const {
           totalCount
-        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link) || {}
+        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true) || {}
 
         if (isNumber(totalCount)) {
           link.countBefore = totalCount

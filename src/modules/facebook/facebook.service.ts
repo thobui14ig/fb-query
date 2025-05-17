@@ -173,11 +173,11 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, type = 'RECENT_ACTIVITY_INTENT_V1') {
+  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false) {
     console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
-    const body = getBodyComment(postId, type);
+    const body = getBodyComment(postId);
 
     try {
       const response = await firstValueFrom(
@@ -199,7 +199,7 @@ export class FacebookService {
 
       if (!dataComment) {
         //bai viet ko co cmt moi nhat => lay all
-        dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, 'CHRONOLOGICAL_UNFILTERED_INTENT_V1', link)
+        dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, link, isGetCommentCount)
       }
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
@@ -234,7 +234,6 @@ export class FacebookService {
       return null
     }
   }
-
 
   async convertPublicToPrivate(proxy: ProxyEntity, postId: string, link: LinkEntity) {
     const cookieEntity = await this.getCookieActiveFromDb()
@@ -336,7 +335,7 @@ export class FacebookService {
     }
   }
 
-  async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, type: string, link: LinkEntity) {
+  async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, link: LinkEntity, isGetCommentCount: boolean) {
     const httpsAgent = this.getHttpAgent(proxy)
 
     const fetchCm = async (after = null) => {
@@ -366,7 +365,7 @@ export class FacebookService {
           fb_api_caller_class: 'RelayModern',
           fb_api_req_friendly_name: 'CommentListComponentsRootQuery',
           variables: `{
-          "commentsIntentToken": "${type}",
+          "commentsIntentToken": "CHRONOLOGICAL_UNFILTERED_INTENT_V1",
           "feedLocation": "PERMALINK",
           "feedbackSource": 2,
           "focusCommentID": null,
@@ -442,7 +441,7 @@ export class FacebookService {
       hasNextPage = pageInfo.has_next_page;
       after = pageInfo.end_cursor;
       await this.delay(500)
-      if (!hasNextPage) {
+      if (!hasNextPage || isGetCommentCount) {
         responsExpected = response
         break;
       }
