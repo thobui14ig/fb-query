@@ -135,7 +135,6 @@ export class MonitoringService implements OnModuleInit {
     const groupPost = this.groupPostsByType(postsStarted || []);
 
     const processLinksPulic = async () => {
-      console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ processLinksPulic:", JSON.stringify(groupPost.public))
       for (const link of groupPost.public ?? []) {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
@@ -143,7 +142,7 @@ export class MonitoringService implements OnModuleInit {
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
         let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true) || {} as any
 
-        if ((!res.commentId || !res.userIdComment) && link.postIdV1) {
+        if ((!res?.commentId || !res?.userIdComment) && link.postIdV1) {
           const postId = `feedback:${link.postIdV1}`;
           const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
           res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
