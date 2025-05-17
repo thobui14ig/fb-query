@@ -182,7 +182,6 @@ export class MonitoringService implements OnModuleInit {
         }
 
         let res = await getWithCookie() as any
-        console.log("🚀 ~ MonitoringService ~ processLinksPrivate ~ res:", res)
 
         if (res?.totalCount) {
           link.countBefore = res.totalCount
