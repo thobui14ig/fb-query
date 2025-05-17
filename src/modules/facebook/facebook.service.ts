@@ -328,7 +328,7 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       }
 
       return true
@@ -693,7 +693,7 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return
       }
 
@@ -1116,7 +1116,7 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return
       }
       return null
@@ -1166,7 +1166,7 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return
       }
       return null
