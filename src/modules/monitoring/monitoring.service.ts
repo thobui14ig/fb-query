@@ -20,6 +20,7 @@ import { isNumber } from 'class-validator';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+const proxy_check = require('proxy-check');
 
 
 type RefreshKey = 'refreshToken' | 'refreshCookie' | 'refreshProxy';
@@ -116,17 +117,19 @@ export class MonitoringService implements OnModuleInit {
     const proxyInActive = await this.proxyRepository.find()
 
     for (const proxy of proxyInActive) {
-      const httpsAgent = this.getHttpAgent(proxy)
-      try {
-        const response = await firstValueFrom(
-          this.httpService.get('https://ipinfo.io/json', {
-            httpsAgent
-          }),
-        );
-        await this.facebookService.updateProxyActive(proxy)
-      } catch (error) {
+      const [host, port, username, password] = proxy.proxyAddress.split(':');
+      const config = {
+        host,
+        port,
+        proxyAuth: `${username}:${password}`
+      };
+      proxy_check(config).then(async (res) => {
+        if (res) {
+          await this.facebookService.updateProxyActive(proxy)
+        }
+      }).catch(async (e) => {
         await this.facebookService.updateProxyDie(proxy)
-      }
+      });
     }
   }
 
