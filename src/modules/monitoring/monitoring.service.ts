@@ -136,30 +136,37 @@ export class MonitoringService implements OnModuleInit {
 
     const processLinksPulic = async () => {
       for (const link of groupPost.public ?? []) {
-        const proxy = await this.getRandomProxy()
-        if (!proxy) continue
-        const postId = `feedback:${link.postId}`;
-        const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
-        let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true) || {} as any
-
-        if ((!res?.commentId || !res?.userIdComment) && link.postIdV1) {
-          const postId = `feedback:${link.postIdV1}`;
-          const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
-          res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
-        }
-        const totalCount = res?.totalCount
         if (link.linkUrl === 'https://www.facebook.com/share/v/14tGMUq3BzE/?mibextid=WC7FNe') {
           console.log("🚀 ~2222222222222222222222222222222222222222222222222222222222222222222222222:")
 
-          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", link.id, totalCount)
+          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", link.id)
+
+        }
+        try {
+          const proxy = await this.getRandomProxy()
+          if (!proxy) continue
+          const postId = `feedback:${link.postId}`;
+          const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
+          let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true) || {} as any
+
+          if ((!res?.commentId || !res?.userIdComment) && link.postIdV1) {
+            const postId = `feedback:${link.postIdV1}`;
+            const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
+            res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
+          }
+          const totalCount = res?.totalCount
+          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", totalCount)
+
+
+          if (isNumber(totalCount)) {
+            link.countBefore = totalCount
+            link.countAfter = totalCount - (link.countBefore ?? 0)
+            await this.linkRepository.save(link)
+          }
+        } catch (error) {
 
         }
 
-        if (isNumber(totalCount)) {
-          link.countBefore = totalCount
-          link.countAfter = totalCount - (link.countBefore ?? 0)
-          await this.linkRepository.save(link)
-        }
       }
     }
 
