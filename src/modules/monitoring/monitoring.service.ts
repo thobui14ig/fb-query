@@ -135,6 +135,7 @@ export class MonitoringService implements OnModuleInit {
     const groupPost = this.groupPostsByType(postsStarted || []);
 
     const processLinksPulic = async () => {
+      console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ processLinksPulic:", groupPost.public)
       for (const link of groupPost.public ?? []) {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
