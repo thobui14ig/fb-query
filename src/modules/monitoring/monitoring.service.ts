@@ -139,9 +139,14 @@ export class MonitoringService implements OnModuleInit {
         if (!proxy) continue
         const postId = `feedback:${link.postId}`;
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
-        const {
-          totalCount
-        } = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true) || {}
+        let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true) || {} as any
+
+        if ((!res.commentId || !res.userIdComment) && link.postIdV1) {
+          const postId = `feedback:${link.postIdV1}`;
+          const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
+          res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link) || {} as any
+        }
+        const totalCount = res?.totalCount
 
         if (isNumber(totalCount)) {
           link.countBefore = totalCount
