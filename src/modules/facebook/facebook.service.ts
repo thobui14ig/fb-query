@@ -600,6 +600,8 @@ export class FacebookService {
       const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(httpsAgent, cookieEntity.cookie) || {}
 
       if (!facebookId) {
+        console.log("🚀 ~ getCommentByCookie ~ proxy:", proxy)
+
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
 
         return null
