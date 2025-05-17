@@ -164,6 +164,7 @@ export class MonitoringService implements OnModuleInit {
             await this.linkRepository.save(link)
           }
         } catch (error) {
+          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ error:", error?.message)
 
         }
 
