@@ -130,6 +130,7 @@ export class MonitoringService implements OnModuleInit {
   }
 
   async startProcessTotalCount() {
+    console.log("🚀 ~1111111111111111111111111111111111111111111111111111111111111111111111111:")
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
 
@@ -148,6 +149,8 @@ export class MonitoringService implements OnModuleInit {
         }
         const totalCount = res?.totalCount
         if (link.linkName === 'https://www.facebook.com/share/v/14tGMUq3BzE/?mibextid=WC7FNe') {
+          console.log("🚀 ~2222222222222222222222222222222222222222222222222222222222222222222222222:")
+
           console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ totalCount:", link.id, totalCount)
 
         }
