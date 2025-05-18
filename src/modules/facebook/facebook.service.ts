@@ -1413,6 +1413,7 @@ export class FacebookService {
         return match[1];
       }
       const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
+      console.log("🚀 ~ getUuidPuppeteer ~ match1:", match1)
       if (match1) {
         console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
 
