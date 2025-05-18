@@ -1406,6 +1406,7 @@ export class FacebookService {
         waitUntil: 'networkidle2'
       });
       const pageSource = await page.content()
+      console.log("🚀 ~ getUuidPuppeteer ~ pageSource:", pageSource)
       const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
       if (match) {
         console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
