@@ -1366,14 +1366,14 @@ export class FacebookService {
 
   async getUuidPuppeteer(uid: string) {
     console.log("🚀 ~ getUuidPuppeteer:")
-    const cookie = await this.cookieRepository.findOne({
-      where: {
-        status: CookieStatus.ACTIVE
-      }
-    })
-    if (!cookie) {
-      return null
-    }
+    // const cookie = await this.cookieRepository.findOne({
+    //   where: {
+    //     status: CookieStatus.ACTIVE
+    //   }
+    // })
+    // if (!cookie) {
+    //   return null
+    // }
     try {
       const proxyURL = 'http://ip.mproxy.vn:12370';
       const proxyUsername = 'chuongndh';
@@ -1397,8 +1397,8 @@ export class FacebookService {
         hasTouch: true,
         deviceScaleFactor: 3,
       });
-      // const rawCookie = `c_user=61576583694257; xs=8:3vDGMSL4LxLCrw:2:1747372963:-1:-1; fr=02aZuwwMYsDH1SvKv.AWfsiNvTN4FPb0gSPpPO509x06b-7umEcfvxwVd35rzJLxxWtQw.BoJsua..AAA.0.0.BoJsua.AWezcu9YxwTp-7UFSjPKrMQvSzM; datr=WcsmaKoNiQxwWPCtZqs8kGcS|EAAAAUaZA8jlABOyfXippdwMlgqr6vcZCmK0fOz6yXr4bDxy7LOKVLSm1x7rjhfZBpdl0XwDrXKOgLChItdSIsZBlzjWnOMshGEdS2VRtXNAv993nGXxOH4fs1FkzjYlCdY0qZAQsgIKBW9nn3g4ZAIttY1ZBuOCfOw6ZCoUAmXZAj1luakduDFaAqaGZC4BtP48WH1BeYoZAcxKmQZDZD`;
-      const cookies = this.parseCookieString(cookie.cookie);
+      const rawCookie = `c_user=61576583694257; xs=8:3vDGMSL4LxLCrw:2:1747372963:-1:-1; fr=02aZuwwMYsDH1SvKv.AWfsiNvTN4FPb0gSPpPO509x06b-7umEcfvxwVd35rzJLxxWtQw.BoJsua..AAA.0.0.BoJsua.AWezcu9YxwTp-7UFSjPKrMQvSzM; datr=WcsmaKoNiQxwWPCtZqs8kGcS|EAAAAUaZA8jlABOyfXippdwMlgqr6vcZCmK0fOz6yXr4bDxy7LOKVLSm1x7rjhfZBpdl0XwDrXKOgLChItdSIsZBlzjWnOMshGEdS2VRtXNAv993nGXxOH4fs1FkzjYlCdY0qZAQsgIKBW9nn3g4ZAIttY1ZBuOCfOw6ZCoUAmXZAj1luakduDFaAqaGZC4BtP48WH1BeYoZAcxKmQZDZD`;
+      const cookies = this.parseCookieString(rawCookie);
 
       // ✅ Set cookies
       await page.setCookie(...cookies);
