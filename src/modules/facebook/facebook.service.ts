@@ -13,7 +13,7 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkType } from '../links/entities/links.entity';
@@ -1076,15 +1076,18 @@ export class FacebookService {
   async getUuidByCookie(uuid: string) {
     const cookieEntity = await this.cookieRepository.findOne({
       where: {
-        status: CookieStatus.ACTIVE
+        status: In([CookieStatus.LIMIT, CookieStatus.ACTIVE])
       }
     })
     if (!cookieEntity) return null
+    const proxy = await this.getRandomProxy()
+    if (!proxy) return null
+    const httpsAgent = this.getHttpAgent(proxy)
     try {
-      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      const proxyArr = proxyhard.split(':')
-      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      const httpsAgent = new HttpsProxyAgent(agent);
+      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      // const proxyArr = proxyhard.split(':')
+      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      // const httpsAgent = new HttpsProxyAgent(agent);
       const cookies = this.changeCookiesFb(cookieEntity.cookie);
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -1126,15 +1129,18 @@ export class FacebookService {
   async getUuidByCookieV2(uuid: string) {
     const cookieEntity = await this.cookieRepository.findOne({
       where: {
-        status: CookieStatus.ACTIVE
+        status: In([CookieStatus.LIMIT, CookieStatus.ACTIVE])
       }
     })
     if (!cookieEntity) return null
+    const proxy = await this.getRandomProxy()
+    if (!proxy) return null
+    const httpsAgent = this.getHttpAgent(proxy)
     try {
-      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      const proxyArr = proxyhard.split(':')
-      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      const httpsAgent = new HttpsProxyAgent(agent);
+      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      // const proxyArr = proxyhard.split(':')
+      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      // const httpsAgent = new HttpsProxyAgent(agent);
       const cookies = this.changeCookiesFb(cookieEntity.cookie);
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -1175,10 +1181,13 @@ export class FacebookService {
 
   async getUuidPublic(uuid: string, proxy: ProxyEntity) {
     try {
-      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      const proxyArr = proxyhard.split(':')
-      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      const httpsAgent = new HttpsProxyAgent(agent);
+      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      // const proxyArr = proxyhard.split(':')
+      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      // const httpsAgent = new HttpsProxyAgent(agent);
+      const proxy = await this.getRandomProxy()
+      const httpsAgent = this.getHttpAgent(proxy)
+      if (!proxy) { return null }
 
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
