@@ -10,6 +10,7 @@ import { isArray } from 'class-validator';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import puppeteer from 'puppeteer';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
@@ -27,6 +28,7 @@ import {
   getHeaderProfileLink,
   getHeaderToken,
 } from './utils';
+import { writeFile } from 'src/common/utils/file';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -729,7 +731,7 @@ export class FacebookService {
       }
     })
 
-    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id)) || userIdComment) : isCommentExit.uid
+    userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUser(comment?.author.id)) || userIdComment) : isCommentExit.uid
 
     return {
       commentId,
@@ -742,11 +744,17 @@ export class FacebookService {
     };
   }
 
-  async getProfileLink(url: string, proxy: ProxyEntity) {
+  async getProfileLink(url: string) {
     const token = await this.getTokenActiveFromDb()
-    const cookieEntity = await this.getCookieActiveFromDb()
+    const cookieEntity = await this.getCookieActiveOrLimitFromDb()
+    const proxy = await this.getRandomProxy()
 
     try {
+      if (!proxy) {
+        return {
+          type: LinkType.UNDEFINED,
+        }
+      }
       const httpsAgent = this.getHttpAgent(proxy)
       console.log("----------Đang lấy thông tin url:", url)
       const { headers, cookies } = getHeaderProfileLink()
@@ -1074,11 +1082,7 @@ export class FacebookService {
   }
 
   async getUuidByCookie(uuid: string) {
-    const cookieEntity = await this.cookieRepository.findOne({
-      where: {
-        status: In([CookieStatus.LIMIT, CookieStatus.ACTIVE])
-      }
-    })
+    const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     if (!cookieEntity) return null
     const proxy = await this.getRandomProxy()
     if (!proxy) return null
@@ -1094,7 +1098,7 @@ export class FacebookService {
           headers: {
             Cookie: this.formatCookies(cookies)
           },
-          httpsAgent
+          // httpsAgent
         }),
       );
 
@@ -1127,11 +1131,7 @@ export class FacebookService {
   }
 
   async getUuidByCookieV2(uuid: string) {
-    const cookieEntity = await this.cookieRepository.findOne({
-      where: {
-        status: In([CookieStatus.LIMIT, CookieStatus.ACTIVE])
-      }
-    })
+    const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     if (!cookieEntity) return null
     const proxy = await this.getRandomProxy()
     if (!proxy) return null
@@ -1147,7 +1147,7 @@ export class FacebookService {
           headers: {
             Cookie: this.formatCookies(cookies)
           },
-          httpsAgent
+          // httpsAgent
         }),
       );
 
@@ -1179,7 +1179,7 @@ export class FacebookService {
     }
   }
 
-  async getUuidPublic(uuid: string, proxy: ProxyEntity) {
+  async getUuidPublic(uuid: string) {
     try {
       // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
       // const proxyArr = proxyhard.split(':')
@@ -1286,6 +1286,18 @@ export class FacebookService {
     return randomCookie
   }
 
+  async getCookieActiveOrLimitFromDb(): Promise<CookieEntity> {
+    const cookies = await this.cookieRepository.find({
+      where: {
+        status: In([CookieStatus.LIMIT, CookieStatus.ACTIVE])
+      }
+    })
+    const randomIndex = Math.floor(Math.random() * cookies.length);
+    const randomCookie = cookies[randomIndex];
+
+    return randomCookie
+  }
+
   async getTokenActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.tokenRepository.find({
       where: {
@@ -1313,29 +1325,31 @@ export class FacebookService {
     console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
 
     for (const comment of comments) {
-      const proxy = await this.getRandomProxy()
-      let uid = await this.getUuidPublic(comment.uid, proxy)
-      console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
-
-
+      let uid = await this.getUuidUser(comment.uid)
       if (!uid) {
-        uid = await this.getUuidByCookie(comment.uid)
-        console.log("🚀 ~ updateUUIDUser ~ getUuidByCookie:", uid)
+        uid = await this.getUuidPuppeteer(comment.uid)
       }
-      if (!uid) {
-        uid = await this.getUuidByCookieV2(comment.uid)
-        console.log("🚀 ~ updateUUIDUser ~ getUuidByCookieV2:", uid)
-
-      }
-
-      // if (!uid) {
-      //   uid = await this.getUuidPuppeteer(comment.uid)
-      // }
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
       }
     }
+  }
+
+  async getUuidUser(id: string) {
+    let uid = await this.getUuidPublic(id)
+    console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
+
+    if (!uid) {
+      uid = await this.getUuidByCookie(id)
+      console.log("🚀 ~ updateUUIDUser ~ getUuidByCookie:", uid)
+    }
+    if (!uid) {
+      uid = await this.getUuidByCookieV2(id)
+      console.log("🚀 ~ updateUUIDUser ~ getUuidByCookieV2:", uid)
+    }
+
+    return uid;
   }
 
   async getRandomProxy() {
@@ -1348,5 +1362,83 @@ export class FacebookService {
     const randomProxy = proxies[randomIndex];
 
     return randomProxy
+  }
+
+  async getUuidPuppeteer(uid: string) {
+    console.log("🚀 ~ getUuidPuppeteer:")
+    const cookie = await this.cookieRepository.findOne({
+      where: {
+        status: CookieStatus.ACTIVE
+      }
+    })
+    if (!cookie) {
+      return null
+    }
+    try {
+      const proxyURL = 'http://ip.mproxy.vn:12370';
+      const proxyUsername = 'chuongndh';
+      const proxyPassword = 'LOKeNCbTGeI1t';
+      const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`]
+      });
+      const page = await browser.newPage();
+      await page.authenticate({
+        username: proxyUsername,
+        password: proxyPassword,
+      });
+      // Navigate the page to a URL.
+      await page.setUserAgent(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+      );
+      await page.setViewport({
+        width: 375,
+        height: 812,
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 3,
+      });
+      // const rawCookie = `c_user=61576583694257; xs=8:3vDGMSL4LxLCrw:2:1747372963:-1:-1; fr=02aZuwwMYsDH1SvKv.AWfsiNvTN4FPb0gSPpPO509x06b-7umEcfvxwVd35rzJLxxWtQw.BoJsua..AAA.0.0.BoJsua.AWezcu9YxwTp-7UFSjPKrMQvSzM; datr=WcsmaKoNiQxwWPCtZqs8kGcS|EAAAAUaZA8jlABOyfXippdwMlgqr6vcZCmK0fOz6yXr4bDxy7LOKVLSm1x7rjhfZBpdl0XwDrXKOgLChItdSIsZBlzjWnOMshGEdS2VRtXNAv993nGXxOH4fs1FkzjYlCdY0qZAQsgIKBW9nn3g4ZAIttY1ZBuOCfOw6ZCoUAmXZAj1luakduDFaAqaGZC4BtP48WH1BeYoZAcxKmQZDZD`;
+      const cookies = this.parseCookieString(cookie.cookie);
+
+      // ✅ Set cookies
+      await page.setCookie(...cookies);
+      await page.goto(`https://www.facebook.com/${uid}`, {
+        waitUntil: 'networkidle2'
+      });
+      const pageSource = await page.content()
+      const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+      if (match) {
+        console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
+
+        return match[1];
+      }
+      const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
+      if (match1) {
+        console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
+
+        return match1[1];
+      }
+
+      browser.close()
+      return null
+    } catch (error) {
+      console.log("🚀 ~ getUuidPuppeteer ~ error:", error?.message)
+      return null
+    }
+  }
+
+  parseCookieString(cookieStr: string) {
+    return cookieStr.split(';').map(cookie => {
+      const [name, ...rest] = cookie.trim().split('=');
+      const value = rest.join('=');
+      return {
+        name,
+        value,
+        domain: '.facebook.com',
+        path: '/',
+        httpOnly: false,
+        secure: true
+      };
+    });
   }
 }

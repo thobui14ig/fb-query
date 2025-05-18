@@ -404,11 +404,6 @@ export class MonitoringService implements OnModuleInit {
       this.isHandleUrl = false
       return
     };
-    const proxy = await this.getRandomProxy()
-    if (!proxy) {
-      this.isHandleUrl = false
-      return
-    };
 
     this.isHandleUrl = true
     const BATCH_SIZE = 10;
@@ -417,7 +412,7 @@ export class MonitoringService implements OnModuleInit {
       const batch = links.slice(i, i + BATCH_SIZE);
 
       await Promise.all(batch.map(async (link) => {
-        const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl, proxy) || {};
+        const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl) || {};
 
         if (postId) {
           const exitLink = await this.linkRepository.findOne({
