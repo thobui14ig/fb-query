@@ -80,6 +80,11 @@ export class LinkService {
   }
 
   async getAll(status: LinkStatus, level: LEVEL, userId: number) {
+    const startFDate = dayjs().tz(this.ukTimezone)
+      .format('YYYY-MM-DD 00:00:00')
+    const endDate = dayjs().tz(this.ukTimezone)
+      .format('YYYY-MM-DD 23:59:59')
+
     const response = await this.connection.query(`
         SELECT 
             l.id,
@@ -104,6 +109,7 @@ export class LinkService {
         LEFT JOIN 
             comments c ON c.link_id = l.id
         WHERE l.status = ? ${level === LEVEL.USER ? `AND l.user_id = ${userId}` : ''}
+        AND  l.created_at between "${startFDate}" AND "${endDate}"
         GROUP BY 
             l.id, u.email
             order by l.id desc
