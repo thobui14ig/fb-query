@@ -1366,67 +1366,55 @@ export class FacebookService {
 
   async getUuidPuppeteer(uid: string) {
     console.log("🚀 ~ getUuidPuppeteer:")
-    // const cookie = await this.cookieRepository.findOne({
-    //   where: {
-    //     status: CookieStatus.ACTIVE
-    //   }
-    // })
-    // if (!cookie) {
-    //   return null
-    // }
-    try {
-      const proxyURL = 'http://ip.mproxy.vn:12370';
-      const proxyUsername = 'chuongndh';
-      const proxyPassword = 'LOKeNCbTGeI1t';
-      const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`]
-      });
-      const page = await browser.newPage();
-      await page.authenticate({
-        username: proxyUsername,
-        password: proxyPassword,
-      });
-      // Navigate the page to a URL.
-      await page.setUserAgent(
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
-      );
-      await page.setViewport({
-        width: 375,
-        height: 812,
-        isMobile: true,
-        hasTouch: true,
-        deviceScaleFactor: 3,
-      });
-      const rawCookie = `c_user=61576583694257; xs=8:3vDGMSL4LxLCrw:2:1747372963:-1:-1; fr=02aZuwwMYsDH1SvKv.AWfsiNvTN4FPb0gSPpPO509x06b-7umEcfvxwVd35rzJLxxWtQw.BoJsua..AAA.0.0.BoJsua.AWezcu9YxwTp-7UFSjPKrMQvSzM; datr=WcsmaKoNiQxwWPCtZqs8kGcS|EAAAAUaZA8jlABOyfXippdwMlgqr6vcZCmK0fOz6yXr4bDxy7LOKVLSm1x7rjhfZBpdl0XwDrXKOgLChItdSIsZBlzjWnOMshGEdS2VRtXNAv993nGXxOH4fs1FkzjYlCdY0qZAQsgIKBW9nn3g4ZAIttY1ZBuOCfOw6ZCoUAmXZAj1luakduDFaAqaGZC4BtP48WH1BeYoZAcxKmQZDZD`;
-      const cookies = this.parseCookieString(rawCookie);
+    const proxyURL = 'http://ip.mproxy.vn:12370';
+    const proxyUsername = 'chuongndh';
+    const proxyPassword = 'LOKeNCbTGeI1t';
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`],
+      headless: false
+    });
+    const page = await browser.newPage();
+    await page.authenticate({
+      username: proxyUsername,
+      password: proxyPassword,
+    });
+    // Navigate the page to a URL.
+    await page.setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+    );
+    await page.setViewport({
+      width: 375,
+      height: 812,
+      isMobile: true,
+      hasTouch: true,
+      deviceScaleFactor: 3,
+    });
+    const rawCookie = `presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1747568637720%2C%22v%22%3A1%7D;fr=1qCO1k9f0YkkoKLHp.AWcdcPgBEcQXVl4p83o5abugxsN-CyVGGKll5K0YS_kerzQ7vT0.BoIb1L..AAA.0.0.BoKcf3.AWf6ECkOUoOgbxZGQWwRyg7q2Qo;xs=12%3AOyZun9iXsJewhg%3A2%3A1747568622%3A-1%3A-1;ps_l=1;datr=RBTyZ9xS4PWsLxy6iUAXG3JX;ps_n=1;sb=dhjyZ34ooz9bJta7qZ9BJ1nT;ar_debug=1;dpr=2;c_user=61575018390746;wd=386x495;`;
+    const cookies = this.parseCookieString(rawCookie);
 
-      // ✅ Set cookies
-      await page.setCookie(...cookies);
-      await page.goto(`https://www.facebook.com/${uid}`, {
-        waitUntil: 'networkidle2'
-      });
-      const pageSource = await page.content()
-      console.log("🚀 ~ getUuidPuppeteer ~ pageSource:", pageSource)
-      const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
-      if (match) {
-        console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
+    // ✅ Set cookies
+    await page.setCookie(...cookies);
+    await page.goto(`https://www.facebook.com/${uid}`, {
+      waitUntil: 'networkidle2'
+    });
+    const pageSource = await page.content()
+    writeFile(pageSource, '22222222')
+    const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+    if (match) {
+      console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
 
-        return match[1];
-      }
-      const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
-      console.log("🚀 ~ getUuidPuppeteer ~ match1:", match1)
-      if (match1) {
-        console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
-
-        return match1[1];
-      }
-
-      browser.close()
-      return null
-    } catch (error) {
-      console.log("🚀 ~ getUuidPuppeteer ~ error:", error?.message)
-      return null
+      return match[1];
     }
+    const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
+    console.log("🚀 ~ getUuidPuppeteer ~ match1:", match1)
+    if (match1) {
+      console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
+
+      return match1[1];
+    }
+
+    // browser.close()
+    return null
   }
 
   parseCookieString(cookieStr: string) {
