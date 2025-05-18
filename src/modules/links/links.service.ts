@@ -80,11 +80,48 @@ export class LinkService {
   }
 
   async getAll(status: LinkStatus, level: LEVEL, userId: number) {
-    const startFDate = dayjs().tz(this.ukTimezone)
-      .format('YYYY-MM-DD 00:00:00')
-    const endDate = dayjs().tz(this.ukTimezone)
-      .format('YYYY-MM-DD 23:59:59')
+    // const startDate = dayjs().tz(this.ukTimezone)
+    //   .format('YYYY-MM-DD 00:00:00')
+    // const endDate = dayjs().tz(this.ukTimezone)
+    //   .format('YYYY-MM-DD 23:59:59')
 
+    // const response = await this.connection.query(`
+    //   SELECT 
+    //       l.id,
+    //       l.error_message as errorMessage,
+    //       l.link_name as linkName,
+    //       l.link_url as linkUrl,
+    //       l.like,
+    //       l.post_id as postId,
+    //       l.delay_time as delayTime,
+    //       l.status,
+    //       l.created_at as createdAt,
+    //       l.last_comment_time as lastCommentTime,
+    //       l.process,
+    //       l.type,
+    //       u.email, 
+    //       l.count_before AS countBefore,
+    //       l.count_after AS countAfter
+    //   FROM 
+    //       links l
+    //   JOIN 
+    //       users u ON u.id = l.user_id
+    //   LEFT JOIN 
+    //       comments c ON c.link_id = l.id
+    //   WHERE l.status = ? ${level === LEVEL.USER ? `AND l.user_id = ${userId}` : ''}
+    //   AND  l.created_at between "${startDate}" AND "${endDate}"
+    //   GROUP BY 
+    //       l.id, u.email
+    //       order by l.id desc
+    // `, [status])
+
+    // return response.map((item) => {
+    //   return {
+    //     ...item,
+    //     createdAt: dayjs(item.createdAt).tz(this.ukTimezone)
+    //       .format('YYYY-MM-DD HH:mm:ss')
+    //   }
+    // })
     const response = await this.connection.query(`
         SELECT 
             l.id,
@@ -109,7 +146,6 @@ export class LinkService {
         LEFT JOIN 
             comments c ON c.link_id = l.id
         WHERE l.status = ? ${level === LEVEL.USER ? `AND l.user_id = ${userId}` : ''}
-        AND  l.created_at between "${startFDate}" AND "${endDate}"
         GROUP BY 
             l.id, u.email
             order by l.id desc
