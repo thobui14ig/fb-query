@@ -112,7 +112,7 @@ export class LinkService {
     return response.map((item) => {
       return {
         ...item,
-        createdAt: dayjs().tz(this.ukTimezone)
+        createdAt: dayjs(item.createdAt).tz(this.ukTimezone)
           .format('YYYY-MM-DD HH:mm:ss')
       }
     })
