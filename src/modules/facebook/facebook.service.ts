@@ -1098,7 +1098,7 @@ export class FacebookService {
           headers: {
             Cookie: this.formatCookies(cookies)
           },
-          // httpsAgent
+          httpsAgent
         }),
       );
 
@@ -1147,7 +1147,7 @@ export class FacebookService {
           headers: {
             Cookie: this.formatCookies(cookies)
           },
-          // httpsAgent
+          httpsAgent
         }),
       );
 
@@ -1277,7 +1277,7 @@ export class FacebookService {
   async getCookieActiveFromDb(): Promise<CookieEntity> {
     const cookies = await this.cookieRepository.find({
       where: {
-        status: CookieStatus.ACTIVE
+        status: In([CookieStatus.INACTIVE, CookieStatus.ACTIVE])
       }
     })
     const randomIndex = Math.floor(Math.random() * cookies.length);
@@ -1289,7 +1289,7 @@ export class FacebookService {
   async getCookieActiveOrLimitFromDb(): Promise<CookieEntity> {
     const cookies = await this.cookieRepository.find({
       where: {
-        status: In([CookieStatus.LIMIT, CookieStatus.ACTIVE])
+        status: In([CookieStatus.INACTIVE, CookieStatus.LIMIT, CookieStatus.ACTIVE])
       }
     })
     const randomIndex = Math.floor(Math.random() * cookies.length);

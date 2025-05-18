@@ -323,19 +323,24 @@ export class MonitoringService implements OnModuleInit {
         }
 
         let dataComment = null;
-        const random = this.getRandomNumber()
-        if (random % 2 === 0) {
+        // const random = this.getRandomNumber()
+        // if (random % 2 === 0) {
+        //   dataComment = await getWithCookie()
+
+        //   if ((!dataComment || !(dataComment as any)?.commentId)) {
+        //     dataComment = await getWithToken()
+        //   }
+        // } else {
+        //   dataComment = await getWithToken()
+
+        //   if ((!dataComment || !(dataComment as any)?.commentId)) {
+        //     dataComment = await getWithCookie()
+        //   }
+        // }
+        dataComment = await getWithToken()
+
+        if ((!dataComment || !(dataComment as any)?.commentId)) {
           dataComment = await getWithCookie()
-
-          if ((!dataComment || !(dataComment as any)?.commentId)) {
-            dataComment = await getWithToken()
-          }
-        } else {
-          dataComment = await getWithToken()
-
-          if ((!dataComment || !(dataComment as any)?.commentId)) {
-            dataComment = await getWithCookie()
-          }
         }
 
         const {
