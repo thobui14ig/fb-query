@@ -112,13 +112,9 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async checkProxyOk() {
-    const proxyInActive = await this.proxyRepository.find({
-      where: {
-        status: ProxyStatus.ACTIVE
-      }
-    })
+    const proxyInActive = await this.proxyRepository.find({})
 
     for (const proxy of proxyInActive) {
       const [host, port, username, password] = proxy.proxyAddress.split(':');
