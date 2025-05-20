@@ -755,11 +755,15 @@ export class FacebookService {
           type: LinkType.UNDEFINED,
         }
       }
-      const httpsAgent = this.getHttpAgent(proxy)
+      // const httpsAgent = this.getHttpAgent(proxy)
       console.log("----------Đang lấy thông tin url:", url)
       const { headers, cookies } = getHeaderProfileLink()
+      const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
+      const proxyArr = proxyhard.split(':')
+      const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+      const httpsAgent = new HttpsProxyAgent(agent);
 
-      const response = await await firstValueFrom(
+      const response = await firstValueFrom(
         this.httpService.get(url, {
           headers: {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -819,6 +823,7 @@ export class FacebookService {
 
       //case 3: reel public
       const matchVideopublic = htmlContent.match(/"post_id":"(.*?)"/);
+
       if (matchVideopublic && matchVideopublic[1]) {
         const postId = matchVideopublic[1]
         console.log("🚀 ~ getProfileLink ~ matchVideopublic:", postId)
@@ -1092,10 +1097,6 @@ export class FacebookService {
     if (!proxy) return null
     const httpsAgent = this.getHttpAgent(proxy)
     try {
-      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      // const proxyArr = proxyhard.split(':')
-      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      // const httpsAgent = new HttpsProxyAgent(agent);
       const cookies = this.changeCookiesFb(cookieEntity.cookie);
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -1141,10 +1142,6 @@ export class FacebookService {
     if (!proxy) return null
     const httpsAgent = this.getHttpAgent(proxy)
     try {
-      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      // const proxyArr = proxyhard.split(':')
-      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      // const httpsAgent = new HttpsProxyAgent(agent);
       const cookies = this.changeCookiesFb(cookieEntity.cookie);
       const dataUser = await firstValueFrom(
         this.httpService.get(`https://www.facebook.com/${uuid}`, {
@@ -1185,10 +1182,6 @@ export class FacebookService {
 
   async getUuidPublic(uuid: string) {
     try {
-      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      // const proxyArr = proxyhard.split(':')
-      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      // const httpsAgent = new HttpsProxyAgent(agent);
       const proxy = await this.getRandomProxy()
       const httpsAgent = this.getHttpAgent(proxy)
       if (!proxy) { return null }
