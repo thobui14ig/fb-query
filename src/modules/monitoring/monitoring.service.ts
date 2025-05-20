@@ -114,7 +114,36 @@ export class MonitoringService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async checkProxyOk() {
-    const proxyInActive = await this.proxyRepository.find()
+    const proxyInActive = await this.proxyRepository.find({
+      where: {
+        status: ProxyStatus.ACTIVE
+      }
+    })
+
+    for (const proxy of proxyInActive) {
+      const [host, port, username, password] = proxy.proxyAddress.split(':');
+      const config = {
+        host,
+        port,
+        proxyAuth: `${username}:${password}`
+      };
+      proxy_check(config).then(async (res) => {
+        if (res) {
+          await this.facebookService.updateProxyActive(proxy)
+        }
+      }).catch(async (e) => {
+        await this.facebookService.updateProxyDie(proxy)
+      });
+    }
+  }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async checkProxyNoOk() {
+    const proxyInActive = await this.proxyRepository.find({
+      where: {
+        status: ProxyStatus.ACTIVE
+      }
+    })
 
     for (const proxy of proxyInActive) {
       const [host, port, username, password] = proxy.proxyAddress.split(':');
