@@ -8,6 +8,7 @@ import { LEVEL } from '../user/entities/user.entity';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
+import { DelayEntity } from '../setting/entities/delay.entity';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -18,10 +19,13 @@ export class LinkService {
   constructor(
     @InjectRepository(LinkEntity)
     private repo: Repository<LinkEntity>,
+    @InjectRepository(DelayEntity)
+    private delayRepository: Repository<DelayEntity>,
     private connection: DataSource
   ) { }
 
   async create(params: CreateLinkParams) {
+    const config = await this.delayRepository.find();
     const linkEntities: Partial<LinkEntity>[] = []
     const linksInValid = [];
 
@@ -37,7 +41,7 @@ export class LinkService {
         const entity: Partial<LinkEntity> = {
           userId: params.userId,
           linkUrl: link.url,
-          delayTime: 3,
+          delayTime: params.status === LinkStatus.Started ? config[0].delayOn ?? 10 : config[0].delayOff ?? 10,
           status: params.status,
           linkName: link.name
         }
