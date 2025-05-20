@@ -176,7 +176,7 @@ export class FacebookService {
   }
 
   async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false) {
-    console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
+    // console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
@@ -514,7 +514,7 @@ export class FacebookService {
     if (!token) {
       return
     }
-    console.log("🚀 ~ getCommentByToken ~ postId:", postId)
+    // console.log("🚀 ~ getCommentByToken ~ postId:", postId)
 
     try {
       const httpsAgent = this.getHttpAgent(proxy)
@@ -593,7 +593,7 @@ export class FacebookService {
   async getCommentByCookie(proxy: ProxyEntity, postId: string, link: LinkEntity) {
     const cookieEntity = await this.getCookieActiveFromDb()
     if (!cookieEntity) return null
-    console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
+    // console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
 
     try {
       const id = `feedback:${postId}`;
