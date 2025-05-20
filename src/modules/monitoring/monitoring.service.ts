@@ -114,7 +114,7 @@ export class MonitoringService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async checkProxyOk() {
-    const proxyInActive = await this.proxyRepository.find({})
+    const proxyInActive = await this.proxyRepository.find()
 
     for (const proxy of proxyInActive) {
       const [host, port, username, password] = proxy.proxyAddress.split(':');
