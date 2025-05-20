@@ -906,6 +906,10 @@ export class FacebookService {
               postId: postId,
             }
           }
+        } else {
+          return {
+            type: LinkType.DIE,
+          }
         }
       }
 
