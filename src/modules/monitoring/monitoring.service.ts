@@ -149,12 +149,10 @@ export class MonitoringService implements OnModuleInit {
         proxyAuth: `${username}:${password}`
       };
       proxy_check(config).then(async (res) => {
-        console.log("🚀 ~ MonitoringService ~ proxy_check ~ res:", res)
         if (res) {
           await this.facebookService.updateProxyActive(proxy)
         }
       }).catch(async (e) => {
-        console.log("🚀 ~ MonitoringService ~ proxy_check ~ e:", e)
         await this.facebookService.updateProxyDie(proxy)
       });
     }
