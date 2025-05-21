@@ -112,7 +112,7 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async checkProxyOk() {
     const proxyInActive = await this.proxyRepository.find()
 
@@ -149,10 +149,12 @@ export class MonitoringService implements OnModuleInit {
         proxyAuth: `${username}:${password}`
       };
       proxy_check(config).then(async (res) => {
+        console.log("🚀 ~ MonitoringService ~ proxy_check ~ res:", res)
         if (res) {
           await this.facebookService.updateProxyActive(proxy)
         }
       }).catch(async (e) => {
+        console.log("🚀 ~ MonitoringService ~ proxy_check ~ e:", e)
         await this.facebookService.updateProxyDie(proxy)
       });
     }
@@ -469,7 +471,6 @@ export class MonitoringService implements OnModuleInit {
           type === LinkType.PRIVATE
             ? await this.facebookService.getPostIdV2WithCookie(link.linkUrl) || null
             : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
-
         await this.linkRepository.save(link);
       }));
     }
