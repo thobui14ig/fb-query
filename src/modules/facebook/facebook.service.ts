@@ -228,7 +228,7 @@ export class FacebookService {
       return res;
     } catch (error) {
       console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
         return
       }
@@ -570,7 +570,7 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", error.response?.data?.error?.code)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
       }
 
@@ -929,8 +929,9 @@ export class FacebookService {
       }
     } catch (error) {
       console.log("🚀 ~ getProfileLink ~ error:", error.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH')) {
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
+        return
       }
       if (error?.response?.status == 400) {
         if (error.response?.data?.error?.code === 368) {
