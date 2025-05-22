@@ -886,37 +886,37 @@ export class FacebookService {
         }
       }
 
-      if (token) {
-        const params = {
-          "order": "reverse_chronological",
-          "limit": "1000",
-          "access_token": token.tokenValue,
-          "created_time": "created_time"
-        }
+      // if (token) {
+      //   const params = {
+      //     "order": "reverse_chronological",
+      //     "limit": "1000",
+      //     "access_token": token.tokenValue,
+      //     "created_time": "created_time"
+      //   }
 
-        const responseV1 = await firstValueFrom(
-          this.httpService.get(url, {
-            headers: { ...headers },
-            httpsAgent,
-            params
-          }),
-        );
-        const htmlContentV1 = responseV1.data
-        const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
+      //   const responseV1 = await firstValueFrom(
+      //     this.httpService.get(url, {
+      //       headers: { ...headers },
+      //       httpsAgent,
+      //       params
+      //     }),
+      //   );
+      //   const htmlContentV1 = responseV1.data
+      //   const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
 
-        if (match1 && match1[1]) {
-          const postId = match1[1]
-          console.log("🚀 ~ getProfileLink ~ match1[1]:", postId)
+      //   if (match1 && match1[1]) {
+      //     const postId = match1[1]
+      //     console.log("🚀 ~ getProfileLink ~ match1[1]:", postId)
 
-          return {
-            type: LinkType.PRIVATE,
-            name: url,
-            postId: postId,
-          }
-        }
-      }
+      //     return {
+      //       type: LinkType.PRIVATE,
+      //       name: url,
+      //       postId: postId,
+      //     }
+      //   }
+      // }
 
-      if (!token || !cookieEntity) {
+      if (!cookieEntity) {
         return {
           type: LinkType.UNDEFINED,
         }
