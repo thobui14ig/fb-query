@@ -748,6 +748,7 @@ export class FacebookService {
     const token = await this.getTokenActiveFromDb()
     const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     const proxy = await this.getRandomProxy()
+    console.log("🚀 ~ getProfileLink ~ proxy:", proxy.proxyAddress)
 
     try {
       if (!proxy) {
@@ -797,6 +798,7 @@ export class FacebookService {
       if (matchVideoPublic && matchVideoPublic[1]) {
         console.log("🚀 ~ getProfileLink ~ match[1]:", matchVideoPublic[1])
         const postId = htmlContent?.split('"matchVideoPublic":"')[1]?.split('"')[0];
+        console.log("🚀 ~ getProfileLink ~ postId:", postId)
         const profileDecode = JSON.parse(matchVideoPublic[1])
         if (postId) {
           return {
