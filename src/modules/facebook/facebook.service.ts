@@ -826,7 +826,6 @@ export class FacebookService {
 
       if (matchVideopublic && matchVideopublic[1]) {
         const postId = matchVideopublic[1]
-        console.log("🚀 ~ getProfileLink ~ matchVideopublic:", postId)
         if (postId) {
           return {
             type: LinkType.PUBLIC,
@@ -837,37 +836,6 @@ export class FacebookService {
       }
 
       //case 2: cần token
-      if (token) {
-        const params = {
-          "order": "reverse_chronological",
-          "limit": "1000",
-          "access_token": token.tokenValue,
-          "created_time": "created_time"
-        }
-
-        const responseV1 = await firstValueFrom(
-          this.httpService.get(url, {
-            headers: { ...headers },
-            httpsAgent,
-            params
-          }),
-        );
-        const htmlContentV1 = responseV1.data
-
-        const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
-
-        if (match1 && match1[1]) {
-          const postId = match1[1]
-          console.log("🚀 ~ getProfileLink ~ match1[1]:", postId)
-
-          return {
-            type: LinkType.PRIVATE,
-            name: url,
-            postId: postId,
-          }
-        }
-      }
-
       if (cookieEntity) {
         const newCookies = this.changeCookiesFb(cookieEntity.cookie);
 
@@ -914,6 +882,36 @@ export class FacebookService {
         } else {
           return {
             type: LinkType.DIE,
+          }
+        }
+      }
+
+      if (token) {
+        const params = {
+          "order": "reverse_chronological",
+          "limit": "1000",
+          "access_token": token.tokenValue,
+          "created_time": "created_time"
+        }
+
+        const responseV1 = await firstValueFrom(
+          this.httpService.get(url, {
+            headers: { ...headers },
+            httpsAgent,
+            params
+          }),
+        );
+        const htmlContentV1 = responseV1.data
+        const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
+
+        if (match1 && match1[1]) {
+          const postId = match1[1]
+          console.log("🚀 ~ getProfileLink ~ match1[1]:", postId)
+
+          return {
+            type: LinkType.PRIVATE,
+            name: url,
+            postId: postId,
           }
         }
       }

@@ -362,11 +362,31 @@ export class MonitoringService implements OnModuleInit {
         //     dataComment = await getWithCookie()
         //   }
         // }
-        dataComment = await getWithToken()
+        const postId = `feedback:${link.postId}`;
+        const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
+        dataComment = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postId, link) || {} as any
 
-        if ((!dataComment || !(dataComment as any)?.commentId)) {
-          dataComment = await getWithCookie()
+        if (dataComment.commentId) {
+          const links = await this.linkRepository.find({
+            where: {
+              id: link.id
+            }
+          })
+          const linksChanged = links.map(item => {
+            return {
+              ...item,
+              type: LinkType.PUBLIC
+            }
+          })
+          await this.linkRepository.save(linksChanged)
+        } else {
+          dataComment = await getWithToken()
+
+          if ((!dataComment || !(dataComment as any)?.commentId)) {
+            dataComment = await getWithCookie()
+          }
         }
+
 
         const {
           commentId,
@@ -443,6 +463,7 @@ export class MonitoringService implements OnModuleInit {
 
       await Promise.all(batch.map(async (link) => {
         const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl) || {};
+        if (!postId) return null
 
         if (postId) {
           const exitLink = await this.linkRepository.findOne({
