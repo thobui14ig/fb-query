@@ -17,7 +17,7 @@ import { extractPhoneNumber } from 'src/common/utils/helper';
 import { In, IsNull, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { LinkEntity, LinkType } from '../links/entities/links.entity';
+import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import {
@@ -175,7 +175,7 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false) {
+  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false, isCheckPrivate = false) {
     // console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
@@ -203,8 +203,11 @@ export class FacebookService {
         //bai viet ko co cmt moi nhat => lay all
         dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, link, isGetCommentCount)
       }
+      if (isCheckPrivate && response?.data?.data?.node) {
+        await this.convertLinkPrivateToPublic(postIdNumber)
+      }
 
-      if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
+      if (!isCheckPrivate && !dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
         await this.convertPublicToPrivate(proxy, postIdNumber, link)
       }
 
@@ -237,6 +240,22 @@ export class FacebookService {
     }
   }
 
+  async convertLinkPrivateToPublic(postId: string) {
+    const links = await this.linkRepository.find({
+      where: {
+        postId
+      }
+    })
+
+    const entities = links.map((item) => {
+      return {
+        ...item,
+        type: LinkType.PUBLIC
+      }
+    })
+
+    return this.linkRepository.save(entities)
+  }
   async convertPublicToPrivate(proxy: ProxyEntity, postId: string, link: LinkEntity) {
     const cookieEntity = await this.getCookieActiveFromDb()
     if (!cookieEntity) return true
