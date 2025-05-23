@@ -17,7 +17,7 @@ import { extractPhoneNumber } from 'src/common/utils/helper';
 import { In, IsNull, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
+import { LinkEntity, LinkType } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
 import {
@@ -25,17 +25,16 @@ import {
   getBodyToken,
   getHeaderComment,
   getHeaderProfileFb,
-  getHeaderProfileLink,
-  getHeaderToken,
+  getHeaderToken
 } from './utils';
-import { writeFile } from 'src/common/utils/file';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
 
 @Injectable()
 export class FacebookService {
-  appId = '256002347743983';
+  // appId = '256002347743983';
+  appId = '202805033077166'
   fbUrl = 'https://www.facebook.com';
   fbGraphql = `https://www.facebook.com/api/graphql`;
   ukTimezone = 'Asia/Bangkok';
