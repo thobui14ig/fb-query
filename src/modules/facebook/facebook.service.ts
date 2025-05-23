@@ -866,10 +866,12 @@ export class FacebookService {
             httpsAgent,
           }),
         );
+        console.log("🚀 ~ getProfileLink ~ cookieEntity: 11111111")
 
         const text = responseWithCookie.data
         const regex = /"post_id":"(.*?)"/g;
         const matches = [...text.matchAll(regex)]
+
         if (matches.length > 0 && matches[1] && matches[1][1]) {
           const postId = matches[1][1]
           console.log("🚀 ~ getProfileLink - private ~ postId:", postId)
@@ -886,7 +888,6 @@ export class FacebookService {
           }
         }
       }
-
       // if (token) {
       //   const params = {
       //     "order": "reverse_chronological",
