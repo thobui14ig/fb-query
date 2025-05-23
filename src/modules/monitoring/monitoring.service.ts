@@ -327,8 +327,8 @@ export class MonitoringService implements OnModuleInit {
           id: link.id
         }
       })
-      try {
 
+      try {
         if (!currentLink) break;
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
@@ -386,7 +386,6 @@ export class MonitoringService implements OnModuleInit {
             dataComment = await getWithCookie()
           }
         }
-
 
         const {
           commentId,

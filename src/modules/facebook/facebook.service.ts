@@ -336,6 +336,8 @@ export class FacebookService {
         await this.linkRepository.save(link)
         return true
       } else {
+        console.log("🚀 ~ UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
+
         await this.updateLinkPostIdInvalid(postId)
         return null
       }
@@ -533,7 +535,6 @@ export class FacebookService {
     if (!token) {
       return
     }
-    // console.log("🚀 ~ getCommentByToken ~ postId:", postId)
 
     try {
       const httpsAgent = this.getHttpAgent(proxy)
@@ -601,6 +602,8 @@ export class FacebookService {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
         if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
+          console.log("🚀 ~ getCommentByToken UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
+
           await this.updateLinkPostIdInvalid(postId)
         }
       }
@@ -894,6 +897,7 @@ export class FacebookService {
             }
           }
         } else {
+          console.log("🚀 ~ LẤY PROFILE LINK DIE 1:", url)
           return {
             type: LinkType.DIE,
           }
@@ -906,6 +910,7 @@ export class FacebookService {
         }
       }
 
+      console.log("🚀 ~LẤY PROFILE LINK DIE2:", url)
       return {
         type: LinkType.DIE,
       }
@@ -924,6 +929,7 @@ export class FacebookService {
         }
       }
       if (error?.status === 404) {
+        console.log("🚀 ~ LẤY PROFILE LINK DIE:", 404, url)
         return {
           type: LinkType.DIE,
         }
