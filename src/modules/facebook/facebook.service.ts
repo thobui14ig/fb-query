@@ -602,9 +602,10 @@ export class FacebookService {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
         if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
-          console.log("🚀 ~ getCommentByToken UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
+          // console.log("🚀 ~ getCommentByToken UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
 
-          await this.updateLinkPostIdInvalid(postId)
+          // await this.updateLinkPostIdInvalid(postId)
+          await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
       }
 
