@@ -20,8 +20,11 @@ import { isNumber } from 'class-validator';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import * as dayjs from 'dayjs';
+import * as utc from 'dayjs/plugin/utc';
 const proxy_check = require('proxy-check');
 
+dayjs.extend(utc);
 
 type RefreshKey = 'refreshToken' | 'refreshCookie' | 'refreshProxy';
 @Injectable()
@@ -296,7 +299,7 @@ export class MonitoringService implements OnModuleInit {
             link.type = LinkType.PRIVATE
           }
 
-          const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
           linkEntities.push(linkEntity)
         }
 

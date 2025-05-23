@@ -886,8 +886,8 @@ export class FacebookService {
         const regex = /"post_id":"(.*?)"/g;
         const matches = [...text.matchAll(regex)]
 
-        if (matches.length > 0 && matches[1] && matches[1][1]) {
-          const postId = matches[1][1]
+        if (matches.length > 0 && matches[0] && matches[0][1]) {
+          const postId = matches[0][1]
           console.log("🚀 ~ getProfileLink - private ~ postId:", postId)
           if (postId) {
             return {
