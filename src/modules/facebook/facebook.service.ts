@@ -798,7 +798,6 @@ export class FacebookService {
       if (matchVideoPublic && matchVideoPublic[1]) {
         console.log("🚀 ~ getProfileLink ~ match[1]:", matchVideoPublic[1])
         const postId = htmlContent?.split('"matchVideoPublic":"')[1]?.split('"')[0];
-        console.log("🚀 ~ getProfileLink ~ postId:", postId)
         const profileDecode = JSON.parse(matchVideoPublic[1])
         if (postId) {
           return {
@@ -869,11 +868,11 @@ export class FacebookService {
         );
 
         const text = responseWithCookie.data
-        const matchpublic = text.match(/"post_id":"(.*?)"/);
-
-        if (matchpublic && matchpublic[1]) {
-          const postId = matchpublic[1]
-          console.log("🚀 ~ getProfileLink ~ postId:", postId)
+        const regex = /"post_id":"(.*?)"/g;
+        const matches = [...text.matchAll(regex)]
+        if (matches.length > 0 && matches[1] && matches[1][1]) {
+          const postId = matches[1][1]
+          console.log("🚀 ~ getProfileLink - private ~ postId:", postId)
           if (postId) {
             return {
               type: LinkType.PRIVATE,
