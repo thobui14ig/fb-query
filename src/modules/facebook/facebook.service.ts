@@ -207,7 +207,7 @@ export class FacebookService {
         await this.convertLinkPrivateToPublic(postIdNumber)
       }
 
-      if (!isCheckPrivate && !dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
+      if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
         await this.convertPublicToPrivate(proxy, postIdNumber, link)
       }
 
