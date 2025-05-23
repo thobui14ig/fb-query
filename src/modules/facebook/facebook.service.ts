@@ -33,8 +33,8 @@ dayjs.extend(utc);
 
 @Injectable()
 export class FacebookService {
-  // appId = '256002347743983';
-  appId = '173847642670370'
+  appId = '256002347743983';
+  // appId = '173847642670370'
   fbUrl = 'https://www.facebook.com';
   fbGraphql = `https://www.facebook.com/api/graphql`;
   ukTimezone = 'Asia/Bangkok';
