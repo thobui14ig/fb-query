@@ -748,7 +748,6 @@ export class FacebookService {
     const token = await this.getTokenActiveFromDb()
     const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     const proxy = await this.getRandomProxy()
-    console.log("🚀 ~ getProfileLink ~ proxy:", proxy.proxyAddress)
 
     try {
       if (!proxy) {
@@ -758,11 +757,6 @@ export class FacebookService {
       }
       const httpsAgent = this.getHttpAgent(proxy)
       console.log("----------Đang lấy thông tin url:", url)
-      const { headers, cookies } = getHeaderProfileLink()
-      // const proxyhard = 'ip.mproxy.vn:12370:chuongndh:LOKeNCbTGeI1t'
-      // const proxyArr = proxyhard.split(':')
-      // const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
-      // const httpsAgent = new HttpsProxyAgent(agent);
 
       const response = await firstValueFrom(
         this.httpService.get(url, {
@@ -796,7 +790,6 @@ export class FacebookService {
 
       //case 1: video, post public
       if (matchVideoPublic && matchVideoPublic[1]) {
-        console.log("🚀 ~ getProfileLink ~ match[1]:", matchVideoPublic[1])
         const postId = htmlContent?.split('"matchVideoPublic":"')[1]?.split('"')[0];
         const profileDecode = JSON.parse(matchVideoPublic[1])
         if (postId) {
@@ -887,35 +880,6 @@ export class FacebookService {
           }
         }
       }
-      // if (token) {
-      //   const params = {
-      //     "order": "reverse_chronological",
-      //     "limit": "1000",
-      //     "access_token": token.tokenValue,
-      //     "created_time": "created_time"
-      //   }
-
-      //   const responseV1 = await firstValueFrom(
-      //     this.httpService.get(url, {
-      //       headers: { ...headers },
-      //       httpsAgent,
-      //       params
-      //     }),
-      //   );
-      //   const htmlContentV1 = responseV1.data
-      //   const match1 = htmlContentV1.match(/"video_id":"(.*?)"/);
-
-      //   if (match1 && match1[1]) {
-      //     const postId = match1[1]
-      //     console.log("🚀 ~ getProfileLink ~ match1[1]:", postId)
-
-      //     return {
-      //       type: LinkType.PRIVATE,
-      //       name: url,
-      //       postId: postId,
-      //     }
-      //   }
-      // }
 
       if (!cookieEntity) {
         return {
