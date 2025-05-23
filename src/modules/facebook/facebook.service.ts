@@ -588,7 +588,7 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", error.response)
+      console.log("🚀 ~ getCommentByToken ~ error:", error.response?.data?.error?.code)
       if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
       }
