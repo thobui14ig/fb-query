@@ -589,7 +589,7 @@ export class FacebookService {
         commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", postId, error.response?.data?.error?.code)
+      console.log("🚀 ~ getCommentByToken ~ error:", postId, error.response?.data)
       if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
       }
@@ -602,9 +602,9 @@ export class FacebookService {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
         if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
-          // console.log("🚀 ~ getCommentByToken UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
-
-          // await this.updateLinkPostIdInvalid(postId)
+          await this.updateStatusTokenDie(token, TokenStatus.DIE)
+        }
+        if (error.response?.data?.error?.code === 10) {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
       }
