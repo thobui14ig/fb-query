@@ -476,21 +476,21 @@ export class MonitoringService implements OnModuleInit {
             await this.linkRepository.delete(link.id);
             return; // skip saving
           }
+
+          if (!link.linkName || link.linkName.length === 0) {
+            link.linkName = name;
+          }
+
+          link.process = type === LinkType.UNDEFINED ? false : true;
+          link.type = type;
+          link.postId = postId;
+
+          link.postIdV1 =
+            type === LinkType.PRIVATE
+              ? await this.facebookService.getPostIdV2WithCookie(link.linkUrl) || null
+              : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
+          await this.linkRepository.save(link);
         }
-
-        if (!link.linkName || link.linkName.length === 0) {
-          link.linkName = name;
-        }
-
-        link.process = type === LinkType.UNDEFINED ? false : true;
-        link.type = type;
-        link.postId = postId;
-
-        link.postIdV1 =
-          type === LinkType.PRIVATE
-            ? await this.facebookService.getPostIdV2WithCookie(link.linkUrl) || null
-            : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
-        await this.linkRepository.save(link);
       }));
     }
 
