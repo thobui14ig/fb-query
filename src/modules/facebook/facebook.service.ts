@@ -336,9 +336,9 @@ export class FacebookService {
         await this.linkRepository.save(link)
         return true
       } else {
-        console.log("🚀 ~ UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
+        // console.log("🚀 ~ UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
 
-        await this.updateLinkPostIdInvalid(postId)
+        // await this.updateLinkPostIdInvalid(postId)
         return null
       }
     } catch (error) {
