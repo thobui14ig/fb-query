@@ -866,7 +866,6 @@ export class FacebookService {
             httpsAgent,
           }),
         );
-        console.log("🚀 ~ getProfileLink ~ cookieEntity: 11111111")
 
         const text = responseWithCookie.data
         const regex = /"post_id":"(.*?)"/g;
