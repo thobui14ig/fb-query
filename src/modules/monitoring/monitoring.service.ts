@@ -398,7 +398,6 @@ export class MonitoringService implements OnModuleInit {
           userNameComment,
           commentCreatedAt
         } = dataComment || {}
-        console.log("🚀 ~ MonitoringService ~ processLinkPrivate ~ dataComment:", dataComment)
 
         if (!commentId || !userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)
