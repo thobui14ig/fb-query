@@ -42,6 +42,9 @@ export class LinkEntity {
   @Column({ length: 255, nullable: true, name: 'post_id_v1' })
   postIdV1: string | null;
 
+  @Column({ length: 255, nullable: true, name: 'page_id' })
+  pageId: string | null;
+
   @Column({ type: 'datetime', nullable: true, name: 'last_comment_time' })
   lastCommentTime: Date | null;
 

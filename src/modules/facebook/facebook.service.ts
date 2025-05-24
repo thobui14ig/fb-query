@@ -14,12 +14,12 @@ import puppeteer from 'puppeteer';
 import { firstValueFrom } from 'rxjs';
 import { isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
-import { In, IsNull, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkType } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
-import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
+import { TokenEntity, TokenStatus, TokenType } from '../token/entities/token.entity';
 import {
   getBodyComment,
   getBodyToken,
@@ -27,6 +27,7 @@ import {
   getHeaderProfileFb,
   getHeaderToken
 } from './utils';
+import { writeFile } from 'src/common/utils/file';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -34,7 +35,7 @@ dayjs.extend(utc);
 @Injectable()
 export class FacebookService {
   // appId = '256002347743983';
-  appId = '165907476854626'
+  appId = '6628568379'
   fbUrl = 'https://www.facebook.com';
   fbGraphql = `https://www.facebook.com/api/graphql`;
   ukTimezone = 'Asia/Bangkok';
@@ -53,8 +54,21 @@ export class FacebookService {
     private commentRepository: Repository<CommentEntity>,
   ) { }
 
+  getAppIdByTypeToken(type: TokenType) {
+    if (type === TokenType.EAADo1) {
+      return '256002347743983'
+    }
+
+    if (type === TokenType.EAAAAAY) {
+      return '6628568379'
+    }
+
+    return '256002347743983'
+  }
+
   async getDataProfileFb(
     cookie: string,
+    type: TokenType
   ): Promise<{ login: boolean; accessToken?: string }> {
     const cookies = this.changeCookiesFb(cookie);
     const headers = getHeaderProfileFb();
@@ -63,6 +77,7 @@ export class FacebookService {
       withCredentials: true,
       timeout: 30000,
     };
+    const appId = this.getAppIdByTypeToken(type)
 
     try {
       const response = await firstValueFrom(
@@ -92,7 +107,7 @@ export class FacebookService {
         lsd,
         cookies,
         cUser,
-        this.appId,
+        appId,
       );
 
       return { login: true, accessToken: accessToken };
@@ -909,6 +924,12 @@ export class FacebookService {
 
         const regex = /"post_id":"(.*?)"/g;
         const matches = [...text.matchAll(regex)]
+        const page = text.match(/"mailbox_id":"(.*?)"/);
+        let pageId = null
+
+        if (page && page[1]) {
+          pageId = page[1]
+        }
 
         if (matches.length > 0 && matches[0] && matches[0][1]) {
           const postId = matches[0][1]
@@ -918,6 +939,7 @@ export class FacebookService {
               type: LinkType.PRIVATE,
               name: url,
               postId: postId,
+              pageId
             }
           }
         } else {
@@ -927,6 +949,7 @@ export class FacebookService {
           }
         }
       }
+
 
       if (!cookieEntity) {
         return {
@@ -1239,6 +1262,56 @@ export class FacebookService {
     }
   }
 
+  async getTotalCountWithToken(link: LinkEntity) {
+    try {
+      const proxy = await this.getRandomProxy()
+      const token = await this.getTokenEAAAAAYActiveFromDb()
+      if (!proxy || !token) { return null }
+
+      const httpsAgent = this.getHttpAgent(proxy)
+      const languages = [
+        'en-US,en;q=0.9',
+        'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+        'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7'
+      ];
+
+      const userAgent = faker.internet.userAgent()
+      const apceptLanguage = languages[Math.floor(Math.random() * languages.length)]
+
+      const headers = {
+        'authority': 'graph.facebook.com',
+        'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="99", "Opera";v="85"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'upgrade-insecure-requests': '1',
+        'user-agent': userAgent,
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'sec-fetch-site': 'none',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-user': '?1',
+        'sec-fetch-dest': 'document',
+        'accept-language': apceptLanguage,
+      };
+      const id = `${link.pageId}_${link.postId}`
+
+      const dataCommentToken = await firstValueFrom(
+        this.httpService.get(`https://graph.facebook.com/${id}?fields=comments.summary(count),reactions.summary(total_count)&access_token=${token.tokenValueV1}`, {
+          headers,
+          httpsAgent
+        }),
+      );
+      const { comments, reactions } = dataCommentToken.data || {}
+      const totalCountLike = reactions?.summary?.total_count
+      const totalCountCmt = comments?.count
+
+      return {
+        totalCountLike, totalCountCmt
+      }
+    } catch (error) {
+
+    }
+
+  }
 
   updateStatusTokenDie(token: TokenEntity, status: TokenStatus) {
     console.log("🚀 ~ updateTokenDie ~ token:", token)
@@ -1310,6 +1383,20 @@ export class FacebookService {
     const tokens = await this.tokenRepository.find({
       where: {
         status: TokenStatus.ACTIVE
+      }
+    })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
+  }
+
+  async getTokenEAAAAAYActiveFromDb(): Promise<TokenEntity> {
+    const tokens = await this.tokenRepository.find({
+      where: {
+        status: In([TokenStatus.LIMIT, TokenStatus.ACTIVE]),
+        tokenValueV1: Not(IsNull())
       }
     })
 

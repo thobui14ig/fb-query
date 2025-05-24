@@ -6,6 +6,11 @@ export enum TokenStatus {
   DIE = 'die',
 }
 
+export enum TokenType {
+  EAADo1 = 'EAADo1',
+  EAAAAAY = 'EAAAAAY',
+}
+
 @Entity('token')
 export class TokenEntity {
   @PrimaryGeneratedColumn()
@@ -13,6 +18,9 @@ export class TokenEntity {
 
   @Column({ name: 'token_value', type: 'varchar', length: 255 })
   tokenValue: string;
+
+  @Column({ name: 'token_value_v1', type: 'varchar', length: 255 })
+  tokenValueV1: string;
 
   @Column({ type: 'enum', enum: TokenStatus, default: TokenStatus.ACTIVE })
   status: TokenStatus;

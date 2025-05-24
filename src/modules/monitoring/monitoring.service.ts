@@ -199,21 +199,12 @@ export class MonitoringService implements OnModuleInit {
         const proxy = await this.getRandomProxy()
         if (!proxy) continue
 
-        const getWithCookie = async () => {
-          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId, link) || {}
+        let res = await this.facebookService.getTotalCountWithToken(link)
 
-          if ((!dataComment || !(dataComment as any)?.commentId) && link.postIdV1) {
-            dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
-          }
-
-          return dataComment
-        }
-
-        let res = await getWithCookie() as any
-
-        if (res?.totalCount) {
-          link.countBefore = res.totalCount
-          link.countAfter = res.totalCount - (link.countBefore ?? 0)
+        if (res?.totalCountCmt) {
+          link.countBefore = res.totalCountCmt
+          link.countAfter = res.totalCountCmt - (link.countBefore ?? 0)
+          link.like = res.totalCountLike
           await this.linkRepository.save(link)
         }
       }
@@ -396,7 +387,7 @@ export class MonitoringService implements OnModuleInit {
           phoneNumber,
           userIdComment,
           userNameComment,
-          commentCreatedAt
+          commentCreatedAt,
         } = dataComment || {}
 
         if (!commentId || !userIdComment) continue;
@@ -414,7 +405,7 @@ export class MonitoringService implements OnModuleInit {
             message: commentMessage,
             phoneNumber,
             name: userNameComment,
-            timeCreated: commentCreatedAt as any
+            timeCreated: commentCreatedAt as any,
           }
           const comment = await this.getComment(link.id, link.userId, commentId)
           commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
@@ -464,7 +455,7 @@ export class MonitoringService implements OnModuleInit {
       const batch = links.slice(i, i + BATCH_SIZE);
 
       await Promise.all(batch.map(async (link) => {
-        const { type, name, postId } = await this.facebookService.getProfileLink(link.linkUrl) || {};
+        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl) || {};
         if (postId) {
           const exitLink = await this.linkRepository.findOne({
             where: {
@@ -485,6 +476,7 @@ export class MonitoringService implements OnModuleInit {
         link.process = type === LinkType.UNDEFINED ? false : true;
         link.type = type;
         link.postId = postId;
+        link.pageId = pageId
 
         if (postId) {
           link.postIdV1 =
