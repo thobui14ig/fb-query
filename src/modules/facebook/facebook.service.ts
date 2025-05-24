@@ -33,8 +33,8 @@ dayjs.extend(utc);
 
 @Injectable()
 export class FacebookService {
-  appId = '256002347743983';
-  // appId = '173847642670370'
+  // appId = '256002347743983';
+  appId = '165907476854626'
   fbUrl = 'https://www.facebook.com';
   fbGraphql = `https://www.facebook.com/api/graphql`;
   ukTimezone = 'Asia/Bangkok';
@@ -615,7 +615,6 @@ export class FacebookService {
   async getCommentByCookie(proxy: ProxyEntity, postId: string, link: LinkEntity) {
     const cookieEntity = await this.getCookieActiveFromDb()
     if (!cookieEntity) return null
-    // console.log("🚀 ~ getCommentByCookie ~ getCommentByCookie:", postId)
 
     try {
       const id = `feedback:${postId}`;
@@ -883,6 +882,31 @@ export class FacebookService {
         );
 
         const text = responseWithCookie.data
+        //check block
+        const isBlock = (text as string).includes('Temporarily Blocked')
+
+        if (isBlock) {
+          await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+          return {
+            type: LinkType.UNDEFINED,
+          }
+        }
+        //check die
+        const isCookieDie = (text as string).includes('You must log in to continue')
+        if (isCookieDie) {
+          await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+          return {
+            type: LinkType.UNDEFINED,
+          }
+        }
+        const isDisable = (text as string).includes('After that your account will be permanently disabled')
+        if (isDisable) {
+          await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+          return {
+            type: LinkType.UNDEFINED,
+          }
+        }
+
         const regex = /"post_id":"(.*?)"/g;
         const matches = [...text.matchAll(regex)]
 

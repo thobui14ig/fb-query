@@ -398,6 +398,7 @@ export class MonitoringService implements OnModuleInit {
           userNameComment,
           commentCreatedAt
         } = dataComment || {}
+        console.log("🚀 ~ MonitoringService ~ processLinkPrivate ~ dataComment:", dataComment)
 
         if (!commentId || !userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)
@@ -419,7 +420,7 @@ export class MonitoringService implements OnModuleInit {
           const comment = await this.getComment(link.id, link.userId, commentId)
           commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
 
-          const linkEntity: LinkEntity = { ...link, lastCommentTime: commentCreatedAt as any }
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
           linkEntities.push(linkEntity)
         }
 

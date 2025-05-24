@@ -159,6 +159,8 @@ export class LinkService {
       return {
         ...item,
         createdAt: dayjs(item.createdAt).tz(this.ukTimezone)
+          .format('YYYY-MM-DD HH:mm:ss'),
+        lastCommentTime: dayjs(item.lastCommentTime).tz(this.ukTimezone)
           .format('YYYY-MM-DD HH:mm:ss')
       }
     })
