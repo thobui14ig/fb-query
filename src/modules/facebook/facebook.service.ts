@@ -640,7 +640,20 @@ export class FacebookService {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
         }
         if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
-          await this.updateStatusTokenDie(token, TokenStatus.DIE)
+          //kiểm tra lại 1 lần nữa link die hay token
+          const link = await this.linkRepository.findOne({
+            where: {
+              postId
+            }
+          })
+          const profile = await this.getProfileLink(link.linkUrl)
+          //nếu có profile trả về nghĩa là token die
+          if (profile?.postId) {
+            await this.updateStatusTokenDie(token, TokenStatus.DIE)
+          } else {
+            //link die
+            await this.linkRepository.save({ ...link, type: LinkType.DIE })
+          }
         }
         if (error.response?.data?.error?.code === 10) {
           await this.updateStatusTokenDie(token, TokenStatus.DIE)
