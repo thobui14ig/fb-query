@@ -342,20 +342,6 @@ export class MonitoringService implements OnModuleInit {
         }
 
         let dataComment = null;
-        // const random = this.getRandomNumber()
-        // if (random % 2 === 0) {
-        //   dataComment = await getWithCookie()
-
-        //   if ((!dataComment || !(dataComment as any)?.commentId)) {
-        //     dataComment = await getWithToken()
-        //   }
-        // } else {
-        //   dataComment = await getWithToken()
-
-        //   if ((!dataComment || !(dataComment as any)?.commentId)) {
-        //     dataComment = await getWithCookie()
-        //   }
-        // }
         const postId = `feedback:${link.postId}`;
         const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
         dataComment = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postId, link, false, true) || {} as any
@@ -455,7 +441,7 @@ export class MonitoringService implements OnModuleInit {
       const batch = links.slice(i, i + BATCH_SIZE);
 
       await Promise.all(batch.map(async (link) => {
-        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl) || {};
+        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl) || {} as any;
         if (postId) {
           const exitLink = await this.linkRepository.findOne({
             where: {

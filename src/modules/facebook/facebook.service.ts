@@ -190,7 +190,6 @@ export class FacebookService {
   }
 
   async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false, isCheckPrivate = false) {
-    // console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
@@ -204,6 +203,7 @@ export class FacebookService {
       )
 
       let dataComment = await this.handleDataComment(response, proxy, link)
+
 
       if (!dataComment && typeof response.data === 'string') {
         //story
@@ -222,7 +222,22 @@ export class FacebookService {
       }
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
-        await this.convertPublicToPrivate(proxy, postIdNumber, link)
+        const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
+        if (!status && !link.pageId) {
+          const data = await this.getCommentByToken(link.postId, proxy)
+          if (data?.commentId) {
+            const cookieEntity = await this.getCookieActiveOrLimitFromDb()
+            if (cookieEntity) {
+              link.type = LinkType.PRIVATE
+              const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
+              if (dataReconstruct?.pageId) {
+                link.pageId = dataReconstruct?.pageId
+              }
+              await this.linkRepository.save(link)
+            }
+
+          }
+        }
       }
 
       const { commentId,
@@ -272,7 +287,7 @@ export class FacebookService {
   }
   async convertPublicToPrivate(proxy: ProxyEntity, postId: string, link: LinkEntity) {
     const cookieEntity = await this.getCookieActiveFromDb()
-    if (!cookieEntity) return true
+    if (!cookieEntity) return false
 
     try {
       const id = `feedback:${postId}`;
@@ -283,7 +298,7 @@ export class FacebookService {
       if (!facebookId) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
 
-        return true
+        return false
       }
       const cookies = this.changeCookiesFb(cookieEntity.cookie)
 
@@ -344,17 +359,22 @@ export class FacebookService {
       );
 
       const dataJson = await response.data
-
+      if (dataJson?.errors[0]?.code === 1675004) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        return false
+      }
       if (dataJson?.data?.node) {
+
         link.type = LinkType.PRIVATE
+        const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
+        if (dataReconstruct?.pageId) {
+          link.pageId = dataReconstruct?.pageId
+        }
         await this.linkRepository.save(link)
         return true
-      } else {
-        // console.log("🚀 ~ UPDATE LINK DIEEEEEEEEEEEEEEEEEEEE:", postId)
-
-        // await this.updateLinkPostIdInvalid(postId)
-        return null
       }
+
+      return false
     } catch (error) {
       console.log("🚀 ~ convertPublicToPrivate ~ error:", error.message)
       if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
@@ -368,7 +388,7 @@ export class FacebookService {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       }
 
-      return true
+      return false
     }
   }
 
@@ -545,7 +565,9 @@ export class FacebookService {
   }
 
   async getCommentByToken(postId: string, proxy: ProxyEntity) {
+    // console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     const token = await this.getTokenActiveFromDb()
+
     if (!token) {
       return
     }
@@ -591,7 +613,9 @@ export class FacebookService {
           params
         }),
       );
+
       const res = dataCommentToken.data?.data[0]
+
       if (!res?.message?.length) return
 
       return {
@@ -867,87 +891,7 @@ export class FacebookService {
 
       //case 2: cần token
       if (cookieEntity) {
-        const newCookies = this.changeCookiesFb(cookieEntity.cookie);
-
-        const responseWithCookie = await firstValueFrom(
-          this.httpService.get(url, {
-            "headers": {
-              "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-              "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-              "cache-control": "max-age=0",
-              "dpr": "1",
-              "priority": "u=0, i",
-              "sec-ch-prefers-color-scheme": "light",
-              "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
-              "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.116\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.116\"",
-              "sec-ch-ua-mobile": "?0",
-              "sec-ch-ua-model": "\"\"",
-              "sec-ch-ua-platform": "\"Windows\"",
-              "sec-ch-ua-platform-version": "\"10.0.0\"",
-              "sec-fetch-dest": "document",
-              "sec-fetch-mode": "navigate",
-              "sec-fetch-site": "same-origin",
-              "sec-fetch-user": "?1",
-              "upgrade-insecure-requests": "1",
-              "viewport-width": "856",
-              "cookie": this.formatCookies(newCookies)
-            },
-            httpsAgent,
-          }),
-        );
-
-        const text = responseWithCookie.data
-        //check block
-        const isBlock = (text as string).includes('Temporarily Blocked')
-
-        if (isBlock) {
-          await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-          return {
-            type: LinkType.UNDEFINED,
-          }
-        }
-        //check die
-        const isCookieDie = (text as string).includes('You must log in to continue')
-        if (isCookieDie) {
-          await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-          return {
-            type: LinkType.UNDEFINED,
-          }
-        }
-        const isDisable = (text as string).includes('After that your account will be permanently disabled')
-        if (isDisable) {
-          await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-          return {
-            type: LinkType.UNDEFINED,
-          }
-        }
-
-        const regex = /"post_id":"(.*?)"/g;
-        const matches = [...text.matchAll(regex)]
-        const page = text.match(/"mailbox_id":"(.*?)"/);
-        let pageId = null
-
-        if (page && page[1]) {
-          pageId = page[1]
-        }
-
-        if (matches.length > 0 && matches[0] && matches[0][1]) {
-          const postId = matches[0][1]
-          console.log("🚀 ~ getProfileLink - private ~ postId:", postId)
-          if (postId) {
-            return {
-              type: LinkType.PRIVATE,
-              name: url,
-              postId: postId,
-              pageId
-            }
-          }
-        } else {
-          console.log("🚀 ~ LẤY PROFILE LINK DIE 1:", url)
-          return {
-            type: LinkType.DIE,
-          }
-        }
+        return await this.reGetProfileWithCookie(url, cookieEntity)
       }
 
 
@@ -983,6 +927,92 @@ export class FacebookService {
       }
       return {
         type: LinkType.UNDEFINED,
+      }
+    }
+  }
+
+  async reGetProfileWithCookie(url: string, cookieEntity: CookieEntity) {
+    const proxy = await this.getRandomProxy()
+    const httpsAgent = this.getHttpAgent(proxy)
+    const newCookies = this.changeCookiesFb(cookieEntity.cookie);
+
+    const responseWithCookie = await firstValueFrom(
+      this.httpService.get(url, {
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+          "cache-control": "max-age=0",
+          "dpr": "1",
+          "priority": "u=0, i",
+          "sec-ch-prefers-color-scheme": "light",
+          "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+          "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.116\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.116\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-model": "\"\"",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-ch-ua-platform-version": "\"10.0.0\"",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          "viewport-width": "856",
+          "cookie": this.formatCookies(newCookies)
+        },
+        httpsAgent,
+      }),
+    );
+
+    const text = responseWithCookie.data
+    //check block
+    const isBlock = (text as string).includes('Temporarily Blocked')
+
+    if (isBlock) {
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      return {
+        type: LinkType.UNDEFINED,
+      }
+    }
+    //check die
+    const isCookieDie = (text as string).includes('You must log in to continue')
+    if (isCookieDie) {
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      return {
+        type: LinkType.UNDEFINED,
+      }
+    }
+    const isDisable = (text as string).includes('After that your account will be permanently disabled')
+    if (isDisable) {
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      return {
+        type: LinkType.UNDEFINED,
+      }
+    }
+
+    const regex = /"post_id":"(.*?)"/g;
+    const matches = [...text.matchAll(regex)]
+    const page = text.match(/"mailbox_id":"(.*?)"/);
+    let pageId = null
+
+    if (page && page[1]) {
+      pageId = page[1]
+    }
+
+    if (matches.length > 0 && matches[0] && matches[0][1]) {
+      const postId = matches[0][1]
+      console.log("🚀 ~ getProfileLink - private ~ postId:", postId)
+      if (postId) {
+        return {
+          type: LinkType.PRIVATE,
+          name: url,
+          postId: postId,
+          pageId
+        }
+      }
+    } else {
+      console.log("🚀 ~ LẤY PROFILE LINK DIE 1:", url)
+      return {
+        type: LinkType.DIE,
       }
     }
   }
