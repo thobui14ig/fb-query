@@ -25,8 +25,11 @@ export class DelayEntity {
     @Column({ name: 'refresh_proxy', type: 'int', default: 0 })
     refreshProxy: number;
 
-    @Column({ name: 'delay_on', type: 'int', default: 0 })
-    delayOn: number;
+    @Column({ name: 'delay_on_public', type: 'int', default: 0 })
+    delayOnPublic: number;
+
+    @Column({ name: 'delay_on_private', type: 'int', default: 0 })
+    delayOnPrivate: number;
 
     @Column({ name: 'delay_off', type: 'int', default: 0 })
     delayOff: number;

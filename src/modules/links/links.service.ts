@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { LinkEntity, LinkStatus } from './entities/links.entity';
+import { LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
 import { CreateLinkParams } from './links.service.i';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { LEVEL } from '../user/entities/user.entity';
@@ -41,7 +41,7 @@ export class LinkService {
         const entity: Partial<LinkEntity> = {
           userId: params.userId,
           linkUrl: link.url,
-          delayTime: params.status === LinkStatus.Started ? config[0].delayOn ?? 10 : config[0].delayOff ?? 10,
+          delayTime: params.status === LinkStatus.Started ? config[0].delayOnPublic ?? 10 : config[0].delayOff ?? 10,
           status: params.status,
           linkName: link.name
         }

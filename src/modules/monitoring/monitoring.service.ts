@@ -464,6 +464,11 @@ export class MonitoringService implements OnModuleInit {
         link.postId = postId;
         link.pageId = pageId
 
+        if (type !== LinkType.UNDEFINED) {
+          const delayTime = await this.getDelayTime(link.status, link.type)
+          link.delayTime = delayTime
+        }
+
         if (postId) {
           link.postIdV1 =
             type === LinkType.PRIVATE
@@ -476,6 +481,11 @@ export class MonitoringService implements OnModuleInit {
     }
 
     this.isHandleUrl = false
+  }
+
+  async getDelayTime(status: LinkStatus, type: LinkType) {
+    const setting = await this.delayRepository.find()
+    return status === LinkStatus.Pending ? setting[0].delayOff * 60 : (type === LinkType.PUBLIC ? setting[0].delayOnPublic : setting[0].delayOnPrivate)
   }
 
   @Cron(CronExpression.EVERY_5_SECONDS)
@@ -565,6 +575,7 @@ export class MonitoringService implements OnModuleInit {
       const link = await this.linkRepository.findOne({
         where: {
           userId,
+          id: processDTO.id
         },
       });
 
@@ -573,8 +584,13 @@ export class MonitoringService implements OnModuleInit {
       }
     }
 
-    const setting = await this.delayRepository.find()
-    const dataUpdate = { ...processDTO, delayTime: processDTO.status === LinkStatus.Started ? setting[0].delayOn : setting[0].delayOff }
+    const link = await this.linkRepository.findOne({
+      where: {
+        id: processDTO.id
+      },
+    });
+    const delayTime = await this.getDelayTime(processDTO.status, link.type)
+    const dataUpdate = { ...processDTO, delayTime }
 
     const response = await this.linkRepository.save(dataUpdate);
 

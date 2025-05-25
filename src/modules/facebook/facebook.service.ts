@@ -17,7 +17,7 @@ import { extractPhoneNumber } from 'src/common/utils/helper';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
-import { LinkEntity, LinkType } from '../links/entities/links.entity';
+import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { TokenEntity, TokenStatus, TokenType } from '../token/entities/token.entity';
 import {
@@ -28,6 +28,7 @@ import {
   getHeaderToken
 } from './utils';
 import { writeFile } from 'src/common/utils/file';
+import { DelayEntity } from '../setting/entities/delay.entity';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -52,6 +53,8 @@ export class FacebookService {
     private linkRepository: Repository<LinkEntity>,
     @InjectRepository(CommentEntity)
     private commentRepository: Repository<CommentEntity>,
+    @InjectRepository(DelayEntity)
+    private delayRepository: Repository<DelayEntity>,
   ) { }
 
   getAppIdByTypeToken(type: TokenType) {
@@ -222,13 +225,17 @@ export class FacebookService {
       }
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
+        //get bang cookie
         const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
+        //get bang token
         if (!status && !link.pageId) {
           const data = await this.getCommentByToken(link.postId, proxy)
           if (data?.commentId) {
             const cookieEntity = await this.getCookieActiveOrLimitFromDb()
             if (cookieEntity) {
+              const delayTime = await this.getDelayTime(link.status, link.type)
               link.type = LinkType.PRIVATE
+              link.delayTime = delayTime
               const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
               if (dataReconstruct?.pageId) {
                 link.pageId = dataReconstruct?.pageId
@@ -364,8 +371,9 @@ export class FacebookService {
         return false
       }
       if (dataJson?.data?.node) {
-
+        const delayTime = await this.getDelayTime(link.status, link.type)
         link.type = LinkType.PRIVATE
+        link.delayTime = delayTime
         const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
         if (dataReconstruct?.pageId) {
           link.pageId = dataReconstruct?.pageId
@@ -1575,4 +1583,10 @@ export class FacebookService {
       };
     });
   }
+
+  async getDelayTime(status: LinkStatus, type: LinkType) {
+    const setting = await this.delayRepository.find()
+    return status === LinkStatus.Pending ? setting[0].delayOff * 60 : (type === LinkType.PUBLIC ? setting[0].delayOnPublic : setting[0].delayOnPrivate)
+  }
+
 }
