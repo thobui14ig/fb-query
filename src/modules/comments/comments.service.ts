@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { CommentEntity } from './entities/comment.entity';
 import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import * as dayjs from 'dayjs';
@@ -25,6 +25,11 @@ export class CommentsService {
   }
 
   async findAll(user: UserEntity) {
+    const startDate = dayjs().tz(this.vnTimezone)
+      .format('YYYY-MM-DD 00:00:00')
+    const endDate = dayjs().tz(this.vnTimezone)
+      .format('YYYY-MM-DD 23:59:59')
+
     let response: CommentEntity[] = []
     if (user.level === LEVEL.ADMIN) {
       response = await this.repo.find({
@@ -53,6 +58,9 @@ export class CommentsService {
         },
         order: {
           timeCreated: "DESC"
+        },
+        where: {
+          timeCreated: Between(startDate, endDate) as any
         }
       })
     } else {
@@ -83,7 +91,8 @@ export class CommentsService {
           userId: user.id,
           link: {
             userId: user.id,
-          }
+          },
+          timeCreated: Between(startDate, endDate) as any
         },
         order: {
           timeCreated: "DESC"
