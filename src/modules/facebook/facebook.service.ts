@@ -252,7 +252,7 @@ export class FacebookService {
         commentMessage,
         phoneNumber,
         userIdComment,
-        commentCreatedAt, totalCount } = dataComment || {}
+        commentCreatedAt, totalCount, totalLike } = dataComment || {}
 
       const res = {
         commentId,
@@ -261,7 +261,8 @@ export class FacebookService {
         phoneNumber,
         userIdComment,
         commentCreatedAt,
-        totalCount
+        totalCount,
+        totalLike
       };
 
       return res;
@@ -495,13 +496,15 @@ export class FacebookService {
     let hasNextPage = true;
     let responsExpected = null;
     let commentCount = null
+    let likeCount = null
 
     while (hasNextPage) {
       const response = await fetchCm(after);
       const pageInfo = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.page_info || {};
-      const count = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
-      if (count) {
-        commentCount = count
+      const comments = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments
+      if (comments) {
+        commentCount = comments?.total_count
+        likeCount = comments?.count
       }
       hasNextPage = pageInfo.has_next_page;
       after = pageInfo.end_cursor;
@@ -539,6 +542,7 @@ export class FacebookService {
 
     userIdComment = !isCommentExit ? (isNumeric(userIdComment) ? userIdComment : (await this.getUuidByCookie(comment?.author.id)) || userIdComment) : isCommentExit.uid
     const totalCount = commentCount
+    const totalLike = likeCount
 
     return {
       commentId,
@@ -547,7 +551,8 @@ export class FacebookService {
       phoneNumber,
       userIdComment,
       commentCreatedAt,
-      totalCount
+      totalCount,
+      totalLike
     };
   }
 
@@ -803,6 +808,7 @@ export class FacebookService {
     const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
     let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
     const totalCount = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
+    const totalLike = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.count
 
     const isCommentExit = await this.commentRepository.findOne({
       where: {
@@ -821,7 +827,8 @@ export class FacebookService {
       phoneNumber,
       userIdComment,
       commentCreatedAt,
-      totalCount
+      totalCount,
+      totalLike
     };
   }
 

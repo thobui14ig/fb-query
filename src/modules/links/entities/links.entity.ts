@@ -75,6 +75,12 @@ export class LinkEntity {
   @Column({ name: 'count_after', type: 'int' })
   countAfter: number;
 
+  @Column({ name: 'like_before', type: 'int' })
+  likeBefore: number;
+
+  @Column({ name: 'like_after', type: 'int' })
+  likeAfter: number;
+
   @CreateDateColumn({
     type: 'datetime',
     name: 'created_at',

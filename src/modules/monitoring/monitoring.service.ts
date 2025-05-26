@@ -180,10 +180,13 @@ export class MonitoringService implements OnModuleInit {
             res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link, true, false) || {} as any
           }
           const totalCount = res?.totalCount
+          const totalLike = res?.totalLike
 
           if (isNumber(totalCount)) {
             link.countBefore = totalCount
             link.countAfter = totalCount - (link.countBefore ?? 0)
+            link.likeBefore = res.totalLike
+            link.likeAfter = res.totalLike - (link.likeBefore ?? 0)
             await this.linkRepository.save(link)
           }
         } catch (error) {
@@ -204,7 +207,9 @@ export class MonitoringService implements OnModuleInit {
         if (res?.totalCountCmt) {
           link.countBefore = res.totalCountCmt
           link.countAfter = res.totalCountCmt - (link.countBefore ?? 0)
-          link.like = res.totalCountLike
+          link.likeBefore = res.totalCountLike
+          link.likeAfter = res.totalCountLike - (link.likeBefore ?? 0)
+
           await this.linkRepository.save(link)
         }
       }

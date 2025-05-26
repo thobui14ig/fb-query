@@ -84,8 +84,16 @@ export class LinkService {
   }
 
   async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean) {
-    const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo } = body
+    const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo, likeFrom, likeTo } = body
     let queryEntends = ``
+
+    if (differenceCountCmtFrom && differenceCountCmtTo) {
+      queryEntends += ` AND l.count_after between ${differenceCountCmtFrom} and ${differenceCountCmtTo}`
+    }
+
+    if (likeFrom && likeTo) {
+      queryEntends += ` AND l.like_after between ${likeFrom} and ${likeTo}`
+    }
 
     if (isFilter) {
       if (level === LEVEL.ADMIN) {
@@ -97,9 +105,6 @@ export class LinkService {
         }
         if (delayFrom && delayTo) {
           queryEntends += ` AND l.delay_time between ${delayFrom} and ${delayTo}`
-        }
-        if (differenceCountCmtFrom && differenceCountCmtTo) {
-          queryEntends += ` AND l.count_after between ${differenceCountCmtFrom} and ${differenceCountCmtTo}`
         }
       }
     } else {
@@ -151,10 +156,8 @@ export class LinkService {
       }
     })
 
-    if (level === LEVEL.ADMIN) {
-      if (lastCommentFrom && lastCommentTo) {
-        return res.filter((item) => item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
-      }
+    if (lastCommentFrom && lastCommentTo) {
+      return res.filter((item) => item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
     }
 
     return res

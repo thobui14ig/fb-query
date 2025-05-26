@@ -14,5 +14,7 @@ export interface BodyLinkQuery {
     differenceCountCmtTo?: number
     delayFrom?: number
     delayTo?: number
+    likeFrom?: number
+    likeTo?: number
     userId: number
 }
