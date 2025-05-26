@@ -294,6 +294,11 @@ export class MonitoringService implements OnModuleInit {
           linkEntities.push(linkEntity)
         }
 
+        if (currentLink.postId === '668468116145177') {
+          console.log("🚀 ~ MonitoringService ~ processLinkPublic ~ currentLink:", linkEntities)
+
+        }
+
         await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
       } catch (error) {
         console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
