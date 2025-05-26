@@ -25,9 +25,9 @@ export class CommentsService {
   }
 
   async findAll(user: UserEntity) {
-    const startDate = dayjs()
+    const startDate = dayjs.utc()
       .format('YYYY-MM-DD 00:00:00')
-    const endDate = dayjs()
+    const endDate = dayjs.utc()
       .format('YYYY-MM-DD 23:59:59')
 
     let response: CommentEntity[] = []
