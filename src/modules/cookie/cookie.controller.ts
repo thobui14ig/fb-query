@@ -1,20 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Req } from '@nestjs/common';
 import { CookieService } from './cookie.service';
 import { CreateCookieDto } from './dto/create-cookie.dto';
 import { UpdateCookieDto } from './dto/update-cookie.dto';
+import { getUser } from 'src/common/utils/user';
+import { Request } from 'express';
 
 @Controller('cookies')
 export class CookieController {
   constructor(private readonly cookieService: CookieService) { }
 
   @Post()
-  create(@Body() createCookieDto: CreateCookieDto) {
-    return this.cookieService.create(createCookieDto);
+  create(@Body() createCookieDto: CreateCookieDto, @Req() req: Request) {
+    const user = getUser(req);
+
+    return this.cookieService.create(createCookieDto, user.id);
   }
 
   @Get()
-  findAll() {
-    return this.cookieService.findAll();
+  findAll(@Req() req: Request) {
+    const user = getUser(req);
+    return this.cookieService.findAll(user.level, user.id);
   }
 
   @Get(':id')

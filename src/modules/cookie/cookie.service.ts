@@ -4,6 +4,7 @@ import { UpdateCookieDto } from './dto/update-cookie.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CookieEntity, CookieStatus } from './entities/cookie.entity';
+import { LEVEL } from '../user/entities/user.entity';
 
 @Injectable()
 export class CookieService {
@@ -12,17 +13,28 @@ export class CookieService {
     private repo: Repository<CookieEntity>,
   ) { }
 
-  create(params: CreateCookieDto) {
+  create(params: CreateCookieDto, userId: number) {
     const cookies = params.cookies.map((cookie) => {
       return {
         cookie,
-        status: CookieStatus.INACTIVE
+        status: CookieStatus.INACTIVE,
+        createdBy: userId
       }
     })
     return this.repo.save(cookies)
   }
 
-  findAll() {
+  findAll(level: LEVEL, userId: number) {
+    if (level === LEVEL.USER) {
+      return this.repo.find({
+        where: {
+          createdBy: userId
+        },
+        order: {
+          id: "DESC"
+        }
+      })
+    }
     return this.repo.find({
       order: {
         id: "DESC"

@@ -15,6 +15,9 @@ export class CookieEntity {
     @Column({ type: 'text' })
     cookie: string;
 
+    @Column({ name: 'created_by' })
+    createdBy: number;
+
     @Column({ type: 'enum', enum: CookieStatus, default: CookieStatus.ACTIVE })
     status: CookieStatus;
 }
