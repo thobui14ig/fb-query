@@ -290,7 +290,7 @@ export class MonitoringService implements OnModuleInit {
             link.type = LinkType.PRIVATE
           }
 
-          const linkEntity: LinkEntity = { ...link, lastCommentTime: dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
           linkEntities.push(linkEntity)
         }
 
