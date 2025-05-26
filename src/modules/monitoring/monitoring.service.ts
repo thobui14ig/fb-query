@@ -181,6 +181,7 @@ export class MonitoringService implements OnModuleInit {
           }
           const totalCount = res?.totalCount
           const totalLike = res?.totalLike
+          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ res:", res)
 
           if (isNumber(totalCount)) {
             link.countBefore = totalCount
