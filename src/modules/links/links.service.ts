@@ -129,7 +129,9 @@ export class LinkService {
             l.type,
             u.email, 
             l.count_before AS countBefore,
-            l.count_after AS countAfter
+            l.count_after AS countAfter,
+            l.like_before AS likeBefore,
+            l.like_after AS likeAfter
         FROM 
             links l
         JOIN 
