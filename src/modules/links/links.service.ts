@@ -107,10 +107,9 @@ export class LinkService {
           queryEntends += ` AND l.delay_time between ${delayFrom} and ${delayTo}`
         }
       }
-    } else {
-      if (level === LEVEL.USER) {
-        queryEntends += ` AND l.user_id = ${userIdByUerLogin}`
-      }
+    }
+    if (level === LEVEL.USER) {
+      queryEntends += ` AND l.user_id = ${userIdByUerLogin}`
     }
 
     let response: any[] = await this.connection.query(`
