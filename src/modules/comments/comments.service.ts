@@ -25,10 +25,9 @@ export class CommentsService {
   }
 
   async findAll(user: UserEntity) {
-    const startDate = dayjs.utc()
-      .format('YYYY-MM-DD 00:00:00')
-    const endDate = dayjs.utc()
-      .format('YYYY-MM-DD 23:59:59')
+    const vnNow = dayjs().tz(this.vnTimezone); // thời gian hiện tại theo giờ VN
+    const startDate = vnNow.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const endDate = vnNow.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
 
     let response: CommentEntity[] = []
     if (user.level === LEVEL.ADMIN) {
