@@ -9,12 +9,13 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { LinkService } from './links.service';
-import { CreateLinkDTO } from './dto/create-link.dto';
 import { Request } from 'express';
 import { getUser } from 'src/common/utils/user';
+import { CreateLinkDTO } from './dto/create-link.dto';
 import { UpdateLinkDTO } from './dto/update-link.dto';
-import { LinkStatus } from './entities/links.entity';
+import { LinkStatus, LinkType } from './entities/links.entity';
+import { LinkService } from './links.service';
+import { BodyLinkQuery } from './links.service.i';
 
 @Controller('links')
 export class LinkController {
@@ -34,11 +35,11 @@ export class LinkController {
     return this.linkService.getOne(id);
   }
 
-  @Get()
-  getLinks(@Req() req: Request, @Query('status') status: LinkStatus) {
+  @Post('/query')
+  getLinks(@Req() req: Request, @Body() body: BodyLinkQuery, @Query('status') status: LinkStatus, @Query('isFilter') isFilter: boolean) {
     const user = getUser(req);
 
-    return this.linkService.getAll(status, user.level, user.id);
+    return this.linkService.getAll(status, body, user.level, user.id, isFilter);
   }
 
   @Put()

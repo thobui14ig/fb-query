@@ -25,9 +25,9 @@ export class CommentsService {
   }
 
   async findAll(user: UserEntity) {
-    const startDate = dayjs().tz(this.vnTimezone)
+    const startDate = dayjs()
       .format('YYYY-MM-DD 00:00:00')
-    const endDate = dayjs().tz(this.vnTimezone)
+    const endDate = dayjs()
       .format('YYYY-MM-DD 23:59:59')
 
     let response: CommentEntity[] = []
@@ -100,12 +100,15 @@ export class CommentsService {
       })
     }
 
-    return response.map((item) => {
+    const res = response.map((item) => {
+      const utcTime = dayjs(item.timeCreated).format('YYYY-MM-DD HH:mm:ss')
+
       return {
         ...item,
-        timeCreated: dayjs(item.timeCreated).tz(this.vnTimezone).format('YYYY-MM-DD HH:mm:ss')
+        timeCreated: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss')
       }
     })
+    return res
   }
 
   findOne(id: number) {

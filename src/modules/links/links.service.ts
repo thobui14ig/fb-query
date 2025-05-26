@@ -1,14 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
-import { CreateLinkParams } from './links.service.i';
-import { UpdateLinkDTO } from './dto/update-link.dto';
-import { LEVEL } from '../user/entities/user.entity';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
+import { DataSource, Repository } from 'typeorm';
 import { DelayEntity } from '../setting/entities/delay.entity';
+import { LEVEL } from '../user/entities/user.entity';
+import { UpdateLinkDTO } from './dto/update-link.dto';
+import { LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
+import { BodyLinkQuery, CreateLinkParams } from './links.service.i';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -83,50 +83,32 @@ export class LinkService {
     });
   }
 
-  async getAll(status: LinkStatus, level: LEVEL, userId: number) {
-    // const startDate = dayjs().tz(this.ukTimezone)
-    //   .format('YYYY-MM-DD 00:00:00')
-    // const endDate = dayjs().tz(this.ukTimezone)
-    //   .format('YYYY-MM-DD 23:59:59')
+  async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean) {
+    const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo } = body
+    let queryEntends = ``
 
-    // const response = await this.connection.query(`
-    //   SELECT 
-    //       l.id,
-    //       l.error_message as errorMessage,
-    //       l.link_name as linkName,
-    //       l.link_url as linkUrl,
-    //       l.like,
-    //       l.post_id as postId,
-    //       l.delay_time as delayTime,
-    //       l.status,
-    //       l.created_at as createdAt,
-    //       l.last_comment_time as lastCommentTime,
-    //       l.process,
-    //       l.type,
-    //       u.email, 
-    //       l.count_before AS countBefore,
-    //       l.count_after AS countAfter
-    //   FROM 
-    //       links l
-    //   JOIN 
-    //       users u ON u.id = l.user_id
-    //   LEFT JOIN 
-    //       comments c ON c.link_id = l.id
-    //   WHERE l.status = ? ${level === LEVEL.USER ? `AND l.user_id = ${userId}` : ''}
-    //   AND  l.created_at between "${startDate}" AND "${endDate}"
-    //   GROUP BY 
-    //       l.id, u.email
-    //       order by l.id desc
-    // `, [status])
+    if (isFilter) {
+      if (level === LEVEL.ADMIN) {
+        if (type) {
+          queryEntends += ` AND l.type='${type}'`
+        }
+        if (userId) {
+          queryEntends += ` AND l.user_id=${userId}`
+        }
+        if (delayFrom && delayTo) {
+          queryEntends += ` AND l.delay_time between ${delayFrom} and ${delayTo}`
+        }
+        if (differenceCountCmtFrom && differenceCountCmtTo) {
+          queryEntends += ` AND l.count_after between ${differenceCountCmtFrom} and ${differenceCountCmtTo}`
+        }
+      }
+    } else {
+      if (level === LEVEL.USER) {
+        queryEntends += ` AND l.user_id = ${userIdByUerLogin}`
+      }
+    }
 
-    // return response.map((item) => {
-    //   return {
-    //     ...item,
-    //     createdAt: dayjs(item.createdAt).tz(this.ukTimezone)
-    //       .format('YYYY-MM-DD HH:mm:ss')
-    //   }
-    // })
-    const response = await this.connection.query(`
+    let response: any[] = await this.connection.query(`
         SELECT 
             l.id,
             l.error_message as errorMessage,
@@ -149,21 +131,33 @@ export class LinkService {
             users u ON u.id = l.user_id
         LEFT JOIN 
             comments c ON c.link_id = l.id
-        WHERE l.status = ? ${level === LEVEL.USER ? `AND l.user_id = ${userId}` : ''}
+        WHERE l.status = ? ${queryEntends}
         GROUP BY 
             l.id, u.email
             order by l.id desc
       `, [status])
 
-    return response.map((item) => {
+    const res = response.map((item) => {
+      const now = dayjs().utc()
+      const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
+      const diff = now.diff(utcLastCommentTime, 'minute')
+      const utcTimeCreate = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
+
+
       return {
         ...item,
-        createdAt: dayjs(item.createdAt).tz(this.ukTimezone)
-          .format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: item.lastCommentTime ? dayjs(item.lastCommentTime).tz(this.ukTimezone)
-          .format('YYYY-MM-DD HH:mm:ss') : null
+        createdAt: dayjs.utc(utcTimeCreate).format('YYYY-MM-DD HH:mm:ss'),
+        lastCommentTime: item.lastCommentTime ? diff : null
       }
     })
+
+    if (level === LEVEL.ADMIN) {
+      if (lastCommentFrom && lastCommentTo) {
+        return res.filter((item) => item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
+      }
+    }
+
+    return res
   }
 
   update(params: UpdateLinkDTO, level: LEVEL) {
