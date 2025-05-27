@@ -15,7 +15,7 @@ import { CreateLinkDTO } from './dto/create-link.dto';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
-import { BodyLinkQuery } from './links.service.i';
+import { BodyLinkQuery, EKeyHideCmt } from './links.service.i';
 
 @Controller('links')
 export class LinkController {
@@ -51,5 +51,12 @@ export class LinkController {
   @Delete('/:id')
   deleteUser(@Param('id') id: number) {
     return this.linkService.delete(id);
+  }
+
+  @Post('/hide-cmt/:linkId')
+  hideCmt(@Req() req: Request, @Param('linkId') linkId: number, @Query('type') type: EKeyHideCmt) {
+    const user = getUser(req);
+
+    return this.linkService.hideCmt(linkId, type, user.id)
   }
 }

@@ -81,6 +81,9 @@ export class LinkEntity {
   @Column({ name: 'like_after', type: 'int' })
   likeAfter: number;
 
+  @Column({ name: 'hide_cmt', type: 'boolean' })
+  hideCmt: boolean;
+
   @CreateDateColumn({
     type: 'datetime',
     name: 'created_at',
