@@ -179,10 +179,16 @@ export class MonitoringService implements OnModuleInit {
           const oldCountCmt = link.countBefore;
           const oldLike = link.likeBefore;
 
-          link.countBefore = totalCount;
-          link.countAfter = totalCount - (oldCountCmt ?? 0);
-          link.likeBefore = totalLike;
-          link.likeAfter = totalLike - (oldLike ?? 0);
+
+          if (totalCount) {
+            link.countBefore = totalCount;
+            link.countAfter = totalCount - (oldCountCmt ?? 0);
+          }
+
+          if (totalLike) {
+            link.likeBefore = totalLike;
+            link.likeAfter = totalLike - (oldLike ?? 0);
+          }
 
           await this.linkRepository.save(link);
         } catch (error) {
