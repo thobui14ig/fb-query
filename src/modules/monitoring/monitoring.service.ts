@@ -160,7 +160,6 @@ export class MonitoringService implements OnModuleInit {
       });
     }
   }
-  @Cron(CronExpression.EVERY_5_SECONDS)
 
   async startProcessTotalCount() {
     const postsStarted = await this.getPostStarted()
@@ -168,7 +167,7 @@ export class MonitoringService implements OnModuleInit {
 
     const processLinksPulic = async () => {
       const links = groupPost.public ?? [];
-      const batchSize = Math.floor(links.length / 3);
+      const batchSize = Math.floor((links.length % 3));
 
       // Hàm xử lý một link
       const processLink = async (link: LinkEntity) => {
@@ -205,7 +204,7 @@ export class MonitoringService implements OnModuleInit {
 
     const processLinksPrivate = async () => {
       const links = groupPost.private ?? [];
-      const batchSize = Math.floor(links.length / 3);
+      const batchSize = Math.floor(links.length % 3);
 
 
       const processPrivateLink = async (link: any) => {
