@@ -160,14 +160,15 @@ export class MonitoringService implements OnModuleInit {
       });
     }
   }
+  @Cron(CronExpression.EVERY_5_SECONDS)
 
   async startProcessTotalCount() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
 
     const processLinksPulic = async () => {
-      const batchSize = 20;
       const links = groupPost.public ?? [];
+      const batchSize = Math.floor(links.length / 3);
 
       // Hàm xử lý một link
       const processLink = async (link: LinkEntity) => {
@@ -197,22 +198,37 @@ export class MonitoringService implements OnModuleInit {
     }
 
     const processLinksPrivate = async () => {
-      for (const link of groupPost.private ?? []) {
-        const proxy = await this.getRandomProxy()
-        if (!proxy) continue
+      const links = groupPost.private ?? [];
+      const batchSize = Math.floor(links.length / 3);
 
-        let res = await this.facebookService.getTotalCountWithToken(link)
 
-        if (res?.totalCountCmt && res?.totalCountLike) {
-          const oldCountCmt = link.countBefore
-          const oldLike = link.likeBefore
-          link.countBefore = res.totalCountCmt
-          link.countAfter = res.totalCountCmt - (oldCountCmt ?? 0)
-          link.likeBefore = res.totalCountLike
-          link.likeAfter = res.totalCountLike - (oldLike ?? 0)
+      const processPrivateLink = async (link: any) => {
+        const proxy = await this.getRandomProxy();
+        if (!proxy) return;
 
-          await this.linkRepository.save(link)
+        try {
+          const res = await this.facebookService.getTotalCountWithToken(link);
+
+          if (res?.totalCountCmt && res?.totalCountLike) {
+            const oldCountCmt = link.countBefore;
+            const oldLike = link.likeBefore;
+
+            link.countBefore = res.totalCountCmt;
+            link.countAfter = res.totalCountCmt - (oldCountCmt ?? 0);
+            link.likeBefore = res.totalCountLike;
+            link.likeAfter = res.totalCountLike - (oldLike ?? 0);
+
+            await this.linkRepository.save(link);
+          }
+        } catch (error) {
+          console.log("🚀 ~ MonitoringService ~ processPrivateLinks ~ error:", error?.message);
         }
+      };
+
+      // Chia và xử lý theo batch 10 phần tử một lần
+      for (let i = 0; i < links.length; i += batchSize) {
+        const batch = links.slice(i, i + batchSize);
+        await Promise.all(batch.map(link => processPrivateLink(link)));
       }
     }
 
