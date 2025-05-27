@@ -167,7 +167,7 @@ export class MonitoringService implements OnModuleInit {
 
     const processLinksPulic = async () => {
       const links = groupPost.public ?? [];
-      const batchSize = Math.floor((links.length % 3));
+      const batchSize = 10;
 
       // Hàm xử lý một link
       const processLink = async (link: LinkEntity) => {
@@ -204,7 +204,7 @@ export class MonitoringService implements OnModuleInit {
 
     const processLinksPrivate = async () => {
       const links = groupPost.private ?? [];
-      const batchSize = Math.floor(links.length % 3);
+      const batchSize = 10;
 
 
       const processPrivateLink = async (link: any) => {
