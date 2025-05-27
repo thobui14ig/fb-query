@@ -166,35 +166,33 @@ export class MonitoringService implements OnModuleInit {
     const groupPost = this.groupPostsByType(postsStarted || []);
 
     const processLinksPulic = async () => {
-      for (const link of groupPost.public ?? []) {
+      const batchSize = 20;
+      const links = groupPost.public ?? [];
+
+      // Hàm xử lý một link
+      const processLink = async (link: LinkEntity) => {
         try {
-          const proxy = await this.getRandomProxy()
-          if (!proxy) continue
-          const postId = `feedback:${link.postId}`;
-          const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
-          let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, true, false) || {} as any
+          const res = await this.facebookService.getCountLikePublic(link.linkUrl);
+          const totalCount = res?.totalCount;
+          const totalLike = res?.totalLike;
+          const oldCountCmt = link.countBefore;
+          const oldLike = link.likeBefore;
 
-          if ((!res?.commentId || !res?.userIdComment) && link.postIdV1) {
-            const postId = `feedback:${link.postIdV1}`;
-            const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
-            res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link, true, false) || {} as any
-          }
-          const totalCount = res?.totalCount
-          const totalLike = res?.totalLike
-          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ res:", res)
+          link.countBefore = totalCount;
+          link.countAfter = totalCount - (oldCountCmt ?? 0);
+          link.likeBefore = totalLike;
+          link.likeAfter = totalLike - (oldLike ?? 0);
 
-          if (isNumber(totalCount)) {
-            link.countBefore = totalCount
-            link.countAfter = totalCount - (link.countBefore ?? 0)
-            link.likeBefore = res.totalLike
-            link.likeAfter = res.totalLike - (link.likeBefore ?? 0)
-            await this.linkRepository.save(link)
-          }
+          await this.linkRepository.save(link);
         } catch (error) {
-          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ error:", error?.message)
-
+          console.log("🚀 ~ MonitoringService ~ processLinksPulic ~ error:", error?.message);
         }
+      };
 
+      // Chia mảng thành từng batch 10 phần tử và xử lý song song từng batch
+      for (let i = 0; i < links.length; i += batchSize) {
+        const batch = links.slice(i, i + batchSize);
+        await Promise.all(batch.map(link => processLink(link)));
       }
     }
 
@@ -205,11 +203,13 @@ export class MonitoringService implements OnModuleInit {
 
         let res = await this.facebookService.getTotalCountWithToken(link)
 
-        if (res?.totalCountCmt) {
+        if (res?.totalCountCmt && res?.totalCountLike) {
+          const oldCountCmt = link.countBefore
+          const oldLike = link.likeBefore
           link.countBefore = res.totalCountCmt
-          link.countAfter = res.totalCountCmt - (link.countBefore ?? 0)
+          link.countAfter = res.totalCountCmt - (oldCountCmt ?? 0)
           link.likeBefore = res.totalCountLike
-          link.likeAfter = res.totalCountLike - (link.likeBefore ?? 0)
+          link.likeAfter = res.totalCountLike - (oldLike ?? 0)
 
           await this.linkRepository.save(link)
         }
