@@ -1,6 +1,7 @@
 import {
   ArrayNotEmpty,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -40,4 +41,7 @@ export class CreateLinkDTO {
 
   @IsEnum(LinkStatus)
   status: LinkStatus;
+
+  @IsBoolean()
+  hideCmt: boolean
 }

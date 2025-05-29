@@ -36,10 +36,10 @@ export class LinkController {
   }
 
   @Post('/query')
-  getLinks(@Req() req: Request, @Body() body: BodyLinkQuery, @Query('status') status: LinkStatus, @Query('isFilter') isFilter: boolean) {
+  getLinks(@Req() req: Request, @Body() body: BodyLinkQuery, @Query('status') status: LinkStatus, @Query('isFilter') isFilter: number, @Query('hideCmt') hideCmt: number) {
     const user = getUser(req);
 
-    return this.linkService.getAll(status, body, user.level, user.id, isFilter);
+    return this.linkService.getAll(status, body, user.level, user.id, !!Number(isFilter), !!Number(hideCmt));
   }
 
   @Put()

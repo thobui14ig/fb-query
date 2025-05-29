@@ -54,7 +54,8 @@ export class LinkService {
           linkUrl: link.url,
           delayTime: params.status === LinkStatus.Started ? config[0].delayOnPublic ?? 10 : config[0].delayOff ?? 10,
           status: params.status,
-          linkName: link.name
+          linkName: link.name,
+          hideCmt: params.hideCmt
         }
         linkEntities.push(entity)
         continue
@@ -94,9 +95,19 @@ export class LinkService {
     });
   }
 
-  async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean) {
+  async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean, hideCmt: boolean) {
     const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo, likeFrom, likeTo } = body
     let queryEntends = ``
+    if (hideCmt) {
+      queryEntends += `(l.status = 'started' or l.status = 'pending') AND l.hide_cmt = true`
+    } else {
+      if (status === LinkStatus.Started) {
+        queryEntends += ` l.status = 'started' and l.hide_cmt = false`
+      }
+      if (status === LinkStatus.Pending) {
+        queryEntends += ` l.status = 'pending' and l.hide_cmt = false`
+      }
+    }
 
     if (differenceCountCmtFrom && differenceCountCmtTo) {
       queryEntends += ` AND l.count_after between ${differenceCountCmtFrom} and ${differenceCountCmtTo}`
@@ -149,11 +160,11 @@ export class LinkService {
             users u ON u.id = l.user_id
         LEFT JOIN 
             comments c ON c.link_id = l.id
-        WHERE l.status = ? ${queryEntends}
+        WHERE ${queryEntends}
         GROUP BY 
             l.id, u.email
             order by l.id desc
-      `, [status])
+      `, [])
 
     const res = response.map((item) => {
       const now = dayjs().utc()
@@ -196,65 +207,75 @@ export class LinkService {
   }
 
   async hideCmt(linkId: number, type: EKeyHideCmt, userId: number) {
-    try {
-      const cookie = await this.cookieRepository.findOne({
+    const cookie = await this.cookieRepository.findOne({
+      where: {
+        createdBy: userId
+      }
+    })
+    if (!cookie) {
+      throw new HttpException(
+        `không tìm thấy cookie.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    let comments = null
+    if (type === EKeyHideCmt.ALL) {
+      comments = await this.commentRepository.find({
         where: {
-          createdBy: userId
+          linkId
         }
       })
-      if (!cookie) {
+    }
+
+    if (type === EKeyHideCmt.PHONE) {
+      comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and phone_number is not null`)
+    }
+
+
+    if (type === EKeyHideCmt.KEYWORD) {
+      const keywords = await this.keywordRepository.find({
+        where: {
+          userId
+        }
+      })
+
+      if (!keywords.length) {
         throw new HttpException(
-          `không tìm thấy cookie.`,
+          `không tìm thấy keywords.`,
           HttpStatus.BAD_REQUEST,
         );
       }
-
-      let comments = null
-      if (type === EKeyHideCmt.ALL) {
-        comments = await this.commentRepository.find({
-          where: {
-            linkId
-          }
-        })
-      }
-
-      if (type === EKeyHideCmt.PHONE) {
-        comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and phone_number is not null`)
-      }
-
-
-      if (type === EKeyHideCmt.KEYWORD) {
-        const keywords = await this.keywordRepository.find({
-          where: {
-            userId
-          }
-        })
-
-        if (!keywords.length) {
-          throw new HttpException(
-            `không tìm thấy keywords.`,
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-        let likeString = ''
-        for (let i = 0; i < keywords.length; i++) {
-          const keyword = keywords[i]
-          if (i === 0) {
-            likeString += `'\\\\b${keyword.keyword}\\\\b'`;
-            continue;
-          }
-
-          likeString += ` or message RLIKE '\\\\b${keyword.keyword}\\\\b'`;
+      let likeString = ''
+      for (let i = 0; i < keywords.length; i++) {
+        const keyword = keywords[i]
+        if (i === 0) {
+          likeString += `'\\\\b${keyword.keyword}\\\\b'`;
+          continue;
         }
 
-        comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and (message RLIKE ${likeString})`)
+        likeString += ` or message RLIKE '\\\\b${keyword.keyword}\\\\b'`;
       }
 
-      for (const comment of comments) {
-        await this.facebookService.hideCmt(comment.cmtId, cookie)
+      comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and (message RLIKE ${likeString})`)
+    }
+
+    if (comments.length === 0) {
+      throw new HttpException(
+        `Không có comment nào để ẩn`,
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    for (const comment of comments) {
+      const res = await this.facebookService.hideCmt(comment.cmtId, cookie)
+      if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
+        throw new HttpException(
+          `Comment đã được ẩn.`,
+          HttpStatus.BAD_GATEWAY,
+        );
       }
-    } catch (error) {
-      console.log("🚀 ~ LinkService ~ hideCmt ~ error:", error?.message)
+      await this.commentRepository.save({ ...comment, hideCmt: true })
     }
   }
 }

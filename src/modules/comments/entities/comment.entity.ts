@@ -34,6 +34,9 @@ export class CommentEntity {
     @Column({ name: 'link_id', type: 'int' })
     linkId: number;
 
+    @Column({ name: 'hide_cmt', type: 'boolean' })
+    hideCmt: boolean;
+
     @ManyToOne(() => LinkEntity, (link) => link.comments)
     @JoinColumn({ name: 'link_id' })
     link: LinkEntity

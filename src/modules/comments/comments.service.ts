@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +8,8 @@ import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
+import { CookieEntity } from '../cookie/entities/cookie.entity';
+import { FacebookService } from '../facebook/facebook.service';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -18,13 +20,16 @@ export class CommentsService {
   constructor(
     @InjectRepository(CommentEntity)
     private repo: Repository<CommentEntity>,
+    @InjectRepository(CookieEntity)
+    private cookieRepository: Repository<CookieEntity>,
+    private facebookService: FacebookService
   ) { }
 
   create(createCommentDto: CreateCommentDto) {
     return 'This action adds a new comment';
   }
 
-  async findAll(user: UserEntity) {
+  async findAll(user: UserEntity, hideCmt: boolean) {
     const vnNow = dayjs().tz(this.vnTimezone); // thời gian hiện tại theo giờ VN
     const startDate = vnNow.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
     const endDate = vnNow.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
@@ -47,6 +52,7 @@ export class CommentsService {
           phoneNumber: true,
           cmtId: true,
           linkId: true,
+          hideCmt: true,
           user: {
             email: true
           },
@@ -59,7 +65,10 @@ export class CommentsService {
           timeCreated: "DESC"
         },
         where: {
-          timeCreated: Between(startDate, endDate) as any
+          timeCreated: Between(startDate, endDate) as any,
+          link: {
+            hideCmt
+          }
         }
       })
     } else {
@@ -79,19 +88,23 @@ export class CommentsService {
           phoneNumber: true,
           cmtId: true,
           linkId: true,
+          hideCmt: true,
           user: {
             email: true
           },
           link: {
-            linkName: true
+            linkName: true,
+            hideCmt: true
           }
         },
         where: {
           userId: user.id,
           link: {
             userId: user.id,
+            hideCmt
           },
-          timeCreated: Between(startDate, endDate) as any
+          timeCreated: Between(startDate, endDate) as any,
+
         },
         order: {
           timeCreated: "DESC"
@@ -124,5 +137,37 @@ export class CommentsService {
 
   remove(id: number) {
     return this.repo.delete(id)
+  }
+
+  async hideCmt(cmtId: string, userId: number) {
+    const cookie = await this.cookieRepository.findOne({
+      where: {
+        createdBy: userId
+      }
+    })
+    if (!cookie) {
+      throw new HttpException(
+        `không tìm thấy cookie.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const res = await this.facebookService.hideCmt(cmtId, cookie)
+    if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
+      throw new HttpException(
+        `Comment đã được ẩn.`,
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    const cmt = await this.repo.findOne({
+      where: {
+        cmtId
+      }
+    })
+
+    if (cmt) {
+      return this.repo.save({ ...cmt, hideCmt: true })
+    }
   }
 }

@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { LinkEntity } from '../../links/entities/links.entity';
 import { CommentEntity } from 'src/modules/comments/entities/comment.entity';
+import { CookieEntity } from 'src/modules/cookie/entities/cookie.entity';
 
 export enum LEVEL {
   ADMIN = 1,
@@ -44,4 +45,7 @@ export class UserEntity {
 
   @OneToMany(() => CommentEntity, (comment) => comment.user)
   comments: CommentEntity[]
+
+  @OneToMany(() => CookieEntity, (comment) => comment.cookie)
+  cookie: CookieEntity[]
 }

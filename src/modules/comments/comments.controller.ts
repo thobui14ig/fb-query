@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -15,9 +15,9 @@ export class CommentsController {
   }
 
   @Get()
-  findAll(@Req() req: Request) {
+  findAll(@Req() req: Request, @Query('hide') hideCmt: number) {
     const user = getUser(req);
-    return this.commentsService.findAll(user);
+    return this.commentsService.findAll(user, !!Number(hideCmt));
   }
 
   @Get(':id')
@@ -33,5 +33,12 @@ export class CommentsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.commentsService.remove(+id);
+  }
+
+  @Post('/hide-cmt/:cmtId')
+  hideCmt(@Req() req: Request, @Param('cmtId') cmtId: string) {
+    const user = getUser(req);
+
+    return this.commentsService.hideCmt(cmtId, user.id)
   }
 }

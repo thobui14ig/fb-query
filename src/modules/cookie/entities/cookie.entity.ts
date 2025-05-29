@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { UserEntity } from 'src/modules/user/entities/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
 export enum CookieStatus {
     ACTIVE = 'active',
@@ -20,4 +21,8 @@ export class CookieEntity {
 
     @Column({ type: 'enum', enum: CookieStatus, default: CookieStatus.ACTIVE })
     status: CookieStatus;
+
+    @ManyToOne(() => UserEntity, (user) => user.links)
+    @JoinColumn({ name: 'created_by' })
+    user: UserEntity;
 }

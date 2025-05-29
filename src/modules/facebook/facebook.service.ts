@@ -1725,8 +1725,7 @@ export class FacebookService {
           httpsAgent,
         }),
       );
-
-      return true
+      return response.data
     } catch (error) {
       return false
     }
