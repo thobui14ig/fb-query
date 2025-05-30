@@ -1134,6 +1134,12 @@ export class FacebookService {
   }
 
   async reGetProfileWithCookie(url: string, cookieEntity: CookieEntity) {
+    const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie)
+    if (!facebookId) {
+      return {
+        type: LinkType.UNDEFINED,
+      }
+    }
     const proxy = await this.getRandomProxy()
     const httpsAgent = this.getHttpAgent(proxy)
     const newCookies = this.changeCookiesFb(cookieEntity.cookie);
@@ -1166,6 +1172,14 @@ export class FacebookService {
     );
 
     const text = responseWithCookie.data
+    const isWrong = (text as string).includes('something went wrong')
+    if (isWrong) {
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      return {
+        type: LinkType.UNDEFINED,
+      }
+    }
+
     //check block
     const isBlock = (text as string).includes('Temporarily Blocked')
 
@@ -1551,7 +1565,7 @@ export class FacebookService {
   }
 
   updateStatusCookie(cookie: CookieEntity, status: CookieStatus) {
-    console.log("🚀 ~ updateStatusCookie ~ cookie:", status, cookie)
+    console.log("🚀 ~ updateStatusCookie ~ cookie:", status)
     return this.cookieRepository.save({ ...cookie, status })
   }
 
