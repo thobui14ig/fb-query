@@ -1172,13 +1172,13 @@ export class FacebookService {
     );
 
     const text = responseWithCookie.data
-    const isWrong = (text as string).includes('something went wrong')
-    if (isWrong) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
+    // const isWrong = (text as string).includes('something went wrong')
+    // if (isWrong) {
+    //   await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+    //   return {
+    //     type: LinkType.UNDEFINED,
+    //   }
+    // }
 
     //check block
     const isBlock = (text as string).includes('Temporarily Blocked')
