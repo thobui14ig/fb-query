@@ -1679,9 +1679,9 @@ export class FacebookService {
 
     for (const comment of comments) {
       let uid = await this.getUuidUser(comment.uid)
-      if (!uid) {
-        uid = await this.getUuidPuppeteer(comment.uid)
-      }
+      // if (!uid) {
+      //   uid = await this.getUuidPuppeteer(comment.uid)
+      // }
       if (uid) {
         comment.uid = uid
         await this.commentRepository.save(comment)
