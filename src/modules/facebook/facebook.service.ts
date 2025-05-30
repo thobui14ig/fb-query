@@ -193,6 +193,7 @@ export class FacebookService {
   }
 
   async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false, isCheckPrivate = false) {
+    console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
@@ -220,29 +221,36 @@ export class FacebookService {
         //bai viet ko co cmt moi nhat => lay all
         dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, link, isGetCommentCount)
       }
+
       if (isCheckPrivate && response?.data?.data?.node) {
         await this.convertLinkPrivateToPublic(postIdNumber)
       }
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
-        //get bang cookie
-        const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
-        //get bang token
-        if (!status && !link.pageId) {
-          const data = await this.getCommentByToken(link.postId, proxy)
-          if (data?.commentId) {
-            const cookieEntity = await this.getCookieActiveOrLimitFromDb()
-            if (cookieEntity) {
-              const delayTime = await this.getDelayTime(link.status, link.type)
-              link.type = LinkType.PRIVATE
-              link.delayTime = delayTime
-              const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
-              if (dataReconstruct?.pageId) {
-                link.pageId = dataReconstruct?.pageId
+        //recheck link die public
+        const resProfile = await this.reGetProfilePublic(link.linkUrl)
+        if (resProfile.type === LinkType.DIE) {
+          await this.linkRepository.save({ ...link, type: LinkType.DIE })
+        } else {
+          //get bang cookie
+          const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
+          //get bang token
+          if (!status && !link.pageId) {
+            const data = await this.getCommentByToken(link.postId, proxy)
+            if (data?.commentId) {
+              const cookieEntity = await this.getCookieActiveOrLimitFromDb()
+              if (cookieEntity) {
+                const delayTime = await this.getDelayTime(link.status, link.type)
+                link.type = LinkType.PRIVATE
+                link.delayTime = delayTime
+                const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
+                if (dataReconstruct?.pageId) {
+                  link.pageId = dataReconstruct?.pageId
+                }
+                await this.linkRepository.save(link)
               }
-              await this.linkRepository.save(link)
-            }
 
+            }
           }
         }
       }
@@ -367,10 +375,11 @@ export class FacebookService {
       );
 
       const dataJson = await response.data
-      if (dataJson?.errors[0]?.code === 1675004) {
+      if (dataJson?.errors?.[0]?.code === 1675004) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
         return false
       }
+
       if (dataJson?.data?.node) {
         const delayTime = await this.getDelayTime(link.status, link.type)
         link.type = LinkType.PRIVATE
@@ -1017,6 +1026,111 @@ export class FacebookService {
       }
 
       return res
+    }
+  }
+
+  async reGetProfilePublic(url: string) {
+    const proxy = await this.getRandomProxy()
+
+    try {
+      if (!proxy) {
+        return {
+          type: LinkType.UNDEFINED,
+        }
+      }
+      const httpsAgent = this.getHttpAgent(proxy)
+
+      const response = await firstValueFrom(
+        this.httpService.get(url, {
+          headers: {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "cache-control": "max-age=0",
+            "dpr": "1",
+            "priority": "u=0, i",
+            "sec-ch-prefers-color-scheme": "light",
+            "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
+            "sec-ch-ua-full-version-list": "\"Chromium\";v=\"136.0.7103.93\", \"Google Chrome\";v=\"136.0.7103.93\", \"Not.A/Brand\";v=\"99.0.0.0\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-model": "\"\"",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-ch-ua-platform-version": "\"10.0.0\"",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-user": "?1",
+            "upgrade-insecure-requests": "1",
+            "viewport-width": "856",
+            "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=1UkVxZvyucxVG78mk.AWevqY9nf_vHWJzPoe3hBWtadWsJ80XJ0HFGnqPtdNh439ijAVg.BoHzIp..AAA.0.0.BoH3O0.AWfmrWmPXac1pUoDOR6Hlr4s3r0; wd=856x953",
+            "Referrer-Policy": "origin-when-cross-origin"
+          },
+          httpsAgent,
+        }),
+      );
+      const htmlContent = response.data
+      const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
+
+      //case 1: video, post public
+      if (matchVideoPublic && matchVideoPublic[1]) {
+        const postId = htmlContent?.split('"matchVideoPublic":"')[1]?.split('"')[0];
+        const profileDecode = JSON.parse(matchVideoPublic[1])
+        if (postId) {
+          return {
+            type: LinkType.PUBLIC,
+            name: profileDecode[0]?.name ?? url,
+            postId: postId,
+          }
+        }
+      }
+
+      //case 3: story
+      const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
+      if (matchStoryPublic && matchStoryPublic[1]) {
+        const postId = matchStoryPublic[1]
+        console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
+        if (postId) {
+          return {
+            type: LinkType.PUBLIC,
+            name: url,
+            postId: postId,
+          }
+        }
+      }
+
+      //case 3: reel public
+      const matchVideopublic = htmlContent.match(/"post_id":"(.*?)"/);
+
+      if (matchVideopublic && matchVideopublic[1]) {
+        const postId = matchVideopublic[1]
+        if (postId) {
+          return {
+            type: LinkType.PUBLIC,
+            name: url,
+            postId: postId,
+          }
+        }
+      }
+
+      console.log("🚀 ~LẤY PROFILE LINK DIE2:", url)
+      return {
+        type: LinkType.DIE,
+      }
+    } catch (error) {
+      console.log("🚀 ~ getProfileLink ~ error:", error.message)
+      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
+        await this.updateProxyDie(proxy)
+        return
+      }
+
+      if (error?.status === 404) {
+        console.log("🚀 ~ LẤY PROFILE LINK DIE:", 404, url)
+        return {
+          type: LinkType.DIE,
+        }
+      }
+      return {
+        type: LinkType.UNDEFINED,
+      }
     }
   }
 
