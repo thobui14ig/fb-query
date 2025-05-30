@@ -193,7 +193,6 @@ export class FacebookService {
   }
 
   async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false, isCheckPrivate = false) {
-    console.log("🚀 ~ getCmtPublic ~ getCmtPublic:", postId)
     const httpsAgent = this.getHttpAgent(proxy)
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
