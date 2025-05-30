@@ -227,10 +227,13 @@ export class FacebookService {
 
       if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
         //recheck link die public
-        const resProfile = await this.reGetProfilePublic(link.linkUrl)
-        if (resProfile.type === LinkType.DIE) {
-          await this.linkRepository.save({ ...link, type: LinkType.DIE })
-        } else {
+        if (!isCheckPrivate) {
+          const resProfile = await this.reGetProfilePublic(link.linkUrl)
+          if (resProfile.type === LinkType.DIE) {
+            await this.linkRepository.save({ ...link, type: LinkType.DIE })
+            return null
+          }
+
           //get bang cookie
           const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
           //get bang token
@@ -1135,6 +1138,8 @@ export class FacebookService {
 
   async reGetProfileWithCookie(url: string, cookieEntity: CookieEntity) {
     const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie)
+    console.log("🚀 ~ reGetProfileWithCookie ~ facebookId:", facebookId)
+
     if (!facebookId) {
       return {
         type: LinkType.UNDEFINED,
