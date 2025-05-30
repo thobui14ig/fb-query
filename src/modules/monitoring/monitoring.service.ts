@@ -647,8 +647,14 @@ export class MonitoringService implements OnModuleInit {
   async getCookieActiveFromDb(): Promise<CookieEntity> {
     const cookies = await this.cookieRepository.find({
       where: {
-        status: CookieStatus.ACTIVE
-      }
+        status: CookieStatus.ACTIVE,
+        user: {
+          level: 1
+        }
+      },
+      relations: {
+        user: true
+      },
     })
     const randomIndex = Math.floor(Math.random() * cookies.length);
     const randomCookie = cookies[randomIndex];
@@ -688,8 +694,14 @@ export class MonitoringService implements OnModuleInit {
     console.log("🚀 ~ MonitoringService ~ updateActiveAllCookie ~ updateActiveAllCookie:")
     const allCookie = await this.cookieRepository.find({
       where: {
-        status: CookieStatus.LIMIT
-      }
+        status: CookieStatus.LIMIT,
+        user: {
+          level: 1
+        }
+      },
+      relations: {
+        user: true
+      },
     })
 
     return this.cookieRepository.save(allCookie.map((item) => {

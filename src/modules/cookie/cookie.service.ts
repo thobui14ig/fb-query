@@ -36,11 +36,11 @@ export class CookieService {
       })
     }
     return this.repo.find({
-      relations: {
-        user: true
-      },
       order: {
         id: "DESC"
+      },
+      relations: {
+        user: true
       },
       where: {
         user: {
