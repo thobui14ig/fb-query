@@ -898,7 +898,7 @@ export class FacebookService {
       const htmlContent = response.data
       //check block proxy public
       const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-      console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
+      // console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
 
       if (isBlockProxy) {
         await this.updateProxyFbBlock(proxy)
@@ -926,7 +926,7 @@ export class FacebookService {
       const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
       if (matchStoryPublic && matchStoryPublic[1]) {
         const postId = matchStoryPublic[1]
-        console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
+        // console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
         if (postId) {
           return {
             type: LinkType.PUBLIC,
@@ -1093,7 +1093,7 @@ export class FacebookService {
       );
       const htmlContent = response.data
       const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-      console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
+      // console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
 
       if (isBlockProxy) {
         await this.updateProxyFbBlock(proxy)
@@ -1733,15 +1733,13 @@ export class FacebookService {
 
   async getUuidUser(id: string) {
     let uid = await this.getUuidPublic(id)
-    console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
+    // console.log("🚀 ~ updateUUIDUser ~ uid:", uid)
 
     if (!uid) {
       uid = await this.getUuidByCookie(id)
-      console.log("🚀 ~ updateUUIDUser ~ getUuidByCookie:", uid)
     }
     if (!uid) {
       uid = await this.getUuidByCookieV2(id)
-      console.log("🚀 ~ updateUUIDUser ~ getUuidByCookieV2:", uid)
     }
 
     return uid;
