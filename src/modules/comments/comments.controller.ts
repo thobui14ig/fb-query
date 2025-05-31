@@ -4,20 +4,16 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { getUser } from 'src/common/utils/user';
 import { Request } from 'express';
+import { IGetCommentParams } from './comments.service.i';
 
 @Controller('comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) { }
 
   @Post()
-  create(@Body() createCommentDto: CreateCommentDto) {
-    return this.commentsService.create(createCommentDto);
-  }
-
-  @Get()
-  findAll(@Req() req: Request, @Query('hide') hideCmt: number) {
+  findAll(@Req() req: Request, @Query('hide') hideCmt: number, @Body() body: IGetCommentParams) {
     const user = getUser(req);
-    return this.commentsService.findAll(user, !!Number(hideCmt));
+    return this.commentsService.findAll(user, !!Number(hideCmt), body);
   }
 
   @Get(':id')

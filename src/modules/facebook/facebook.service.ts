@@ -233,26 +233,26 @@ export class FacebookService {
             await this.linkRepository.save({ ...link, type: LinkType.DIE })
             return null
           }
+        }
 
-          //get bang cookie
-          const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
-          //get bang token
-          if (!status && !link.pageId) {
-            const data = await this.getCommentByToken(link.postId, proxy)
-            if (data?.commentId) {
-              const cookieEntity = await this.getCookieActiveOrLimitFromDb()
-              if (cookieEntity) {
-                const delayTime = await this.getDelayTime(link.status, link.type)
-                link.type = LinkType.PRIVATE
-                link.delayTime = delayTime
-                const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
-                if (dataReconstruct?.pageId) {
-                  link.pageId = dataReconstruct?.pageId
-                }
-                await this.linkRepository.save(link)
+        //get bang cookie
+        const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
+        //get bang token
+        if (!status && !link.pageId) {
+          const data = await this.getCommentByToken(link.postId, proxy)
+          if (data?.commentId) {
+            const cookieEntity = await this.getCookieActiveOrLimitFromDb()
+            if (cookieEntity) {
+              const delayTime = await this.getDelayTime(link.status, link.type)
+              link.type = LinkType.PRIVATE
+              link.delayTime = delayTime
+              const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
+              if (dataReconstruct?.pageId) {
+                link.pageId = dataReconstruct?.pageId
               }
-
+              await this.linkRepository.save(link)
             }
+
           }
         }
       }

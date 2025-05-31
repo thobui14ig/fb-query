@@ -10,6 +10,7 @@ import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
 import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { FacebookService } from '../facebook/facebook.service';
+import { IGetCommentParams } from './comments.service.i';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -24,15 +25,11 @@ export class CommentsService {
     private cookieRepository: Repository<CookieEntity>,
     private facebookService: FacebookService
   ) { }
+  async findAll(user: UserEntity, hideCmt: boolean, params: IGetCommentParams) {
+    const vnNow = dayjs(params.startDate).utc()// thời gian hiện tại theo giờ VN
 
-  create(createCommentDto: CreateCommentDto) {
-    return 'This action adds a new comment';
-  }
-
-  async findAll(user: UserEntity, hideCmt: boolean) {
-    const vnNow = dayjs().tz(this.vnTimezone); // thời gian hiện tại theo giờ VN
-    const startDate = vnNow.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
-    const endDate = vnNow.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const startDate = vnNow.startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const endDate = vnNow.endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
     let response: CommentEntity[] = []
     if (user.level === LEVEL.ADMIN) {
