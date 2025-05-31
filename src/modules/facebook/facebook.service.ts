@@ -6,7 +6,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
-import { isArray } from 'class-validator';
+import { isArray, IsString } from 'class-validator';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -237,9 +237,11 @@ export class FacebookService {
 
         //get bang cookie
         const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
+
         //get bang token
         if (!status && !link.pageId) {
           const data = await this.getCommentByToken(link.postId, proxy)
+          console.log("🚀 ~ getCmtPublic ~ data:", data)
           if (data?.commentId) {
             const cookieEntity = await this.getCookieActiveOrLimitFromDb()
             if (cookieEntity) {
@@ -377,6 +379,11 @@ export class FacebookService {
       );
 
       const dataJson = await response.data
+      if (IsString(response.data) && response.data.includes(`"error":1357053`)) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        return false
+      }
+
       if (dataJson?.errors?.[0]?.code === 1675004) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
         return false
