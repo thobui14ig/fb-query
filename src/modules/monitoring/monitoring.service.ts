@@ -110,6 +110,7 @@ export class MonitoringService implements OnModuleInit {
   @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
+    console.log("🚀 ~ MonitoringService ~ startMonitoring ~ postsStarted:", postsStarted)
     const groupPost = this.groupPostsByType(postsStarted || []);
 
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
