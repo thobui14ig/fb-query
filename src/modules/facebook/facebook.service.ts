@@ -410,8 +410,8 @@ export class FacebookService {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
 
-      if ((error?.message as string)?.includes("Unexpected token 'o'", "Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "Unexpected token 'o'")
       }
 
       return false
