@@ -387,7 +387,8 @@ export class MonitoringService implements OnModuleInit {
           })
           await this.linkRepository.save(linksChanged)
         } else {
-          dataComment = await getWithToken()
+          const { data } = await getWithToken() || {}
+          dataComment = data
 
           if ((!dataComment || !(dataComment as any)?.commentId)) {
             dataComment = await getWithCookie()

@@ -6,13 +6,13 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
-import { isArray, IsString } from 'class-validator';
+import { isArray } from 'class-validator';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import puppeteer from 'puppeteer';
 import { firstValueFrom } from 'rxjs';
-import { isNumeric } from 'src/common/utils/check-utils';
+import { isAlpha, isNumeric } from 'src/common/utils/check-utils';
 import { extractPhoneNumber } from 'src/common/utils/helper';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
@@ -241,8 +241,7 @@ export class FacebookService {
         //get bang token
         if (!status && !link.pageId) {
           const data = await this.getCommentByToken(link.postId, proxy)
-          console.log("🚀 ~ getCmtPublic ~ data:", data)
-          if (data?.commentId) {
+          if (data?.hasData) {
             const cookieEntity = await this.getCookieActiveOrLimitFromDb()
             if (cookieEntity) {
               const delayTime = await this.getDelayTime(link.status, link.type)
@@ -379,7 +378,8 @@ export class FacebookService {
       );
 
       const dataJson = await response.data
-      if (IsString(response.data) && response.data.includes(`"error":1357053`)) {
+
+      if (isAlpha(response.data) && dataJson.includes(`"error":1357053`)) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
         return false
       }
@@ -596,7 +596,6 @@ export class FacebookService {
   }
 
   async getCommentByToken(postId: string, proxy: ProxyEntity) {
-    // console.log("🚀 ~ getCommentByToken ~ postId:", postId)
     const token = await this.getTokenActiveFromDb()
 
     if (!token) {
@@ -647,15 +646,22 @@ export class FacebookService {
 
       const res = dataCommentToken.data?.data[0]
 
-      if (!res?.message?.length) return
+      if (!res?.message?.length) {
+        return {
+          hasData: !!dataCommentToken.data?.data,
+        }
+      }
 
       return {
-        commentId: btoa(encodeURIComponent(`comment:${res?.id}`)),
-        userNameComment: res?.from?.name,
-        commentMessage: res?.message,
-        phoneNumber: extractPhoneNumber(res?.message),
-        userIdComment: res?.from?.id,
-        commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
+        hasData: !!dataCommentToken.data?.data,
+        data: {
+          commentId: btoa(encodeURIComponent(`comment:${res?.id}`)),
+          userNameComment: res?.from?.name,
+          commentMessage: res?.message,
+          phoneNumber: extractPhoneNumber(res?.message),
+          userIdComment: res?.from?.id,
+          commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
+        }
       }
     } catch (error) {
       console.log("🚀 ~ getCommentByToken ~ error:", postId, error.response?.data)
