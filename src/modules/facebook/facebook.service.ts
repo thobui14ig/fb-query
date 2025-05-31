@@ -1602,7 +1602,7 @@ export class FacebookService {
   }
 
   updateStatusCookie(cookie: CookieEntity, status: CookieStatus, message?: string) {
-    console.log("🚀 ~ updateStatusCookie ~ cookie: Die", cookie, message)
+    console.log(`🚀 ~ updateStatusCookie ~ cookie: ${status}`, cookie, message)
     return this.cookieRepository.save({ ...cookie, status })
   }
 
