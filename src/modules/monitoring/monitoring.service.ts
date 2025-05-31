@@ -463,7 +463,7 @@ export class MonitoringService implements OnModuleInit {
     };
 
     this.isHandleUrl = true
-    const BATCH_SIZE = 1;
+    const BATCH_SIZE = 10;
 
     for (let i = 0; i < links.length; i += BATCH_SIZE) {
       const batch = links.slice(i, i + BATCH_SIZE);
