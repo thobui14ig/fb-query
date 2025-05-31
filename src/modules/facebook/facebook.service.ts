@@ -885,6 +885,17 @@ export class FacebookService {
         }),
       );
       const htmlContent = response.data
+      //check block proxy public
+      const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
+      console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
+
+      if (isBlockProxy) {
+        await this.updateProxyFbBlock(proxy)
+        return {
+          type: LinkType.UNDEFINED,
+        }
+      }
+
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
 
       //case 1: video, post public
@@ -1577,6 +1588,11 @@ export class FacebookService {
   updateProxyDie(proxy: ProxyEntity) {
     return this.proxyRepository.save({ ...proxy, status: ProxyStatus.IN_ACTIVE })
   }
+
+  updateProxyFbBlock(proxy: ProxyEntity) {
+    return this.proxyRepository.save({ ...proxy, isFbBlock: true })
+  }
+
   updateProxyActive(proxy: ProxyEntity) {
     return this.proxyRepository.save({ ...proxy, status: ProxyStatus.ACTIVE })
   }
@@ -1713,7 +1729,8 @@ export class FacebookService {
   async getRandomProxy() {
     const proxies = await this.proxyRepository.find({
       where: {
-        status: ProxyStatus.ACTIVE
+        status: ProxyStatus.ACTIVE,
+        isFbBlock: false
       }
     })
     const randomIndex = Math.floor(Math.random() * proxies.length);

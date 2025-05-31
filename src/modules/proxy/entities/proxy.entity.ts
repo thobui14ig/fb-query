@@ -15,4 +15,7 @@ export class ProxyEntity {
 
     @Column({ default: 'active' })
     status: ProxyStatus;
+
+    @Column({ default: false, name: "is_fb_block" })
+    isFbBlock: Boolean;
 }
