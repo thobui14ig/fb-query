@@ -278,7 +278,7 @@ export class FacebookService {
 
       return res;
     } catch (error) {
-      console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
+      console.log("🚀 ~ getCmtPublic ~ error:", error)
       if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
         return
@@ -1094,6 +1094,15 @@ export class FacebookService {
         }),
       );
       const htmlContent = response.data
+      const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
+      console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
+
+      if (isBlockProxy) {
+        await this.updateProxyFbBlock(proxy)
+        return {
+          type: LinkType.UNDEFINED,
+        }
+      }
       const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
 
       //case 1: video, post public
@@ -1161,10 +1170,11 @@ export class FacebookService {
   }
 
   async reGetProfileWithCookie(url: string, cookieEntity: CookieEntity) {
-    const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie)
-    console.log("🚀 ~ reGetProfileWithCookie ~ facebookId:", facebookId)
+    const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
     if (!facebookId) {
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+
       return {
         type: LinkType.UNDEFINED,
       }
