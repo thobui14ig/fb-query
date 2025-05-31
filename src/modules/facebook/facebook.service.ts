@@ -846,7 +846,7 @@ export class FacebookService {
   async getProfileLink(url: string) {
     const token = await this.getTokenActiveFromDb()
     const cookieEntity = await this.getCookieActiveOrLimitFromDb()
-    const proxy = await this.getRandomProxy()
+    const proxy = await this.getRandomProxyGetProfile()
 
     try {
       if (!proxy) {
@@ -1043,7 +1043,7 @@ export class FacebookService {
   }
 
   async reGetProfilePublic(url: string) {
-    const proxy = await this.getRandomProxy()
+    const proxy = await this.getRandomProxyGetProfile()
 
     try {
       if (!proxy) {
@@ -1156,7 +1156,7 @@ export class FacebookService {
         type: LinkType.UNDEFINED,
       }
     }
-    const proxy = await this.getRandomProxy()
+    const proxy = await this.getRandomProxyGetProfile()
     const httpsAgent = this.getHttpAgent(proxy)
     const newCookies = this.changeCookiesFb(cookieEntity.cookie);
 
@@ -1727,6 +1727,19 @@ export class FacebookService {
   }
 
   async getRandomProxy() {
+    const proxies = await this.proxyRepository.find({
+      where: {
+        status: ProxyStatus.ACTIVE,
+      }
+    })
+    const randomIndex = Math.floor(Math.random() * proxies.length);
+    const randomProxy = proxies[randomIndex];
+
+    return randomProxy
+  }
+
+
+  async getRandomProxyGetProfile() {
     const proxies = await this.proxyRepository.find({
       where: {
         status: ProxyStatus.ACTIVE,

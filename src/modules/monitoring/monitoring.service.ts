@@ -665,7 +665,7 @@ export class MonitoringService implements OnModuleInit {
   async getRandomProxy() {
     const proxies = await this.proxyRepository.find({
       where: {
-        status: ProxyStatus.ACTIVE
+        status: ProxyStatus.ACTIVE,
       }
     })
     const randomIndex = Math.floor(Math.random() * proxies.length);
