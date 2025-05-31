@@ -26,10 +26,10 @@ export class CommentsService {
     private facebookService: FacebookService
   ) { }
   async findAll(user: UserEntity, hideCmt: boolean, params: IGetCommentParams) {
-    const vnNow = dayjs(params.startDate).utc()// thời gian hiện tại theo giờ VN
-
-    const startDate = vnNow.startOf('day').format('YYYY-MM-DD HH:mm:ss');
-    const endDate = vnNow.endOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const vnNowStart = dayjs(params.startDate).tz(this.vnTimezone)// thời gian hiện tại theo giờ VN
+    const vnNowEnd = dayjs(params.endDate).tz(this.vnTimezone)// thời gian hiện tại theo giờ VN
+    const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
 
     let response: CommentEntity[] = []
     if (user.level === LEVEL.ADMIN) {
