@@ -278,7 +278,7 @@ export class FacebookService {
 
       return res;
     } catch (error) {
-      console.log("🚀 ~ getCmtPublic ~ error:", error)
+      console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
       if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
         return
@@ -315,7 +315,7 @@ export class FacebookService {
       const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
       if (!facebookId) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "convertPublicToPrivate")
 
         return false
       }
@@ -378,14 +378,13 @@ export class FacebookService {
       );
 
       const dataJson = await response.data
-
       if (isAlpha(response.data) && dataJson.includes(`"error":1357053`)) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, `"error":1357053`)
         return false
       }
 
       if (dataJson?.errors?.[0]?.code === 1675004) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, "1675004")
         return false
       }
 
@@ -411,7 +410,7 @@ export class FacebookService {
         await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
       }
 
-      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
+      if ((error?.message as string)?.includes("Unexpected token 'o'", "Unexpected token 'o'")) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       }
 
@@ -712,7 +711,7 @@ export class FacebookService {
       const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
       if (!facebookId) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "!facebookId")
 
         return null
       }
@@ -805,11 +804,10 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "Unexpected token 'o'")
         return
       }
 
-      // await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
       return null
     }
   }
@@ -1173,7 +1171,7 @@ export class FacebookService {
     const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
     if (!facebookId) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "!facebookId")
 
       return {
         type: LinkType.UNDEFINED,
@@ -1213,7 +1211,7 @@ export class FacebookService {
     const text = responseWithCookie.data
     const isWrong = (text as string).includes('something went wrong')
     if (isWrong) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'something went wrong')
       return {
         type: LinkType.UNDEFINED,
       }
@@ -1223,7 +1221,7 @@ export class FacebookService {
     const isBlock = (text as string).includes('Temporarily Blocked')
 
     if (isBlock) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'Temporarily Blocked')
       return {
         type: LinkType.UNDEFINED,
       }
@@ -1238,7 +1236,7 @@ export class FacebookService {
     }
     const isDisable = (text as string).includes('After that your account will be permanently disabled')
     if (isDisable) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'After that your account will be permanently disabled')
       return {
         type: LinkType.UNDEFINED,
       }
@@ -1447,7 +1445,7 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "Unexpected token 'o'")
         return
       }
       return null
@@ -1492,7 +1490,7 @@ export class FacebookService {
       }
 
       if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "Unexpected token 'o'")
         return
       }
       return null
@@ -1603,8 +1601,8 @@ export class FacebookService {
     return this.tokenRepository.save({ ...token, status })
   }
 
-  updateStatusCookie(cookie: CookieEntity, status: CookieStatus) {
-    console.log("🚀 ~ updateStatusCookie ~ cookie:", status)
+  updateStatusCookie(cookie: CookieEntity, status: CookieStatus, message?: string) {
+    console.log("🚀 ~ updateStatusCookie ~ cookie: Die", cookie, message)
     return this.cookieRepository.save({ ...cookie, status })
   }
 
