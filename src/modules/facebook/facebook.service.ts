@@ -1120,7 +1120,7 @@ export class FacebookService {
       const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
       if (matchStoryPublic && matchStoryPublic[1]) {
         const postId = matchStoryPublic[1]
-        console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
+        // console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
         if (postId) {
           return {
             type: LinkType.PUBLIC,
