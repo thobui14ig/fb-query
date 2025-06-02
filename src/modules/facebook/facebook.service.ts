@@ -237,6 +237,7 @@ export class FacebookService {
 
         //get bang cookie
         const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
+        console.log("🚀 ~ getCmtPublic ~ status:", status)
 
         //get bang token
         if (!status && !link.pageId) {
@@ -305,7 +306,7 @@ export class FacebookService {
     return this.linkRepository.save(entities)
   }
   async convertPublicToPrivate(proxy: ProxyEntity, postId: string, link: LinkEntity) {
-    const cookieEntity = await this.getCookieActiveFromDb()
+    const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     if (!cookieEntity) return false
 
     try {
@@ -377,7 +378,8 @@ export class FacebookService {
         }),
       );
 
-      const dataJson = await response.data
+      const dataJson = response.data
+
       if (isAlpha(response.data) && dataJson.includes(`"error":1357053`)) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, `"error":1357053`)
         return false
@@ -663,7 +665,7 @@ export class FacebookService {
         }
       }
     } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", postId, error.response?.data)
+      console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
       if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
         await this.updateProxyDie(proxy)
       }
@@ -682,8 +684,12 @@ export class FacebookService {
               postId
             }
           })
+          //chỗ này chưa ổn
           const profile = await this.getProfileLink(link.linkUrl)
-          //nếu có profile trả về nghĩa là token die
+          // //nếu có profile trả về nghĩa là token die
+          if (profile?.type === LinkType.UNDEFINED) {
+            return null
+          }
           if (profile?.postId) {
             await this.updateStatusTokenDie(token, TokenStatus.DIE)
           } else {
@@ -898,7 +904,6 @@ export class FacebookService {
       const htmlContent = response.data
       //check block proxy public
       const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-      // console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
 
       if (isBlockProxy) {
         await this.updateProxyFbBlock(proxy)
@@ -1120,7 +1125,6 @@ export class FacebookService {
       const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
       if (matchStoryPublic && matchStoryPublic[1]) {
         const postId = matchStoryPublic[1]
-        // console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
         if (postId) {
           return {
             type: LinkType.PUBLIC,
@@ -1717,7 +1721,7 @@ export class FacebookService {
       .getMany();
 
     if (!comments.length) return
-    console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
+    // console.log("🚀 ~ updateUUIDUser ~ updateUUIDUser:")
 
     for (const comment of comments) {
       let uid = await this.getUuidUser(comment.uid)
