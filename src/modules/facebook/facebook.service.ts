@@ -237,7 +237,6 @@ export class FacebookService {
 
         //get bang cookie
         const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
-        console.log("🚀 ~ getCmtPublic ~ status:", status)
 
         //get bang token
         if (!status && !link.pageId) {
