@@ -207,7 +207,6 @@ export class FacebookService {
 
       let dataComment = await this.handleDataComment(response, proxy, link)
 
-
       if (!dataComment && typeof response.data === 'string') {
         //story
         const text = response.data

@@ -275,7 +275,7 @@ export class MonitoringService implements OnModuleInit {
       try {
         let isPrivate = false
         if (!currentLink) break;
-        const proxy = await this.getRandomProxy()
+        const proxy = await this.facebookService.getRandomProxyGetProfile()
         if (!proxy) continue
         const postId = `feedback:${link.postId}`;
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
@@ -352,7 +352,7 @@ export class MonitoringService implements OnModuleInit {
 
       try {
         if (!currentLink) break;
-        const proxy = await this.getRandomProxy()
+        const proxy = await this.facebookService.getRandomProxyGetProfile()
         if (!proxy) continue
 
         const getWithCookie = async () => {
