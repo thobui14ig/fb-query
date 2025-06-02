@@ -241,6 +241,12 @@ export class FacebookService {
 
         //get bang token
         if (!status && !link.pageId) {
+          const token = await this.getTokenActiveFromDb()
+          if (!token) {//ko có cookie và token
+            await this.linkRepository.save({ ...link, type: LinkType.UNDEFINED })
+
+            return null
+          }
           const data = await this.getCommentByToken(link.postId, proxy)
           if (data?.hasData) {
             const cookieEntity = await this.getCookieActiveOrLimitFromDb()

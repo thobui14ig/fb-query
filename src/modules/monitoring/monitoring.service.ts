@@ -33,6 +33,7 @@ export class MonitoringService implements OnModuleInit {
   linksPublic: LinkEntity[] = []
   linksPrivate: LinkEntity[] = []
   isHandleUrl: boolean = false
+  isReHandleUrl: boolean = false
   isHandleUuid: boolean = false
   private jobIntervalHandlers: Record<RefreshKey, NodeJS.Timeout> = {
     refreshToken: null,
@@ -511,6 +512,77 @@ export class MonitoringService implements OnModuleInit {
     this.isHandleUrl = false
   }
 
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async cronjobReHandleProfileUrl() {
+    if (this.isReHandleUrl) {
+      return
+    }
+
+    const links = await this.reGetLinksWithoutProfile()
+    if (links.length === 0) {
+      this.isReHandleUrl = false
+      return
+    };
+
+    const token = await this.getTokenActiveFromDb()
+    const cookieEntity = await this.facebookService.getCookieActiveOrLimitFromDb()
+
+    if (!token && !cookieEntity) {
+      this.isReHandleUrl = false
+      return
+    };
+
+
+    this.isReHandleUrl = true
+    const BATCH_SIZE = 1;
+
+    for (let i = 0; i < links.length; i += BATCH_SIZE) {
+      const batch = links.slice(i, i + BATCH_SIZE);
+
+      await Promise.all(batch.map(async (link) => {
+        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl) || {} as any;
+        if (postId) {
+          const exitLink = await this.linkRepository.findOne({
+            where: {
+              postId,
+              userId: link.userId
+            }
+          });
+          if (exitLink) {
+            await this.linkRepository.delete(link.id);
+            return; // skip saving
+          }
+        }
+
+        if (!link.linkName || link.linkName.length === 0) {
+          link.linkName = name;
+        }
+
+        link.process = type === LinkType.UNDEFINED ? false : true;
+        link.type = type;
+        link.postId = postId;
+        link.pageId = pageId
+
+        if (type !== LinkType.UNDEFINED) {
+          const delayTime = await this.getDelayTime(link.status, link.type)
+          link.delayTime = delayTime
+        }
+
+        if (postId) {
+          link.postIdV1 =
+            type === LinkType.PRIVATE
+              ? await this.facebookService.getPostIdV2WithCookie(link.linkUrl) || null
+              : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
+        }
+
+        await this.linkRepository.save(link);
+      }));
+    }
+
+    this.isReHandleUrl = false
+  }
+
   async getDelayTime(status: LinkStatus, type: LinkType) {
     const setting = await this.delayRepository.find()
     return status === LinkStatus.Pending ? setting[0].delayOff * 60 : (type === LinkType.PUBLIC ? setting[0].delayOnPublic : setting[0].delayOnPrivate)
@@ -593,6 +665,15 @@ export class MonitoringService implements OnModuleInit {
         id: true,
         postId: true,
         userId: true
+      }
+    })
+  }
+
+  private reGetLinksWithoutProfile() {
+    return this.linkRepository.find({
+      where: {
+        type: LinkType.UNDEFINED,
+        postId: Not(IsNull())
       }
     })
   }
