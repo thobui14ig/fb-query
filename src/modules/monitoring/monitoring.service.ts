@@ -117,6 +117,21 @@ export class MonitoringService implements OnModuleInit {
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)
+  async checkProxyBlock() {
+    const proxies = await this.proxyRepository.find({
+      where: {
+        isFbBlock: true
+      }
+    })
+
+    return this.proxyRepository.save(proxies.map(item => {
+      return {
+        ...item, isFbBlock: false
+      }
+    }))
+  }
+
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async checkProxyOk() {
     const proxyInActive = await this.proxyRepository.find()
 
