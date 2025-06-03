@@ -197,14 +197,14 @@ export class FacebookService {
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
 
-    const isBlock = await this.checkProxyBlock(proxy, link.linkUrl)
-    if (isBlock) {
-      console.log("🚀 ~ getCmtPublic ~ proxy:", proxy)
-      await this.updateProxyFbBlock(proxy)
-      const newProxy = await this.getRandomProxyGetProfile()
+    // const isBlock = await this.checkProxyBlock(proxy, link.linkUrl)
+    // if (isBlock) {
+    //   console.log("🚀 ~ getCmtPublic ~ proxy:", proxy)
+    //   await this.updateProxyFbBlock(proxy)
+    //   const newProxy = await this.getRandomProxyGetProfile()
 
-      return this.getCmtPublic(postId, newProxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
-    }
+    //   return this.getCmtPublic(postId, newProxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
+    // }
 
     try {
       const response = await firstValueFrom(
@@ -213,6 +213,12 @@ export class FacebookService {
           httpsAgent
         }),
       )
+      if (response.data?.errors?.[0]?.code === 1675004) {
+        await this.updateProxyFbBlock(proxy)
+        const newProxy = await this.getRandomProxyGetProfile()
+
+        return this.getCmtPublic(postId, newProxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
+      }
 
       let dataComment = await this.handleDataComment(response, proxy, link)
 
@@ -399,7 +405,10 @@ export class FacebookService {
       }
 
       if (dataJson?.errors?.[0]?.code === 1675004) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, "1675004")
+        // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, "1675004")
+        await this.updateProxyFbBlock(proxy)
+        // const newProxy = await this.getRandomProxyGetProfile()
+        // return this.convertPublicToPrivate(newProxy, postId, link)
         return false
       }
 
@@ -793,7 +802,9 @@ export class FacebookService {
       );
 
       if (isArray(response.data?.errors) && response.data?.errors[0]?.code === 1675004) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+        await this.updateProxyFbBlock(proxy)
+        // const newProxy = await this.getRandomProxyGetProfile()
         return null
       }
       const dataJson = response.data as any
