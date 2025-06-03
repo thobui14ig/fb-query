@@ -199,7 +199,9 @@ export class FacebookService {
 
     const isBlock = await this.checkProxyBlock(proxy, link.linkUrl)
     if (isBlock) {
-      return this.getCmtPublic(postId, proxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
+      const newProxy = await this.getRandomProxyGetProfile()
+
+      return this.getCmtPublic(postId, newProxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
     }
 
     try {
