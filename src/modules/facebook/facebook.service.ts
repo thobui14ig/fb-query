@@ -1227,7 +1227,7 @@ export class FacebookService {
     const text = responseWithCookie.data
     const isWrong = (text as string).includes('something went wrong')
     if (isWrong) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'something went wrong')
+      await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, 'something went wrong')
       return {
         type: LinkType.UNDEFINED,
       }
