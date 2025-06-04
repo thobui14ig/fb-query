@@ -197,15 +197,6 @@ export class FacebookService {
     const headers = getHeaderComment(this.fbUrl);
     const body = getBodyComment(postId);
 
-    // const isBlock = await this.checkProxyBlock(proxy, link.linkUrl)
-    // if (isBlock) {
-    //   console.log("🚀 ~ getCmtPublic ~ proxy:", proxy)
-    //   await this.updateProxyFbBlock(proxy)
-    //   const newProxy = await this.getRandomProxyGetProfile()
-
-    //   return this.getCmtPublic(postId, newProxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
-    // }
-
     try {
       const response = await firstValueFrom(
         this.httpService.post(this.fbGraphql, body, {
@@ -255,6 +246,7 @@ export class FacebookService {
         //get bang token
         if (!status && !link.pageId) {
           const token = await this.getTokenActiveFromDb()
+          console.log("🚀 ~ getCmtPublic ~ token:", token)
           if (!token) {//ko có cookie và token
             await this.linkRepository.save({ ...link, type: LinkType.UNDEFINED })
 
@@ -267,6 +259,7 @@ export class FacebookService {
               const delayTime = await this.getDelayTime(link.status, link.type)
               link.type = LinkType.PRIVATE
               link.delayTime = delayTime
+
               const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
               if (dataReconstruct?.pageId) {
                 link.pageId = dataReconstruct?.pageId
@@ -398,17 +391,13 @@ export class FacebookService {
       );
 
       const dataJson = response.data
-
       if (isAlpha(response.data) && dataJson.includes(`"error":1357053`)) {
         await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, `"error":1357053`)
         return false
       }
 
       if (dataJson?.errors?.[0]?.code === 1675004) {
-        // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, "1675004")
-        await this.updateProxyFbBlock(proxy)
-        // const newProxy = await this.getRandomProxyGetProfile()
-        // return this.convertPublicToPrivate(newProxy, postId, link)
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, "1675004")
         return false
       }
 
@@ -416,6 +405,7 @@ export class FacebookService {
         const delayTime = await this.getDelayTime(link.status, link.type)
         link.type = LinkType.PRIVATE
         link.delayTime = delayTime
+
         const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
         if (dataReconstruct?.pageId) {
           link.pageId = dataReconstruct?.pageId
@@ -802,9 +792,8 @@ export class FacebookService {
       );
 
       if (isArray(response.data?.errors) && response.data?.errors[0]?.code === 1675004) {
-        // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
-        await this.updateProxyFbBlock(proxy)
-        // const newProxy = await this.getRandomProxyGetProfile()
+        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
+
         return null
       }
       const dataJson = response.data as any
@@ -1122,7 +1111,6 @@ export class FacebookService {
       );
       const htmlContent = response.data
       const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-      // console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
 
       if (isBlockProxy) {
         await this.updateProxyFbBlock(proxy)
@@ -1246,10 +1234,10 @@ export class FacebookService {
     }
 
     //check block
-    const isBlock = (text as string).includes('Temporarily Blocked')
+    const isProxyBlock = (text as string).includes('Temporarily Blocked')
 
-    if (isBlock) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'Temporarily Blocked')
+    if (isProxyBlock) {
+      await this.updateProxyFbBlock(proxy)
       return {
         type: LinkType.UNDEFINED,
       }
@@ -1331,7 +1319,6 @@ export class FacebookService {
       );
       const htmlContent = response.data
       const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-      console.log("🚀 ~ getProfileLink ~ isBlockProxy:", isBlockProxy)
 
       if (isBlockProxy) {
         return true
