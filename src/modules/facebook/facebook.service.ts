@@ -719,7 +719,7 @@ export class FacebookService {
   }
 
   async getCommentByCookie(proxy: ProxyEntity, postId: string, link: LinkEntity) {
-    const cookieEntity = await this.getCookieActiveFromDb()
+    const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     if (!cookieEntity) return null
 
     try {
@@ -1382,7 +1382,7 @@ export class FacebookService {
     try {
       const proxy = await this.getRandomProxy()
       const httpsAgent = this.getHttpAgent(proxy)
-      const cookieEntity = await this.getCookieActiveFromDb()
+      const cookieEntity = await this.getCookieActiveOrLimitFromDb()
       if (!cookieEntity) return null
       const cookies = this.changeCookiesFb(cookieEntity.cookie)
 
@@ -1831,64 +1831,64 @@ export class FacebookService {
     return randomProxy
   }
 
-  async getUuidPuppeteer(uid: string) {
-    console.log("🚀 ~ getUuidPuppeteer:")
-    const cookie = await this.getCookieActiveFromDb()
-    if (!cookie) return null
+  // async getUuidPuppeteer(uid: string) {
+  //   console.log("🚀 ~ getUuidPuppeteer:")
+  //   const cookie = await this.getCookieActiveFromDb()
+  //   if (!cookie) return null
 
-    try {
-      const proxyURL = 'http://ip.mproxy.vn:12370';
-      const proxyUsername = 'chuongndh';
-      const proxyPassword = 'LOKeNCbTGeI1t';
-      const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`],
-      });
-      const page = await browser.newPage();
-      await page.authenticate({
-        username: proxyUsername,
-        password: proxyPassword,
-      });
-      // Navigate the page to a URL.
-      await page.setUserAgent(
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
-      );
-      await page.setViewport({
-        width: 375,
-        height: 812,
-        isMobile: true,
-        hasTouch: true,
-        deviceScaleFactor: 3,
-      });
-      const cookies = this.changeCookiesFb(cookie.cookie)
+  //   try {
+  //     const proxyURL = 'http://ip.mproxy.vn:12370';
+  //     const proxyUsername = 'chuongndh';
+  //     const proxyPassword = 'LOKeNCbTGeI1t';
+  //     const browser = await puppeteer.launch({
+  //       args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`],
+  //     });
+  //     const page = await browser.newPage();
+  //     await page.authenticate({
+  //       username: proxyUsername,
+  //       password: proxyPassword,
+  //     });
+  //     // Navigate the page to a URL.
+  //     await page.setUserAgent(
+  //       'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+  //     );
+  //     await page.setViewport({
+  //       width: 375,
+  //       height: 812,
+  //       isMobile: true,
+  //       hasTouch: true,
+  //       deviceScaleFactor: 3,
+  //     });
+  //     const cookies = this.changeCookiesFb(cookie.cookie)
 
-      // ✅ Set cookies
-      await page.setExtraHTTPHeaders({
-        Cookie: this.formatCookies(cookies)
-      });
-      await page.goto(`https://www.facebook.com/${uid}`, {
-        waitUntil: 'networkidle2'
-      });
-      const pageSource = await page.content()
-      const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
-      if (match) {
-        console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
+  //     // ✅ Set cookies
+  //     await page.setExtraHTTPHeaders({
+  //       Cookie: this.formatCookies(cookies)
+  //     });
+  //     await page.goto(`https://www.facebook.com/${uid}`, {
+  //       waitUntil: 'networkidle2'
+  //     });
+  //     const pageSource = await page.content()
+  //     const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
+  //     if (match) {
+  //       console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
 
-        return match[1];
-      }
-      const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
-      if (match1) {
-        console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
+  //       return match[1];
+  //     }
+  //     const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
+  //     if (match1) {
+  //       console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
 
-        return match1[1];
-      }
+  //       return match1[1];
+  //     }
 
-      browser.close()
-      return null
-    } catch (error) {
-      console.log("🚀 ~ getUuidPuppeteer ~ error:", error?.message)
-      return null
-    }
-  }
+  //     browser.close()
+  //     return null
+  //   } catch (error) {
+  //     console.log("🚀 ~ getUuidPuppeteer ~ error:", error?.message)
+  //     return null
+  //   }
+  // }
 
   parseCookieString(cookieStr: string) {
     return cookieStr.split(';').map(cookie => {
