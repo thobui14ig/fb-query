@@ -485,7 +485,7 @@ export class MonitoringService implements OnModuleInit {
       const batch = links.slice(i, i + BATCH_SIZE);
 
       await Promise.all(batch.map(async (link) => {
-        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl) || {} as any;
+        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl, link.id) || {} as any;
         if (postId) {
           const exitLink = await this.linkRepository.findOne({
             where: {
@@ -556,7 +556,7 @@ export class MonitoringService implements OnModuleInit {
       const batch = links.slice(i, i + BATCH_SIZE);
 
       await Promise.all(batch.map(async (link) => {
-        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl) || {} as any;
+        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl, link.id) || {} as any;
         if (postId) {
           const exitLink = await this.linkRepository.findOne({
             where: {

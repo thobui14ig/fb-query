@@ -697,7 +697,7 @@ export class FacebookService {
             }
           })
           //chỗ này chưa ổn
-          const profile = await this.getProfileLink(link.linkUrl)
+          const profile = await this.getProfileLink(link.linkUrl, link.id)
           // //nếu có profile trả về nghĩa là token die
           if (profile?.type === LinkType.UNDEFINED) {
             return null
@@ -873,7 +873,7 @@ export class FacebookService {
     };
   }
 
-  async getProfileLink(url: string) {
+  async getProfileLink(url: string, id: number) {
     const token = await this.getTokenActiveFromDb()
     const cookieEntity = await this.getCookieActiveOrLimitFromDb()
     const proxy = await this.getRandomProxyGetProfile()
@@ -885,7 +885,7 @@ export class FacebookService {
         }
       }
       const httpsAgent = this.getHttpAgent(proxy)
-      console.log("----------Đang lấy thông tin url:", url)
+      console.log("----------Đang lấy thông tin url:", url, id)
 
       const response = await firstValueFrom(
         this.httpService.get(url, {
