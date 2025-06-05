@@ -1203,7 +1203,6 @@ export class FacebookService {
   async reGetProfileWithCookie(url: string, cookieEntity: CookieEntity) {
     const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
 
-    console.log(`🚀 ~ reGetProfileWithCookie ~ { facebookId, fbDtsg, jazoest }:`, { facebookId, fbDtsg, jazoest })
     if (!facebookId) {
       await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "!facebookId")
 
