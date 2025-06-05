@@ -35,6 +35,7 @@ export class MonitoringService implements OnModuleInit {
   isHandleUrl: boolean = false
   isReHandleUrl: boolean = false
   isHandleUuid: boolean = false
+  isCheckProxy: boolean = false
   private jobIntervalHandlers: Record<RefreshKey, NodeJS.Timeout> = {
     refreshToken: null,
     refreshCookie: null,
@@ -116,23 +117,47 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
-  async checkProxyBlock() {
-    const proxies = await this.proxyRepository.find({
-      where: {
-        isFbBlock: true
-      }
-    })
+  // // @Cron(CronExpression.EVERY_30_SECONDS)
+  // async checkProxyBlock() {
+  //   const proxies = await this.proxyRepository.find({
+  //     where: {
+  //       isFbBlock: true
+  //     }
+  //   })
 
-    return this.proxyRepository.save(proxies.map(item => {
-      return {
-        ...item, isFbBlock: false
-      }
-    }))
-  }
+  //   return this.proxyRepository.save(proxies.map(item => {
+  //     return {
+  //       ...item, isFbBlock: false
+  //     }
+  //   }))
+  // }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
-  async checkProxyOk() {
+  // // @Cron(CronExpression.EVERY_30_SECONDS)
+  // async checkProxyOk() {
+  //   const proxyInActive = await this.proxyRepository.find()
+
+  //   for (const proxy of proxyInActive) {
+  //     const [host, port, username, password] = proxy.proxyAddress.split(':');
+  //     const config = {
+  //       host,
+  //       port,
+  //       proxyAuth: `${username}:${password}`
+  //     };
+  //     proxy_check(config).then(async (res) => {
+  //       if (res) {
+  //         await this.facebookService.updateProxyActive(proxy)
+  //       }
+  //     }).catch(async (e) => {
+  //       await this.facebookService.updateProxyDie(proxy)
+  //     });
+  //   }
+  // }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async checkProxy() {
+    if (this.isCheckProxy) return
+
+    this.isCheckProxy = true
     const proxyInActive = await this.proxyRepository.find()
 
     for (const proxy of proxyInActive) {
@@ -144,37 +169,18 @@ export class MonitoringService implements OnModuleInit {
       };
       proxy_check(config).then(async (res) => {
         if (res) {
-          await this.facebookService.updateProxyActive(proxy)
+          const status = await this.facebookService.checkProxyBlock(proxy)
+          if (!status) {
+            await this.facebookService.updateProxyActive(proxy)
+          } else {
+            await this.facebookService.updateProxyDie(proxy)
+          }
         }
       }).catch(async (e) => {
         await this.facebookService.updateProxyDie(proxy)
       });
     }
-  }
-
-  @Cron(CronExpression.EVERY_5_SECONDS)
-  async checkProxyNoOk() {
-    const proxyInActive = await this.proxyRepository.find({
-      where: {
-        status: ProxyStatus.ACTIVE
-      }
-    })
-
-    for (const proxy of proxyInActive) {
-      const [host, port, username, password] = proxy.proxyAddress.split(':');
-      const config = {
-        host,
-        port,
-        proxyAuth: `${username}:${password}`
-      };
-      proxy_check(config).then(async (res) => {
-        if (res) {
-          await this.facebookService.updateProxyActive(proxy)
-        }
-      }).catch(async (e) => {
-        await this.facebookService.updateProxyDie(proxy)
-      });
-    }
+    this.isCheckProxy = false
   }
 
   async startProcessTotalCount() {
@@ -387,28 +393,34 @@ export class MonitoringService implements OnModuleInit {
         let dataComment = null;
         const postId = `feedback:${link.postId}`;
         const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
-        dataComment = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postId, link, false, true) || {} as any
+        // dataComment = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postId, link, false, true) || {} as any
 
-        if (dataComment.commentId) {
-          const links = await this.linkRepository.find({
-            where: {
-              id: link.id
-            }
-          })
-          const linksChanged = links.map(item => {
-            return {
-              ...item,
-              type: LinkType.PUBLIC
-            }
-          })
-          await this.linkRepository.save(linksChanged)
-        } else {
-          const { data } = await getWithToken() || {}
-          dataComment = data
+        // if (dataComment.commentId) {
+        //   const links = await this.linkRepository.find({
+        //     where: {
+        //       id: link.id
+        //     }
+        //   })
+        //   const linksChanged = links.map(item => {
+        //     return {
+        //       ...item,
+        //       type: LinkType.PUBLIC
+        //     }
+        //   })
+        //   await this.linkRepository.save(linksChanged)
+        // } else {
+        //   const { data } = await getWithToken() || {}
+        //   dataComment = data
 
-          if ((!dataComment || !(dataComment as any)?.commentId)) {
-            dataComment = await getWithCookie()
-          }
+        //   if ((!dataComment || !(dataComment as any)?.commentId)) {
+        //     dataComment = await getWithCookie()
+        //   }
+        // }
+        const { data } = await getWithToken() || {}
+        dataComment = data
+
+        if ((!dataComment || !(dataComment as any)?.commentId)) {
+          dataComment = await getWithCookie()
         }
 
         const {
