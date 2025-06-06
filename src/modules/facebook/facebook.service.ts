@@ -881,7 +881,9 @@ export class FacebookService {
   async getProfileLink(url: string, id: number) {
     console.log("----------Đang lấy thông tin url:", url, id)
     const postId = extractFacebookId(url)
+    console.log("🚀 ~ getProfileLink ~ postId:", postId)
     const info = await this.getInfoLinkUseCase.getInfoLink(postId)
+    console.log("🚀 ~ getProfileLink ~ info:", info)
     if (info?.id) {
       const cmtResponse = await this.getCommentPublicUseCase.getCmtPublic(info.id)
       if (!cmtResponse) {//xảy ra error
