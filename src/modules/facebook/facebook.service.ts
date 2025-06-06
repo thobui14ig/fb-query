@@ -908,7 +908,7 @@ export class FacebookService {
     }
 
     return {
-      type: LinkType.DIE,
+      type: info.linkType,
     }
   }
 

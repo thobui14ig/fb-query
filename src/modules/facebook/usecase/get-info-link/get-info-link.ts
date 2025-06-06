@@ -28,8 +28,13 @@ export class GetInfoLinkUseCase {
     async getInfoLink(postId: string): Promise<IGetInfoLinkResponse> | null {
         try {
             const proxy = await this.proxyService.getRandomProxy()
-            const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
-            if (!proxy || !token) { return null }
+            // const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
+            // if (!proxy || !token) { return null }
+            if (!proxy) {
+                return {
+                    linkType: LinkType.UNDEFINED
+                }
+            }
 
             const httpsAgent = getHttpAgent(proxy)
             const languages = [
