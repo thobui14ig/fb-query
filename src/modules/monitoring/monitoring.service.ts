@@ -117,42 +117,6 @@ export class MonitoringService implements OnModuleInit {
     return Promise.all([this.handleStartMonitoring((groupPost.public || []), LinkType.PUBLIC), this.handleStartMonitoring((groupPost.private || []), LinkType.PRIVATE)])
   }
 
-  // // @Cron(CronExpression.EVERY_30_SECONDS)
-  // async checkProxyBlock() {
-  //   const proxies = await this.proxyRepository.find({
-  //     where: {
-  //       isFbBlock: true
-  //     }
-  //   })
-
-  //   return this.proxyRepository.save(proxies.map(item => {
-  //     return {
-  //       ...item, isFbBlock: false
-  //     }
-  //   }))
-  // }
-
-  // // @Cron(CronExpression.EVERY_30_SECONDS)
-  // async checkProxyOk() {
-  //   const proxyInActive = await this.proxyRepository.find()
-
-  //   for (const proxy of proxyInActive) {
-  //     const [host, port, username, password] = proxy.proxyAddress.split(':');
-  //     const config = {
-  //       host,
-  //       port,
-  //       proxyAuth: `${username}:${password}`
-  //     };
-  //     proxy_check(config).then(async (res) => {
-  //       if (res) {
-  //         await this.facebookService.updateProxyActive(proxy)
-  //       }
-  //     }).catch(async (e) => {
-  //       await this.facebookService.updateProxyDie(proxy)
-  //     });
-  //   }
-  // }
-
   @Cron(CronExpression.EVERY_10_SECONDS)
   async checkProxy() {
     if (this.isCheckProxy) return

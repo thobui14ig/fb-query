@@ -1,3 +1,6 @@
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { ProxyEntity } from "src/modules/proxy/entities/proxy.entity";
+
 function extractPhoneNumber(text: string) {
     text = text.replace(/o/gi, '0');
     text = text.replace(/[^0-9]/g, '');
@@ -22,9 +25,37 @@ function extractPhoneNumber(text: string) {
         }
     }
 
-    return null; 
+    return null;
+}
+
+function extractFacebookId(url: string): string | null {
+    const patterns = [
+        /\/videos\/(\d+)/,                         // video id
+        /\/posts\/(pfbid\w+)/,                     // post with pfbid
+        /facebook\.com\/(\d{10,})$/,               // plain user/page ID
+        /facebook\.com\/(pfbid\w+)/,               // post with pfbid in URL directly
+        /story\.php\?story_fbid=(\d+)/,            // story_fbid in query params
+        /\/reel\/(\d+)/                            // reel id
+    ];
+
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+            return match[1];
+        }
+    }
+
+    return null;
+}
+
+function getHttpAgent(proxy: ProxyEntity) {
+    const proxyArr = proxy?.proxyAddress.split(':')
+    const agent = `http://${proxyArr[2]}:${proxyArr[3]}@${proxyArr[0]}:${proxyArr[1]}`
+    const httpsAgent = new HttpsProxyAgent(agent);
+
+    return httpsAgent;
 }
 
 export {
-    extractPhoneNumber
+    extractPhoneNumber, extractFacebookId, getHttpAgent
 }

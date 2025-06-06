@@ -8,9 +8,11 @@ import { ProxyEntity } from '../proxy/entities/proxy.entity';
 import { LinkEntity } from '../links/entities/links.entity';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
+import { GetInfoLinkUseCaseModule } from './usecase/get-info-link/get-info-link-usecase.module';
+import { GetCommentPublicUseCaseModule } from './usecase/get-comment-public/get-comment-public.module';
 
 @Module({
-  imports: [HttpModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity, ProxyEntity, LinkEntity, CommentEntity, DelayEntity])],
+  imports: [HttpModule, GetInfoLinkUseCaseModule, GetCommentPublicUseCaseModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity, ProxyEntity, LinkEntity, CommentEntity, DelayEntity])],
   controllers: [],
   providers: [FacebookService],
   exports: [FacebookService],

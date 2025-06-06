@@ -5,3 +5,14 @@ export interface IGetProfileLinkResponse {
     name?: string,
     postId?: string,
 }
+
+export interface ICommentResponse {
+    commentId: string,
+    userNameComment: string,
+    commentMessage: string,
+    phoneNumber: string,
+    userIdComment: string,
+    commentCreatedAt: string,
+    totalCount: number,
+    totalLike: number
+}

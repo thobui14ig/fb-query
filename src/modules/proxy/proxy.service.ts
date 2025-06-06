@@ -3,7 +3,7 @@ import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProxyEntity } from './entities/proxy.entity';
+import { ProxyEntity, ProxyStatus } from './entities/proxy.entity';
 
 @Injectable()
 export class ProxyService {
@@ -74,5 +74,21 @@ export class ProxyService {
 
   remove(id: number) {
     return this.repo.delete(id);
+  }
+
+  async getRandomProxy() {
+    const proxies = await this.repo.find({
+      where: {
+        status: ProxyStatus.ACTIVE,
+      }
+    })
+    const randomIndex = Math.floor(Math.random() * proxies.length);
+    const randomProxy = proxies[randomIndex];
+
+    return randomProxy
+  }
+
+  updateProxyFbBlock(proxy: ProxyEntity) {
+    return this.repo.save({ ...proxy, isFbBlock: true })
   }
 }

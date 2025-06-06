@@ -1,8 +1,8 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { UpdateTokenDto } from './dto/update-token.dto';
-import { TokenEntity, TokenType } from './entities/token.entity';
-import { Repository } from 'typeorm';
+import { TokenEntity, TokenStatus, TokenType } from './entities/token.entity';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FacebookService } from '../facebook/facebook.service';
 
@@ -11,6 +11,7 @@ export class TokenService {
   constructor(
     @InjectRepository(TokenEntity)
     private repo: Repository<TokenEntity>,
+    @Inject(forwardRef(() => FacebookService))
     private facebookService: FacebookService,
   ) { }
 
@@ -87,4 +88,18 @@ export class TokenService {
   }
 
   getToken(token: string) { }
+
+  async getTokenEAAAAAYActiveFromDb(): Promise<TokenEntity> {
+    const tokens = await this.repo.find({
+      where: {
+        status: In([TokenStatus.LIMIT, TokenStatus.ACTIVE]),
+        tokenValueV1: Not(IsNull())
+      }
+    })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
+  }
 }

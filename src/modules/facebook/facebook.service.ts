@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { fa, faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,16 +10,17 @@ import { isArray } from 'class-validator';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import puppeteer from 'puppeteer';
 import { firstValueFrom } from 'rxjs';
 import { isAlpha, isNumeric } from 'src/common/utils/check-utils';
-import { extractPhoneNumber } from 'src/common/utils/helper';
+import { extractFacebookId, extractPhoneNumber } from 'src/common/utils/helper';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
+import { DelayEntity } from '../setting/entities/delay.entity';
 import { TokenEntity, TokenStatus, TokenType } from '../token/entities/token.entity';
+import { GetInfoLinkUseCase } from './usecase/get-info-link/get-info-link';
 import {
   getBodyComment,
   getBodyToken,
@@ -27,8 +28,7 @@ import {
   getHeaderProfileFb,
   getHeaderToken
 } from './utils';
-import { writeFile } from 'src/common/utils/file';
-import { DelayEntity } from '../setting/entities/delay.entity';
+import { GetCommentPublicUseCase } from './usecase/get-comment-public/get-comment-public';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -55,6 +55,8 @@ export class FacebookService {
     private commentRepository: Repository<CommentEntity>,
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
+    private getInfoLinkUseCase: GetInfoLinkUseCase,
+    private getCommentPublicUseCase: GetCommentPublicUseCase
   ) {
   }
 
@@ -877,145 +879,34 @@ export class FacebookService {
   }
 
   async getProfileLink(url: string, id: number) {
-    const token = await this.getTokenActiveFromDb()
-    const cookieEntity = await this.getCookieActiveFromDb()
-    const proxy = await this.getRandomProxyGetProfile()
-
-    try {
-      if (!proxy) {
-        return {
-          type: LinkType.UNDEFINED,
-        }
-      }
-      const httpsAgent = this.getHttpAgent(proxy)
-      console.log("----------Đang lấy thông tin url:", url, id)
-
-      const response = await firstValueFrom(
-        this.httpService.get(url, {
-          headers: {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-            "cache-control": "max-age=0",
-            "dpr": "1",
-            "priority": "u=0, i",
-            "sec-ch-prefers-color-scheme": "light",
-            "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
-            "sec-ch-ua-full-version-list": "\"Chromium\";v=\"136.0.7103.93\", \"Google Chrome\";v=\"136.0.7103.93\", \"Not.A/Brand\";v=\"99.0.0.0\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-model": "\"\"",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-ch-ua-platform-version": "\"10.0.0\"",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-            "viewport-width": "856",
-            "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=1UkVxZvyucxVG78mk.AWevqY9nf_vHWJzPoe3hBWtadWsJ80XJ0HFGnqPtdNh439ijAVg.BoHzIp..AAA.0.0.BoH3O0.AWfmrWmPXac1pUoDOR6Hlr4s3r0; wd=856x953",
-            "Referrer-Policy": "origin-when-cross-origin"
-          },
-          httpsAgent,
-        }),
-      );
-      const htmlContent = response.data
-      //check block proxy public
-      const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-      if (isBlockProxy) {
-        await this.updateProxyFbBlock(proxy)
-        return {
-          type: LinkType.UNDEFINED,
-        }
-      }
-      const isCookieDie = (htmlContent as string).includes('You must log in to continue')
-      if (isCookieDie) {
-        await this.updateProxyFbBlock(proxy)
+    console.log("----------Đang lấy thông tin url:", url, id)
+    const postId = extractFacebookId(url)
+    const info = await this.getInfoLinkUseCase.getInfoLink(postId)
+    if (info.id) {
+      const cmtResponse = await this.getCommentPublicUseCase.getCmtPublic(info.id)
+      if (!cmtResponse) {//xảy ra error
         return {
           type: LinkType.UNDEFINED,
         }
       }
 
-      const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
-
-      //case 1: video, post public
-      if (matchVideoPublic && matchVideoPublic[1]) {
-        const postId = htmlContent?.split('"matchVideoPublic":"')[1]?.split('"')[0];
-        const profileDecode = JSON.parse(matchVideoPublic[1])
-        if (postId) {
-          return {
-            type: LinkType.PUBLIC,
-            name: profileDecode[0]?.name ?? url,
-            postId: postId,
-          }
-        }
-      }
-
-      //case 3: story
-      const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
-      if (matchStoryPublic && matchStoryPublic[1]) {
-        const postId = matchStoryPublic[1]
-        // console.log("🚀 ~ getProfileLink ~ matchStoryPublic:", postId)
-        if (postId) {
-          return {
-            type: LinkType.PUBLIC,
-            name: url,
-            postId: postId,
-          }
-        }
-      }
-
-      //case 3: reel public
-      const matchVideopublic = htmlContent.match(/"post_id":"(.*?)"/);
-
-      if (matchVideopublic && matchVideopublic[1]) {
-        const postId = matchVideopublic[1]
-        if (postId) {
-          return {
-            type: LinkType.PUBLIC,
-            name: url,
-            postId: postId,
-          }
-        }
-      }
-
-      //case 2: cần token
-      if (cookieEntity) {
-        return await this.reGetProfileWithCookie(url, cookieEntity)
-      }
-
-
-      if (!cookieEntity) {
+      if (cmtResponse.hasData) {
         return {
-          type: LinkType.UNDEFINED,
+          type: LinkType.PUBLIC,
+          name: info.linkName,
+          postId: info.id,
         }
       }
 
-      console.log("🚀 ~LẤY PROFILE LINK DIE2:", url)
       return {
-        type: LinkType.DIE,
+        type: LinkType.PRIVATE,
+        name: info.linkName,
+        postId: info.id,
       }
-    } catch (error) {
-      console.log("🚀 ~ getProfileLink ~ error:", error.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
-        await this.updateProxyDie(proxy)
-        return
-      }
-      if (error?.response?.status == 400) {
-        if (error.response?.data?.error?.code === 368) {
-          await this.updateStatusTokenDie(token, TokenStatus.LIMIT)
-        }
-        if (error.response?.data?.error?.code === 190) {
-          await this.updateStatusTokenDie(token, TokenStatus.DIE)
-        }
-      }
-      if (error?.status === 404) {
-        console.log("🚀 ~ LẤY PROFILE LINK DIE:", 404, url)
-        return {
-          type: LinkType.DIE,
-        }
-      }
-      return {
-        type: LinkType.UNDEFINED,
-      }
+    }
+
+    return {
+      type: LinkType.DIE,
     }
   }
 
@@ -1863,68 +1754,6 @@ export class FacebookService {
 
     return randomProxy
   }
-
-  // async getUuidPuppeteer() {
-  //   console.log("🚀 ~ getUuidPuppeteer:")
-  //   // const cookie = await this.getCookieActiveFromDb()
-  //   // if (!cookie) return null
-  //   // const cc = this.handleCookie("fr=1OpD6KDSau7uCMQ2z.AWf6lmFGwmZa8KPmIBGnzGBT-cd_54Sy3Y9BKdBxvcv2_6XiNU0.BoQGQ2..AAA.0.0.BoQaK4.AWe0DhSgnnGKiCR0WdaF8mYUXaM; c_user=100051755359634; datr=VbQ5aIRhuL3sZgH-YD17GNjn; sb=IpN2Z63pdgaswLIv6HwTPQe2; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1749133215795%2C%22v%22%3A1%7D; wd=1057x953; xs=1%3AKgVWxV673MgyBw%3A2%3A1749131961%3A-1%3A-1; ps_n=1; ps_l=1")
-  //   // console.log("🚀 ~ getUuidPuppeteer ~ cc:", cc)
-
-  //   try {
-  //     const proxyURL = 'http://ip.mproxy.vn:12370';
-  //     const proxyUsername = 'chuongndh';
-  //     const proxyPassword = 'LOKeNCbTGeI1t';
-  //     const browser = await puppeteer.launch({
-  //       headless: false,
-  //       // args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxyURL}`],
-  //     });
-  //     const page = await browser.newPage();
-  //     // await page.authenticate({
-  //     //   username: proxyUsername,
-  //     //   password: proxyPassword,
-  //     // });
-  //     // Navigate the page to a URL.
-  //     // await page.setUserAgent(
-  //     //   'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
-  //     // );
-  //     // await page.setViewport({
-  //     //   width: 375,
-  //     //   height: 812,
-  //     //   isMobile: true,
-  //     //   hasTouch: true,
-  //     //   deviceScaleFactor: 3,
-  //     // });
-  //     const cookies = this.changeCookiesFb("fr=1OpD6KDSau7uCMQ2z.AWf6lmFGwmZa8KPmIBGnzGBT-cd_54Sy3Y9BKdBxvcv2_6XiNU0.BoQGQ2..AAA.0.0.BoQaK4.AWe0DhSgnnGKiCR0WdaF8mYUXaM; c_user=100051755359634; datr=VbQ5aIRhuL3sZgH-YD17GNjn; sb=IpN2Z63pdgaswLIv6HwTPQe2; presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1749133215795%2C%22v%22%3A1%7D; wd=1057x953; xs=1%3AKgVWxV673MgyBw%3A2%3A1749131961%3A-1%3A-1; ps_n=1; ps_l=1")
-
-  //     // ✅ Set cookies
-  //     await page.setExtraHTTPHeaders({
-  //       Cookie: this.formatCookies(cookies)
-  //     });
-  //     await page.goto(`https://www.facebook.com/chuatrimienphi.TrieuThiSau/posts/pfbid0ngFHWBbu9EbgvjnYRHNPPWZ5cgXP8mAym6YTZTeJBWY1Z78WRaYz6J5gDiNq74YHl#`, {
-  //       waitUntil: 'networkidle2'
-  //     });
-  //     const pageSource = await page.content()
-  //     const match = pageSource.match(/"userID"\s*:\s*"(\d+)"/);
-  //     if (match) {
-  //       console.log("🚀 ~ getUuidPuppeteer ~ match:", match[1])
-
-  //       return match[1];
-  //     }
-  //     const match1 = pageSource.match(/"pageID"\s*:\s*(\d+)/);
-  //     if (match1) {
-  //       console.log("🚀 ~ getUuidPuppeteer ~ match:", match1[1])
-
-  //       return match1[1];
-  //     }
-
-  //     // browser.close()
-  //     return null
-  //   } catch (error) {
-  //     console.log("🚀 ~ getUuidPuppeteer ~ error:", error?.message)
-  //     return null
-  //   }
-  // }
 
   parseCookieString(cookieStr: string) {
     return cookieStr.split(';').map(cookie => {
