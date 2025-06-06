@@ -882,7 +882,7 @@ export class FacebookService {
     console.log("----------Đang lấy thông tin url:", url, id)
     const postId = extractFacebookId(url)
     const info = await this.getInfoLinkUseCase.getInfoLink(postId)
-    if (info.id) {
+    if (info?.id) {
       const cmtResponse = await this.getCommentPublicUseCase.getCmtPublic(info.id)
       if (!cmtResponse) {//xảy ra error
         return {
