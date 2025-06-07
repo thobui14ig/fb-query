@@ -1,18 +1,14 @@
+import { faker } from '@faker-js/faker';
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { firstValueFrom } from "rxjs";
-import { ProxyEntity, ProxyStatus } from "src/modules/proxy/entities/proxy.entity";
-import { TokenEntity, TokenStatus } from "src/modules/token/entities/token.entity";
-import { In, IsNull, Not, Repository } from "typeorm";
-import { fa, faker } from '@faker-js/faker';
-import { getHttpAgent } from "src/common/utils/helper";
-import { TokenService } from "src/modules/token/token.service";
-import { ProxyService } from "src/modules/proxy/proxy.service";
-import { IFacebookResponse, IGetInfoLinkResponse } from "./get-info-link.i";
 import { AxiosResponse } from "axios";
-import { LinkEntity, LinkType } from "src/modules/links/entities/links.entity";
-import { InjectRepository } from "@nestjs/typeorm";
+import { firstValueFrom } from "rxjs";
+import { getHttpAgent } from "src/common/utils/helper";
+import { LinkType } from "src/modules/links/entities/links.entity";
+import { ProxyService } from "src/modules/proxy/proxy.service";
+import { TokenStatus } from "src/modules/token/entities/token.entity";
+import { TokenService } from "src/modules/token/token.service";
+import { IFacebookResponse, IGetInfoLinkResponse } from "./get-info-link.i";
 
 
 @Injectable()
@@ -20,22 +16,18 @@ export class GetInfoLinkUseCase {
     constructor(private readonly httpService: HttpService,
         private tokenService: TokenService,
         private proxyService: ProxyService,
-        @InjectRepository(LinkEntity)
-        private linkRepository: Repository<LinkEntity>,
     ) {
     }
 
     async getInfoLink(postId: string): Promise<IGetInfoLinkResponse> | null {
-        try {
-            const proxy = await this.proxyService.getRandomProxy()
-            // const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
-            // if (!proxy || !token) { return null }
-            if (!proxy) {
-                return {
-                    linkType: LinkType.UNDEFINED
-                }
+        const proxy = await this.proxyService.getRandomProxy()
+        const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
+        if (!proxy || !token) {
+            return {
+                linkType: LinkType.UNDEFINED
             }
-
+        }
+        try {
             const httpsAgent = getHttpAgent(proxy)
             const languages = [
                 'en-US,en;q=0.9',
@@ -61,24 +53,29 @@ export class GetInfoLinkUseCase {
                 'accept-language': apceptLanguage,
             };
             const response: AxiosResponse<IFacebookResponse, any> = await firstValueFrom(
-                this.httpService.get(`https://graph.facebook.com/${postId}?access_token=EAAAAUaZA8jlABO4P7KeZAAAOJ5EZB5TZBFD4RUHT8oJlkxlfQ3FQbPTobySA5O9mC4maihxT6VoOQ0YfHW7b2grrGcsjdgJqqiaKizMlxabvJBHa1ZA3o4LO1V4Mp71TrvYBw8iTn0RnnmEkZCpsTYSIFTv5ZAWPYKmlLdgteMPZBp33Y8TZBaiincDviCBGdpH2TCqMx7QZDZD`, {
+                this.httpService.get(`https://graph.facebook.com/${postId}?access_token=${token.tokenValue}`, {
                     headers,
                     httpsAgent
                 }),
             );
-            const { name: linkName } = response.data.from
+            const { name: linkName, id: pageId } = response.data.from
             const { id } = response.data
 
             return {
                 id,
                 linkName,
-                linkType: LinkType.PUBLIC
+                linkType: LinkType.PUBLIC, //mạc định sẽ là public
+                pageId
             }
         } catch (error) {
             if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
                 return {
                     linkType: LinkType.DIE
                 }
+            }
+
+            if (error.response?.data?.error?.code === 190) {//check point
+                await this.tokenService.updateStatusToken(token, TokenStatus.DIE)
             }
 
             return {

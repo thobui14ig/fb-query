@@ -102,4 +102,10 @@ export class TokenService {
 
     return randomToken
   }
+
+  updateStatusToken(token: TokenEntity, status: TokenStatus) {
+    console.log("🚀 ~ updateTokenDie ~ token:", token)
+    return this.repo.save({ ...token, status })
+  }
+
 }

@@ -29,6 +29,7 @@ import {
   getHeaderToken
 } from './utils';
 import { GetCommentPublicUseCase } from './usecase/get-comment-public/get-comment-public';
+import { GetCommentPrivateUseCase } from './usecase/get-comment-private/get-comment-private';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -56,7 +57,8 @@ export class FacebookService {
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
     private getInfoLinkUseCase: GetInfoLinkUseCase,
-    private getCommentPublicUseCase: GetCommentPublicUseCase
+    private getCommentPublicUseCase: GetCommentPublicUseCase,
+    private getCommentPrivateUseCase: GetCommentPrivateUseCase
   ) {
   }
 
@@ -195,246 +197,10 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string, proxy: ProxyEntity, postIdNumber, link: LinkEntity, isGetCommentCount = false, isCheckPrivate = false) {
-    const httpsAgent = this.getHttpAgent(proxy)
-    const headers = getHeaderComment(this.fbUrl);
-    const body = getBodyComment(postId);
+  async getCmtPublic(postId: string) {
+    const commentsRes = await this.getCommentPublicUseCase.getCmtPublic(postId)
 
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(this.fbGraphql, body, {
-          headers,
-          httpsAgent
-        }),
-      )
-      if (response.data?.errors?.[0]?.code === 1675004) {
-        await this.updateProxyFbBlock(proxy)
-        const newProxy = await this.getRandomProxyGetProfile()
-
-        return this.getCmtPublic(postId, newProxy, postIdNumber, link, isGetCommentCount, isCheckPrivate)
-      }
-
-      let dataComment = await this.handleDataComment(response, proxy, link)
-
-      if (!dataComment && typeof response.data === 'string') {
-        //story
-        const text = response.data
-        const lines = text.trim().split('\n');
-        const data = JSON.parse(lines[0])
-        dataComment = await this.handleDataComment({ data }, proxy, link)
-      }
-
-      if (!dataComment) {
-        //bai viet ko co cmt moi nhat => lay all
-        dataComment = await this.getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId, proxy, link, isGetCommentCount)
-      }
-
-      if (isCheckPrivate && response?.data?.data?.node) {
-        await this.convertLinkPrivateToPublic(postIdNumber)
-      }
-
-      if (!dataComment && typeof response.data != 'string' && !response?.data?.data?.node) {
-        //recheck link die public
-        if (!isCheckPrivate) {
-          const resProfile = await this.reGetProfilePublic(link.linkUrl)
-          if (resProfile.type === LinkType.DIE) {
-            await this.linkRepository.save({ ...link, type: LinkType.DIE })
-            return null
-          }
-        }
-
-        //get bang cookie
-        const status = await this.convertPublicToPrivate(proxy, postIdNumber, link)
-
-        //get bang token
-        if (!status && !link.pageId) {
-          const token = await this.getTokenActiveFromDb()
-          if (!token) {//ko có cookie và token
-            await this.linkRepository.save({ ...link, type: LinkType.UNDEFINED })
-
-            return null
-          }
-          const data = await this.getCommentByToken(link.postId, proxy)
-          if (data?.hasData) {
-            const cookieEntity = await this.getCookieActiveFromDb()
-            if (cookieEntity) {
-              const delayTime = await this.getDelayTime(link.status, link.type)
-              link.type = LinkType.PRIVATE
-              link.delayTime = delayTime
-
-              const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
-              if (dataReconstruct?.pageId) {
-                link.pageId = dataReconstruct?.pageId
-              }
-              await this.linkRepository.save(link)
-            }
-
-          }
-        }
-      }
-
-      const { commentId,
-        userNameComment,
-        commentMessage,
-        phoneNumber,
-        userIdComment,
-        commentCreatedAt, totalCount, totalLike } = dataComment || {}
-
-      const res = {
-        commentId,
-        userNameComment,
-        commentMessage,
-        phoneNumber,
-        userIdComment,
-        commentCreatedAt,
-        totalCount,
-        totalLike
-      };
-
-      return res;
-    } catch (error) {
-      console.log("🚀 ~ getCmtPublic ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
-        await this.updateProxyDie(proxy)
-        return
-      }
-
-      return null
-    }
-  }
-
-  async convertLinkPrivateToPublic(postId: string) {
-    const links = await this.linkRepository.find({
-      where: {
-        postId
-      }
-    })
-
-    const entities = links.map((item) => {
-      return {
-        ...item,
-        type: LinkType.PUBLIC
-      }
-    })
-
-    return this.linkRepository.save(entities)
-  }
-  async convertPublicToPrivate(proxy: ProxyEntity, postId: string, link: LinkEntity) {
-    const cookieEntity = await this.getCookieActiveOrLimitFromDb()
-    if (!cookieEntity) return false
-
-    try {
-      const id = `feedback:${postId}`;
-      const encodedPostId = Buffer.from(id, 'utf-8').toString('base64');
-      const httpsAgent = this.getHttpAgent(proxy)
-      const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
-
-      if (!facebookId) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "convertPublicToPrivate")
-
-        return false
-      }
-      const cookies = this.changeCookiesFb(cookieEntity.cookie)
-
-      const data = {
-        av: facebookId,
-        __aaid: '0',
-        __user: facebookId,
-        __a: '1',
-        __req: '13',
-        __hs: '20209.HYP:comet_pkg.2.1...0',
-        dpr: '1',
-        __ccg: 'EXCELLENT',
-        __rev: '1022417048',
-        __s: '5j9f2a:6aicy4:1wsr8e',
-        __hsi: '7499382864565808594',
-        __dyn: '7xeUmwlEnwn8yEqxemh0no6u5U4e1Nxt3odEc8co2qwJyE24wJwpUe8hw2nVE4W0qa321Rw8G11wBz83WwgEcEhwGwQw9m1YwBgao6C0Mo2swlo5qfK0zEkxe2GewbS2SU4i5oe85nxm16waCm260lCq2-azo3iwPwbS16xi4UdUcobUak0KU566E6C13G1-wkE627E4-8wLwHwea',
-        __csr: 'gjMVMFljjPl5OqmDuAXRlAp4L9ZtrQiQb-eypFUB4gyaCiC_xHz9KGDgKboJ2ErBgSvxym5EjyFayVVXUSiEC9Bz-qGDyuu6GgzmaHUmBBDK5GGaUpy8J4CxmcwxUjx20Q87207qA59kRQQ0gd0jA0sHwcW02Jq0c7Q0ME0jNweJ0bqE2Bw28WU0z2E7q0iW6U3yw2kE0p762U03jSwHw7Oo0gfm2C0WFOiw33o9S1mw5Owbq0uW0qWfwJylg35wBw9208qwWo1960dKw6Nw30QU225VHmg905lCabzE3Axmi0Jpk0Uo27xq0P41TzoC0ge0N9o0tyw9Ci3m0Qo2bKjO082hwSwpk2O3K6Q0ruz011a034Yw35w37o1rOwnU460cPw9J2oF3o3Yg1ho3vwnA9yAdDo3mg0zxw26Gxt1G4E3qw4FwjobE0Kq1-xWaQ0g-aOwOw4Hoog1bU0L20oO08Cw',
-        __comet_req: '15',
-        fb_dtsg: fbDtsg,
-        jazoest: jazoest,
-        lsd: 'AVrkziLMLUQ',
-        __spin_r: '1022417048',
-        __spin_b: 'trunk',
-        __spin_t: '1746086138',
-        __crn: 'comet.fbweb.CometTahoeRoute',
-        fb_api_caller_class: 'RelayModern',
-        fb_api_req_friendly_name: 'CommentListComponentsRootQuery',
-        variables: `{"commentsIntentToken":"RECENT_ACTIVITY_INTENT_V1","feedLocation":"TAHOE","feedbackSource":41,"focusCommentID":null,"scale":1,"useDefaultActor":false,"id":"${encodedPostId}","__relay_internal__pv__IsWorkUserrelayprovider":false}`,
-        server_timestamps: 'true',
-        doc_id: '9221104427994320'
-      };
-
-      const response = await firstValueFrom(
-        this.httpService.post("https://www.facebook.com/api/graphql/", new URLSearchParams(data).toString(), {
-          "headers": {
-            "accept": "*/*",
-            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-            "content-type": "application/x-www-form-urlencoded",
-            "priority": "u=1, i",
-            "sec-ch-prefers-color-scheme": "light",
-            "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
-            "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.115\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.115\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-model": "\"\"",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-ch-ua-platform-version": "\"10.0.0\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "x-asbd-id": "359341",
-            "x-fb-friendly-name": "CommentListComponentsRootQuery",
-            "x-fb-lsd": data.lsd,
-            "cookie": this.formatCookies(cookies),
-            "Referrer-Policy": "strict-origin-when-cross-origin"
-          },
-          httpsAgent,
-        }),
-      );
-
-      const dataJson = response.data
-      if (isAlpha(response.data) && dataJson.includes(`"error":1357053`)) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, `"error":1357053`)
-        return false
-      }
-
-      if (dataJson?.errors?.[0]?.code === 1675004) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT, "1675004")
-        return false
-      }
-
-      if (dataJson?.data?.node) {
-        const delayTime = await this.getDelayTime(link.status, link.type)
-        link.type = LinkType.PRIVATE
-        link.delayTime = delayTime
-        const cookieEntity = await this.getCookieActiveFromDb()
-        if (!cookieEntity) {
-          return false
-        }
-        const dataReconstruct = await this.reGetProfileWithCookie(link.linkUrl, cookieEntity) || {} as any
-        if (dataReconstruct?.pageId) {
-          link.pageId = dataReconstruct?.pageId
-        }
-        await this.linkRepository.save(link)
-        return true
-      }
-
-      return false
-    } catch (error) {
-      console.log("🚀 ~ convertPublicToPrivate ~ error:", error.message)
-      if ((error?.message as string)?.includes("Maximum number of redirects exceeded")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
-      }
-      if ((error?.message as string)?.includes("Unexpected non-whitespace character after")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
-      }
-
-      if ((error?.message as string)?.includes("Unexpected token 'o'")) {
-        await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "Unexpected token 'o'")
-      }
-
-      return false
-    }
+    return commentsRes.data
   }
 
   async getCommentWithCHRONOLOGICAL_UNFILTERED_INTENT_V1(postId: string, proxy: ProxyEntity, link: LinkEntity, isGetCommentCount: boolean) {
@@ -613,114 +379,13 @@ export class FacebookService {
     return filteredSortedCookie
   }
 
-  async getCommentByToken(postId: string, proxy: ProxyEntity) {
-    const token = await this.getTokenActiveFromDb()
-
-    if (!token) {
-      return
+  async getCommentByToken(postId: string) {
+    const commentsRes = await this.getCommentPrivateUseCase.getCommentPrivate(postId)
+    if (!commentsRes) {//hết proxy or token
+      return null
     }
 
-    try {
-      const httpsAgent = this.getHttpAgent(proxy)
-      const languages = [
-        'en-US,en;q=0.9',
-        'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-        'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7'
-      ];
-
-      const userAgent = faker.internet.userAgent()
-      const apceptLanguage = languages[Math.floor(Math.random() * languages.length)]
-
-      const headers = {
-        'authority': 'graph.facebook.com',
-        'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="99", "Opera";v="85"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'upgrade-insecure-requests': '1',
-        'user-agent': userAgent,
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'sec-fetch-site': 'none',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-user': '?1',
-        'sec-fetch-dest': 'document',
-        'accept-language': apceptLanguage,
-      };
-
-      const params = {
-        "order": "reverse_chronological",
-        "limit": "1000",
-        "access_token": token.tokenValue,
-        "created_time": "created_time"
-      }
-
-
-      const dataCommentToken = await firstValueFrom(
-        this.httpService.get(`https://graph.facebook.com/${postId}/comments`, {
-          headers,
-          httpsAgent,
-          params
-        }),
-      );
-
-      const res = dataCommentToken.data?.data[0]
-
-      if (!res?.message?.length) {
-        return {
-          hasData: !!dataCommentToken.data?.data,
-        }
-      }
-
-      return {
-        hasData: !!dataCommentToken.data?.data,
-        data: {
-          commentId: btoa(encodeURIComponent(`comment:${res?.id}`)),
-          userNameComment: res?.from?.name,
-          commentMessage: res?.message,
-          phoneNumber: extractPhoneNumber(res?.message),
-          userIdComment: res?.from?.id,
-          commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
-        }
-      }
-    } catch (error) {
-      console.log("🚀 ~ getCommentByToken ~ error:", error?.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
-        await this.updateProxyDie(proxy)
-      }
-
-      if (error?.response?.status == 400) {
-        if (error.response?.data?.error?.code === 368) {
-          await this.updateStatusTokenDie(token, TokenStatus.LIMIT)
-        }
-        if (error.response?.data?.error?.code === 190) {
-          await this.updateStatusTokenDie(token, TokenStatus.DIE)
-        }
-        if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
-          //kiểm tra lại 1 lần nữa link die hay token
-          const link = await this.linkRepository.findOne({
-            where: {
-              postId
-            }
-          })
-          //chỗ này chưa ổn
-          const profile = await this.getProfileLink(link.linkUrl, link.id)
-          // //nếu có profile trả về nghĩa là token die
-          if (profile?.type === LinkType.UNDEFINED) {
-            return null
-          }
-          if (profile?.postId) {
-            await this.updateStatusTokenDie(token, TokenStatus.DIE)
-          } else {
-            //link die
-            await this.linkRepository.save({ ...link, type: LinkType.DIE })
-          }
-        }
-        if (error.response?.data?.error?.code === 10) {
-          await this.updateStatusTokenDie(token, TokenStatus.DIE)
-        }
-      }
-
-      return {}
-    }
+    return commentsRes.data
   }
 
   async getCommentByCookie(proxy: ProxyEntity, postId: string, link: LinkEntity) {
@@ -879,35 +544,36 @@ export class FacebookService {
   }
 
   async getProfileLink(url: string, id: number) {
-    console.log("----------Đang lấy thông tin url:", url, id)
-    const postId = extractFacebookId(url)
-    const info = await this.getInfoLinkUseCase.getInfoLink(postId)
-    if (info?.id) {
-      const cmtResponse = await this.getCommentPublicUseCase.getCmtPublic(info.id)
-      if (!cmtResponse) {//xảy ra error
-        return {
-          type: LinkType.UNDEFINED,
-        }
-      }
+    console.log("----------Đang lấy thông tin url:", url, id);
 
-      if (cmtResponse.hasData) {
-        return {
-          type: LinkType.PUBLIC,
-          name: info.linkName,
-          postId: info.id,
-        }
-      }
+    const postId = extractFacebookId(url);
+    if (!postId) return { type: LinkType.UNDEFINED };
 
+    const info = await this.getInfoLinkUseCase.getInfoLink(postId);
+    if (!info?.id) {
+      return { type: info?.linkType ?? LinkType.UNDEFINED };
+    }
+
+    const cmtResponse = await this.getCommentPublicUseCase.getCmtPublic(info.id, true);
+    if (!cmtResponse) return { type: LinkType.UNDEFINED };
+
+    const baseInfo = {
+      name: info.linkName,
+      postId: info.id,
+    };
+
+    if (cmtResponse.hasData) {
       return {
-        type: LinkType.PRIVATE,
-        name: info.linkName,
-        postId: info.id,
-      }
+        type: LinkType.PUBLIC,
+        ...baseInfo,
+      };
     }
 
     return {
-      type: info.linkType,
-    }
+      type: LinkType.PRIVATE,
+      ...baseInfo,
+      pageId: info.pageId,
+    };
   }
 
   async getCountLikePublic(url: string) {
@@ -968,239 +634,6 @@ export class FacebookService {
       }
 
       return res
-    }
-  }
-
-  async reGetProfilePublic(url: string) {
-    const proxy = await this.getRandomProxyGetProfile()
-
-    try {
-      if (!proxy) {
-        return {
-          type: LinkType.UNDEFINED,
-        }
-      }
-      const httpsAgent = this.getHttpAgent(proxy)
-
-      const response = await firstValueFrom(
-        this.httpService.get(url, {
-          headers: {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-            "cache-control": "max-age=0",
-            "dpr": "1",
-            "priority": "u=0, i",
-            "sec-ch-prefers-color-scheme": "light",
-            "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
-            "sec-ch-ua-full-version-list": "\"Chromium\";v=\"136.0.7103.93\", \"Google Chrome\";v=\"136.0.7103.93\", \"Not.A/Brand\";v=\"99.0.0.0\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-model": "\"\"",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "sec-ch-ua-platform-version": "\"10.0.0\"",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-            "viewport-width": "856",
-            "cookie": "sb=IpN2Z63pdgaswLIv6HwTPQe2; ps_l=1; ps_n=1; datr=Xr4NaIxUf5ztTudh--LM1AJd; ar_debug=1; fr=1UkVxZvyucxVG78mk.AWevqY9nf_vHWJzPoe3hBWtadWsJ80XJ0HFGnqPtdNh439ijAVg.BoHzIp..AAA.0.0.BoH3O0.AWfmrWmPXac1pUoDOR6Hlr4s3r0; wd=856x953",
-            "Referrer-Policy": "origin-when-cross-origin"
-          },
-          httpsAgent,
-        }),
-      );
-      const htmlContent = response.data
-      const isBlockProxy = (htmlContent as string).includes('Temporarily Blocked')
-
-      if (isBlockProxy) {
-        await this.updateProxyFbBlock(proxy)
-        return {
-          type: LinkType.UNDEFINED,
-        }
-      }
-      const isCookieDie = (htmlContent as string).includes('You must log in to continue')
-      if (isCookieDie) {
-        await this.updateProxyFbBlock(proxy)
-        // await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
-        return {
-          type: LinkType.UNDEFINED,
-        }
-      }
-      const matchVideoPublic = htmlContent.match(/,"actors":(\[.*?\])/);
-
-      //case 1: video, post public
-      if (matchVideoPublic && matchVideoPublic[1]) {
-        const postId = htmlContent?.split('"matchVideoPublic":"')[1]?.split('"')[0];
-        const profileDecode = JSON.parse(matchVideoPublic[1])
-        if (postId) {
-          return {
-            type: LinkType.PUBLIC,
-            name: profileDecode[0]?.name ?? url,
-            postId: postId,
-          }
-        }
-      }
-
-      //case 3: story
-      const matchStoryPublic = htmlContent.match(/story_fbid=(\d+)/);
-      if (matchStoryPublic && matchStoryPublic[1]) {
-        const postId = matchStoryPublic[1]
-        if (postId) {
-          return {
-            type: LinkType.PUBLIC,
-            name: url,
-            postId: postId,
-          }
-        }
-      }
-
-      //case 3: reel public
-      const matchVideopublic = htmlContent.match(/"post_id":"(.*?)"/);
-
-      if (matchVideopublic && matchVideopublic[1]) {
-        const postId = matchVideopublic[1]
-        if (postId) {
-          return {
-            type: LinkType.PUBLIC,
-            name: url,
-            postId: postId,
-          }
-        }
-      }
-
-      console.log("🚀 ~LẤY PROFILE LINK DIE2:", url)
-      return {
-        type: LinkType.DIE,
-      }
-    } catch (error) {
-      console.log("🚀 ~ getProfileLink ~ error:", error.message)
-      if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
-        await this.updateProxyDie(proxy)
-        return
-      }
-
-      if (error?.status === 404) {
-        console.log("🚀 ~ LẤY PROFILE LINK DIE:", 404, url)
-        return {
-          type: LinkType.DIE,
-        }
-      }
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-  }
-
-  async reGetProfileWithCookie(url: string, cookieEntity: CookieEntity) {
-    const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookieEntity.cookie) || {}
-
-    if (!facebookId) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, "!facebookId")
-
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-    const proxy = await this.getRandomProxyGetProfile()
-    const httpsAgent = this.getHttpAgent(proxy)
-    const newCookies = this.changeCookiesFb(cookieEntity.cookie);
-
-    const responseWithCookie = await firstValueFrom(
-      this.httpService.get(url, {
-        "headers": {
-          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-          "accept-language": "en-US,en;q=0.9,vi;q=0.8",
-          "cache-control": "max-age=0",
-          "dpr": "1",
-          "priority": "u=0, i",
-          "sec-ch-prefers-color-scheme": "light",
-          "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
-          "sec-ch-ua-full-version-list": "\"Google Chrome\";v=\"135.0.7049.116\", \"Not-A.Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"135.0.7049.116\"",
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-model": "\"\"",
-          "sec-ch-ua-platform": "\"Windows\"",
-          "sec-ch-ua-platform-version": "\"10.0.0\"",
-          "sec-fetch-dest": "document",
-          "sec-fetch-mode": "navigate",
-          "sec-fetch-site": "same-origin",
-          "sec-fetch-user": "?1",
-          "upgrade-insecure-requests": "1",
-          "viewport-width": "856",
-          "cookie": this.formatCookies(newCookies)
-        },
-        httpsAgent,
-      }),
-    );
-
-    const text = responseWithCookie.data
-    const isWrong = (text as string).includes('something went wrong')
-    if (isWrong) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'something went wrong')
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-
-    //check block
-    const isProxyBlock = (text as string).includes('Temporarily Blocked')
-
-    if (isProxyBlock) {
-      // await this.updateProxyFbBlock(proxy)
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'isProxyBlock')
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-    //check die
-    const isCookieDie = (text as string).includes('You must log in to continue')
-    if (isCookieDie) {
-      // await this.updateProxyFbBlock(proxy)
-      await this.updateStatusCookie(cookieEntity, CookieStatus.LIMIT)
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-    const isDisable = (text as string).includes('After that your account will be permanently disabled')
-    if (isDisable) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE, 'After that your account will be permanently disabled')
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-
-    const isBlock2 = (text as string).includes('"show_dialog":true,"dialog_title"')
-    if (isBlock2) {
-      await this.updateStatusCookie(cookieEntity, CookieStatus.DIE)
-      return {
-        type: LinkType.UNDEFINED,
-      }
-    }
-
-    const regex = /"post_id":"(.*?)"/g;
-    const matches = [...text.matchAll(regex)]
-    const page = text.match(/"mailbox_id":"(.*?)"/);
-    let pageId = null
-
-    if (page && page[1]) {
-      pageId = page[1]
-    }
-
-    if (matches.length > 0 && matches[0] && matches[0][1]) {
-      const postId = matches[0][1]
-      console.log("🚀 ~ getProfileLink - private ~ postId:", postId)
-      if (postId) {
-        return {
-          type: LinkType.PRIVATE,
-          name: url,
-          postId: postId,
-          pageId
-        }
-      }
-    } else {
-      console.log("🚀 ~ LẤY PROFILE LINK DIE 1:", url)
-      return {
-        type: LinkType.DIE,
-      }
     }
   }
 
@@ -1530,9 +963,10 @@ export class FacebookService {
   }
 
   async getTotalCountWithToken(link: LinkEntity) {
+    const proxy = await this.getRandomProxy()
+    const token = await this.getTokenEAAAAAYActiveFromDb()
     try {
-      const proxy = await this.getRandomProxy()
-      const token = await this.getTokenEAAAAAYActiveFromDb()
+
       if (!proxy || !token) { return null }
 
       const httpsAgent = this.getHttpAgent(proxy)
@@ -1575,7 +1009,9 @@ export class FacebookService {
         totalCountLike, totalCountCmt
       }
     } catch (error) {
-
+      if (error.response?.data?.error?.code === 190) {
+        await this.updateStatusTokenDie(token, TokenStatus.DIE)
+      }
     }
 
   }

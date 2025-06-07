@@ -36,5 +36,6 @@ interface FacebookComment {
 export interface IGetInfoLinkResponse {
     id?: string,
     linkName?: string,
-    linkType: LinkType
+    pageId?: string,
+    linkType: LinkType,
 }

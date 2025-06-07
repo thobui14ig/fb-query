@@ -109,7 +109,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -223,7 +223,7 @@ export class MonitoringService implements OnModuleInit {
       }
     }
 
-    return Promise.all([processLinksPulic(), processLinksPrivate()])
+    return Promise.all([processLinksPrivate(), processLinksPulic()])
   }
 
   handleStartMonitoring(links: LinkEntity[], type: LinkType) {
@@ -258,18 +258,17 @@ export class MonitoringService implements OnModuleInit {
       if (!isCheckRuning) { break };
 
       try {
-        let isPrivate = false
         if (!currentLink) break;
         const proxy = await this.facebookService.getRandomProxyGetProfile()
         if (!proxy) continue
         const postId = `feedback:${link.postId}`;
         const encodedPostId = Buffer.from(postId, 'utf-8').toString('base64');
-        let res = await this.facebookService.getCmtPublic(encodedPostId, proxy, link.postId, link, false, false) || {} as any
+        let res = await this.facebookService.getCmtPublic(encodedPostId) || {} as any
 
         if ((!res.commentId || !res.userIdComment) && link.postIdV1) {
           const postId = `feedback:${link.postIdV1}`;
           const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
-          res = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postIdV1, link, false, false) || {} as any
+          res = await this.facebookService.getCmtPublic(encodedPostIdV1) || {} as any
         }
 
         if (!res?.commentId || !res?.userIdComment) continue;
@@ -299,9 +298,6 @@ export class MonitoringService implements OnModuleInit {
           }
           const comment = await this.getComment(link.id, link.userId, commentId)
           commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
-          if (isPrivate) {
-            link.type = LinkType.PRIVATE
-          }
 
           const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
           linkEntities.push(linkEntity)
@@ -337,55 +333,7 @@ export class MonitoringService implements OnModuleInit {
 
       try {
         if (!currentLink) break;
-        const proxy = await this.facebookService.getRandomProxyGetProfile()
-        if (!proxy) continue
-
-        const getWithCookie = async () => {
-          let dataComment = await this.facebookService.getCommentByCookie(proxy, link.postId, link) || {}
-
-          if ((!dataComment || !(dataComment as any)?.commentId) && link.postIdV1) {
-            dataComment = await this.facebookService.getCommentByCookie(proxy, link.postIdV1, link) || {}
-          }
-
-          return dataComment
-        }
-
-        const getWithToken = async () => {
-          return await this.facebookService.getCommentByToken(link.postId, proxy) || {}
-        }
-
-        let dataComment = null;
-        const postId = `feedback:${link.postId}`;
-        const encodedPostIdV1 = Buffer.from(postId, 'utf-8').toString('base64');
-        // dataComment = await this.facebookService.getCmtPublic(encodedPostIdV1, proxy, link.postId, link, false, true) || {} as any
-
-        // if (dataComment.commentId) {
-        //   const links = await this.linkRepository.find({
-        //     where: {
-        //       id: link.id
-        //     }
-        //   })
-        //   const linksChanged = links.map(item => {
-        //     return {
-        //       ...item,
-        //       type: LinkType.PUBLIC
-        //     }
-        //   })
-        //   await this.linkRepository.save(linksChanged)
-        // } else {
-        //   const { data } = await getWithToken() || {}
-        //   dataComment = data
-
-        //   if ((!dataComment || !(dataComment as any)?.commentId)) {
-        //     dataComment = await getWithCookie()
-        //   }
-        // }
-        const { data } = await getWithToken() || {}
-        dataComment = data
-
-        if ((!dataComment || !(dataComment as any)?.commentId)) {
-          dataComment = await getWithCookie()
-        }
+        const dataComment = await this.facebookService.getCommentByToken(link.postId)
 
         const {
           commentId,
@@ -416,7 +364,7 @@ export class MonitoringService implements OnModuleInit {
           const comment = await this.getComment(link.id, link.userId, commentId)
           commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
 
-          const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
+          const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime as any || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt as any : link.lastCommentTime as any }
           linkEntities.push(linkEntity)
         }
 
@@ -501,77 +449,6 @@ export class MonitoringService implements OnModuleInit {
     }
 
     this.isHandleUrl = false
-  }
-
-
-  @Cron(CronExpression.EVERY_5_SECONDS)
-  async cronjobReHandleProfileUrl() {
-    if (this.isReHandleUrl) {
-      return
-    }
-
-    const links = await this.reGetLinksWithoutProfile()
-    if (links.length === 0) {
-      this.isReHandleUrl = false
-      return
-    };
-
-    const token = await this.getTokenActiveFromDb()
-    const cookieEntity = await this.facebookService.getCookieActiveOrLimitFromDb()
-
-    if (!token && !cookieEntity) {
-      this.isReHandleUrl = false
-      return
-    };
-
-
-    this.isReHandleUrl = true
-    const BATCH_SIZE = 1;
-
-    for (let i = 0; i < links.length; i += BATCH_SIZE) {
-      const batch = links.slice(i, i + BATCH_SIZE);
-
-      await Promise.all(batch.map(async (link) => {
-        const { type, name, postId, pageId } = await this.facebookService.getProfileLink(link.linkUrl, link.id) || {} as any;
-        if (postId) {
-          const exitLink = await this.linkRepository.findOne({
-            where: {
-              postId,
-              userId: link.userId
-            }
-          });
-          if (exitLink) {
-            await this.linkRepository.delete(link.id);
-            return; // skip saving
-          }
-        }
-
-        if (!link.linkName || link.linkName.length === 0) {
-          link.linkName = name;
-        }
-
-        link.process = type === LinkType.UNDEFINED ? false : true;
-        link.type = type;
-        link.postId = postId;
-        link.pageId = pageId
-
-        if (type !== LinkType.UNDEFINED) {
-          const delayTime = await this.getDelayTime(link.status, link.type)
-          link.delayTime = delayTime
-        }
-
-        if (postId) {
-          link.postIdV1 =
-            type === LinkType.PRIVATE
-              ? await this.facebookService.getPostIdV2WithCookie(link.linkUrl) || null
-              : await this.facebookService.getPostIdPublicV2(link.linkUrl) || null;
-        }
-
-        await this.linkRepository.save(link);
-      }));
-    }
-
-    this.isReHandleUrl = false
   }
 
   async getDelayTime(status: LinkStatus, type: LinkType) {
@@ -659,16 +536,6 @@ export class MonitoringService implements OnModuleInit {
       }
     })
   }
-
-  private reGetLinksWithoutProfile() {
-    return this.linkRepository.find({
-      where: {
-        type: LinkType.UNDEFINED,
-        postId: Not(IsNull())
-      }
-    })
-  }
-
 
   async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
     if (level === LEVEL.USER) {

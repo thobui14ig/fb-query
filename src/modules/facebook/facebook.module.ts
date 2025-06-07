@@ -10,9 +10,10 @@ import { CommentEntity } from '../comments/entities/comment.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { GetInfoLinkUseCaseModule } from './usecase/get-info-link/get-info-link-usecase.module';
 import { GetCommentPublicUseCaseModule } from './usecase/get-comment-public/get-comment-public.module';
+import { GetCommentPrivateUseCaseModule } from './usecase/get-comment-private/get-comment-private.module';
 
 @Module({
-  imports: [HttpModule, GetInfoLinkUseCaseModule, GetCommentPublicUseCaseModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity, ProxyEntity, LinkEntity, CommentEntity, DelayEntity])],
+  imports: [HttpModule, GetInfoLinkUseCaseModule, GetCommentPublicUseCaseModule, GetCommentPrivateUseCaseModule, TypeOrmModule.forFeature([TokenEntity, CookieEntity, ProxyEntity, LinkEntity, CommentEntity, DelayEntity])],
   controllers: [],
   providers: [FacebookService],
   exports: [FacebookService],
