@@ -35,7 +35,10 @@ function extractFacebookId(url: string): string | null {
         /facebook\.com\/(\d{10,})$/,               // plain user/page ID
         /facebook\.com\/(pfbid\w+)/,               // post with pfbid in URL directly
         /story\.php\?story_fbid=(\d+)/,            // story_fbid in query params
-        /\/reel\/(\d+)/                            // reel id
+        /permalink\.php\/\?story_fbid=(\d+)/,      // story_fbid in permalink.php
+        /permalink\.php\/?\?story_fbid=(\d+|pfbid\w+)/,
+        /\/reel\/(\d+)/,                            // reel id
+        /facebook\.com\/\d+\/posts\/(\d+)/
     ];
 
     for (const pattern of patterns) {
