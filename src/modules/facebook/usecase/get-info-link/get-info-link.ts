@@ -58,7 +58,7 @@ export class GetInfoLinkUseCase {
                     httpsAgent
                 }),
             );
-            const { name: linkName, id: pageId } = response.data.from
+            const { name: linkName, id: pageId } = response.data.from || {}
             const { id } = response.data
 
             return {
