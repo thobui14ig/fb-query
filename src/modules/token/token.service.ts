@@ -92,7 +92,7 @@ export class TokenService {
   async getTokenEAAAAAYActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.repo.find({
       where: {
-        status: In([TokenStatus.LIMIT, TokenStatus.ACTIVE]),
+        status: In([TokenStatus.ACTIVE]),
         tokenValueV1: Not(IsNull())
       }
     })
