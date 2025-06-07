@@ -36,25 +36,28 @@ export class GetCommentPublicUseCase {
                     httpsAgent
                 }),
             )
+
             if (response.data?.errors?.[0]?.code === 1675004) {
                 await this.proxyService.updateProxyFbBlock(proxy)
                 return this.getCmtPublic(postId)
             }
 
-            if (!response?.data?.data?.node) {//không phải là link public
-                return {
-                    hasData: false
-                }
-            }
-
-            if (isCheckInfoLink) {//check info link thì trả về kết quả ngay
-                return {
-                    hasData: true,
+            if (isCheckInfoLink) {//không phải là link public
+                if (!response?.data?.data?.node) {
+                    return {
+                        hasData: false
+                    }
+                } else {
+                    return {
+                        hasData: true,
+                    }
                 }
             }
 
             let dataComment = await this.handleDataComment(response)
+
             if (!dataComment && typeof response.data === 'string') {
+
                 //story
                 const text = response.data
                 const lines = text.trim().split('\n');
