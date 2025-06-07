@@ -75,17 +75,17 @@ export class GetCommentPrivateUseCase {
                     params
                 }),
             );
-            const res = dataCommentToken.data?.data[0]
+            const res = dataCommentToken.data?.data.length > 0 ? dataCommentToken.data?.data[0] : null
             return {
                 hasData: !!dataCommentToken.data?.data,
-                data: {
+                data: res ? {
                     commentId: btoa(encodeURIComponent(`comment:${res?.id}`)),
                     userNameComment: res?.from?.name,
                     commentMessage: res?.message,
                     phoneNumber: extractPhoneNumber(res?.message),
                     userIdComment: res?.from?.id,
                     commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
-                }
+                } : {}
             }
         } catch (error) {
             if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {

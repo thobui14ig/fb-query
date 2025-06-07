@@ -197,8 +197,12 @@ export class FacebookService {
     return accessToken ?? null;
   }
 
-  async getCmtPublic(postId: string) {
-    const commentsRes = await this.getCommentPublicUseCase.getCmtPublic(postId)
+  async getCmtPublic(postIdStr: string, postId) {
+    const commentsRes = await this.getCommentPublicUseCase.getCmtPublic(postIdStr)
+    // if (commentsRes.hasData) {//có data nhưng ko lấy dc ở public
+    //   const commensToken = await this.getCommentPrivateUseCase.getCommentPrivate(postId)
+    //   return commensToken.data
+    // }
 
     return commentsRes.data
   }
@@ -719,9 +723,18 @@ export class FacebookService {
       );
       const htmlContent = response.data
       const match = htmlContent.match(/"subscription_target_id":"(.*?)"/);
-
       if (match && match[1]) {
         const postId = match[1]
+        console.log("🚀 ~ getPostIdPublicV2 ~ match:", postId)
+        if (postId) {
+          return postId
+        }
+      }
+
+      const matchV1 = htmlContent.match(/"post_id":"(.*?)"/);
+
+      if (matchV1 && matchV1[1]) {
+        const postId = matchV1[1]
         console.log("🚀 ~ getPostIdPublicV2 ~ match:", postId)
         if (postId) {
           return postId
