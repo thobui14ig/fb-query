@@ -84,7 +84,7 @@ export class GetUuidUserUseCase {
 
             return null
         } catch (error) {
-            console.log("🚀 ~ getUuidPublic ~ error:", error)
+            console.log("🚀 ~ getUuidPublic ~ error:", error?.message)
             return null
         }
     }
