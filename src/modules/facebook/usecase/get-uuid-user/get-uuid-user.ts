@@ -23,7 +23,7 @@ export class GetUuidUserUseCase {
             if (!proxy) { return null }
 
             const body = {
-                route_urls: ["/son.phamvan.3939#"],
+                route_urls: [`/${uuid}#`],
                 routing_namespace: "fb_comet",
                 __aaid: "0",
                 __user: "0",
