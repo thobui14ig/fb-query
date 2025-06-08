@@ -109,7 +109,7 @@ export class MonitoringService implements OnModuleInit {
     }
   }
 
-  // @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async startMonitoring() {
     const postsStarted = await this.getPostStarted()
     const groupPost = this.groupPostsByType(postsStarted || []);
@@ -141,9 +141,11 @@ export class MonitoringService implements OnModuleInit {
           }
         }
       }).catch(async (e) => {
+        console.log("🚀 ~ MonitoringService ~ proxy_check ~ e:", proxy.proxyAddress, e)
         await this.facebookService.updateProxyDie(proxy)
       });
     }
+    console.log('-----------------------------------------')
     this.isCheckProxy = false
   }
 
