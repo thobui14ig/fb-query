@@ -63,6 +63,7 @@ export class GetUuidUserUseCase {
     async getUuidUserToken(uuid: string): Promise<string | null> {
         const proxy = await this.proxyService.getRandomProxy()
         const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
+        if (!proxy) { return null }
         const httpsAgent = getHttpAgent(proxy)
         const params = {
             "order": "reverse_chronological",
@@ -78,7 +79,6 @@ export class GetUuidUserUseCase {
                     params
                 }),
             );
-            console.log("🚀 ~ GetUuidUserUseCase ~ getUuidUserToken ~ response:", response)
 
             return null
         } catch (error) {
