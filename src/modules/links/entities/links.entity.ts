@@ -22,6 +22,12 @@ export enum LinkType {
   PRIVATE = 'private',
 }
 
+export enum HideBy {
+  ALL = 'all',
+  PHONE = 'phone',
+  KEYWORDS = 'keywords'
+}
+
 @Entity('links')
 export class LinkEntity {
   @PrimaryGeneratedColumn()
@@ -83,6 +89,9 @@ export class LinkEntity {
 
   @Column({ name: 'hide_cmt', type: 'boolean' })
   hideCmt: boolean;
+
+  @Column({ name: 'hide_by', default: 'all' })
+  hideBy: HideBy;
 
   @CreateDateColumn({
     type: 'datetime',

@@ -18,9 +18,3 @@ export interface BodyLinkQuery {
     likeTo?: number
     userId: number
 }
-
-export enum EKeyHideCmt {
-    ALL = 'all',
-    PHONE = 'phone',
-    KEYWORD = 'keyword',
-}

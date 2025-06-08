@@ -59,6 +59,41 @@ function getHttpAgent(proxy: ProxyEntity) {
     return httpsAgent;
 }
 
+function changeCookiesFb(cookies: string): Record<string, string> {
+    cookies = cookies.trim()?.replace(/;$/, '');
+    const result = {};
+
+    try {
+        cookies
+            .trim()
+            .split(';')
+            .forEach((item) => {
+                const parts = item.trim().split('=');
+                if (parts.length === 2) {
+                    result[parts[0]] = parts[1];
+                }
+            });
+        return result;
+    } catch (_e) {
+        cookies
+            .trim()
+            .split('; ')
+            .forEach((item) => {
+                const parts = item.trim().split('=');
+                if (parts.length === 2) {
+                    result[parts[0]] = parts[1];
+                }
+            });
+        return result;
+    }
+}
+
+function formatCookies(cookies: Record<string, string>): string {
+    return Object.entries(cookies)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('; ');
+}
+
 export {
-    extractPhoneNumber, extractFacebookId, getHttpAgent
+    extractPhoneNumber, extractFacebookId, getHttpAgent, changeCookiesFb, formatCookies
 }

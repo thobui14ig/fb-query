@@ -13,9 +13,9 @@ import { Request } from 'express';
 import { getUser } from 'src/common/utils/user';
 import { CreateLinkDTO } from './dto/create-link.dto';
 import { UpdateLinkDTO } from './dto/update-link.dto';
-import { LinkStatus, LinkType } from './entities/links.entity';
+import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
-import { BodyLinkQuery, EKeyHideCmt } from './links.service.i';
+import { BodyLinkQuery } from './links.service.i';
 
 @Controller('links')
 export class LinkController {
@@ -54,7 +54,7 @@ export class LinkController {
   }
 
   @Post('/hide-cmt/:linkId')
-  hideCmt(@Req() req: Request, @Param('linkId') linkId: number, @Query('type') type: EKeyHideCmt) {
+  hideCmt(@Req() req: Request, @Param('linkId') linkId: number, @Query('type') type: HideBy) {
     const user = getUser(req);
 
     return this.linkService.hideCmt(linkId, type, user.id)
