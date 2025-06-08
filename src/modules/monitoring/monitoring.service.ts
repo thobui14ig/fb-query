@@ -141,7 +141,6 @@ export class MonitoringService implements OnModuleInit {
           }
         }
       }).catch(async (e) => {
-        console.log("🚀 ~ MonitoringService ~ proxy_check ~ e:", proxy.proxyAddress, e)
         await this.facebookService.updateProxyDie(proxy)
       });
     }
