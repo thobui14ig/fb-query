@@ -87,12 +87,24 @@ export class TokenService {
     return this.repo.delete(id);
   }
 
-  getToken(token: string) { }
-
-  async getTokenEAAAAAYActiveFromDb(): Promise<TokenEntity> {
+  async getTokenActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.repo.find({
       where: {
         status: In([TokenStatus.ACTIVE]),
+        tokenValueV1: Not(IsNull())
+      }
+    })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
+  }
+
+  async getTokenActiveOrLimitFromDb(): Promise<TokenEntity> {
+    const tokens = await this.repo.find({
+      where: {
+        status: In([TokenStatus.ACTIVE, TokenStatus.LIMIT]),
         tokenValueV1: Not(IsNull())
       }
     })

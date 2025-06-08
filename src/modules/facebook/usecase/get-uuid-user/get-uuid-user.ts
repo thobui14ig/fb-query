@@ -1,9 +1,13 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
+import { AxiosResponse } from "axios";
 import { firstValueFrom } from "rxjs";
 import { getHttpAgent } from "src/common/utils/helper";
 import { ProxyService } from "src/modules/proxy/proxy.service";
+import { TokenStatus } from "src/modules/token/entities/token.entity";
 import { TokenService } from "src/modules/token/token.service";
+import { IFacebookUser } from "./get-uuid-user.i";
+import { writeFile } from "src/common/utils/file";
 
 @Injectable()
 export class GetUuidUserUseCase {
@@ -62,8 +66,8 @@ export class GetUuidUserUseCase {
 
     async getUuidUserToken(uuid: string): Promise<string | null> {
         const proxy = await this.proxyService.getRandomProxy()
-        const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
-        if (!proxy) { return null }
+        const token = await this.tokenService.getTokenActiveFromDb()
+        if (!proxy || !token) { return null }
         const httpsAgent = getHttpAgent(proxy)
         const params = {
             "order": "reverse_chronological",
@@ -73,16 +77,37 @@ export class GetUuidUserUseCase {
         }
 
         try {
-            const response = await firstValueFrom(
+            const response: AxiosResponse<IFacebookUser, any> = await firstValueFrom(
                 this.httpService.get(`https://graph.facebook.com/${uuid}`, {
                     httpsAgent,
                     params
                 }),
             );
+            if (response.data.id) {
+                return response.data.id
+            }
 
             return null
         } catch (error) {
-            console.log("🚀 ~ getUuidPublic ~ error:", error?.message)
+            if (error.response?.data?.error?.code === 190) {//check point
+                await this.tokenService.updateStatusToken(token, TokenStatus.DIE)
+            }
+            if ((error?.message as string)?.includes('connect ECONNREFUSED') || error?.status === 407 || (error?.message as string)?.includes('connect EHOSTUNREACH') || (error?.message as string)?.includes('Proxy connection ended before receiving CONNECT')) {
+                await this.proxyService.updateProxyDie(proxy)
+            }
+
+            if (error?.response?.status == 400) {
+                if (error.response?.data?.error?.code === 368) {
+                    await this.tokenService.updateStatusToken(token, TokenStatus.LIMIT)
+                }
+                if (error.response?.data?.error?.code === 190) {
+                    await this.tokenService.updateStatusToken(token, TokenStatus.DIE)
+                }
+
+                if (error.response?.data?.error?.code === 10) {
+                    await this.tokenService.updateStatusToken(token, TokenStatus.DIE)
+                }
+            }
             return null
         }
     }
@@ -90,9 +115,9 @@ export class GetUuidUserUseCase {
     async getUuidUser(uuid: string) {
         let uidPublic = await this.getUuidUserPublic(uuid)
         if (uidPublic) return uidPublic
+        const uidPrivate = await this.getUuidUserToken(uuid)
 
-        uidPublic = await this.getUuidUserToken(uuid)
-        if (uidPublic) return uidPublic
+        if (uidPrivate) return uidPrivate
 
         return null
     }

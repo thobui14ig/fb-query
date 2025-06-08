@@ -31,7 +31,7 @@ export class GetCommentPrivateUseCase {
 
     async getCommentPrivate(postId: string): Promise<IGetCmtPrivateResponse | null> {
         const proxy = await this.proxyService.getRandomProxy()
-        const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
+        const token = await this.tokenService.getTokenActiveOrLimitFromDb()
         try {
             if (!proxy || !token) {
                 return null
