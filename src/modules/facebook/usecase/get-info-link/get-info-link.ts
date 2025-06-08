@@ -27,6 +27,7 @@ export class GetInfoLinkUseCase {
                 linkType: LinkType.UNDEFINED
             }
         }
+
         try {
             const httpsAgent = getHttpAgent(proxy)
             const languages = [
@@ -68,6 +69,7 @@ export class GetInfoLinkUseCase {
                 pageId
             }
         } catch (error) {
+            console.log("🚀 ~ GetInfoLinkUseCase ~ getInfoLink ~ error:", error.response.data)
             if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
                 return {
                     linkType: LinkType.DIE

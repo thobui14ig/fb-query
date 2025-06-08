@@ -9,7 +9,7 @@ import { HideBy } from "src/modules/links/entities/links.entity";
 import { ProxyService } from "src/modules/proxy/proxy.service";
 import { KeywordEntity } from "src/modules/setting/entities/keyword";
 import { TokenService } from "src/modules/token/token.service";
-import { DataSource, Repository } from "typeorm";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class HideCommentUseCase {
@@ -22,11 +22,10 @@ export class HideCommentUseCase {
         private commentRepository: Repository<CommentEntity>,
         @InjectRepository(KeywordEntity)
         private keywordRepository: Repository<KeywordEntity>,
-        private connection: DataSource,
     ) {
     }
 
-    async hideComment(userId: number, type: HideBy, cmtId: number) {
+    async hideComment(userId: number, type: HideBy, comment: CommentEntity) {
         const cookie = await this.cookieRepository.findOne({
             where: {
                 createdBy: userId
@@ -39,55 +38,7 @@ export class HideCommentUseCase {
             );
         }
 
-        let comments = null
-        // if (type === HideBy.ALL) {
-        //     comments = await this.commentRepository.find({
-        //         where: {
-        //             linkId
-        //         }
-        //     })
-        // }
-
-        // if (type === HideBy.PHONE) {
-        //     comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and phone_number is not null`)
-        // }
-
-
-        if (type === HideBy.KEYWORDS) {
-            const keywords = await this.keywordRepository.find({
-                where: {
-                    userId
-                }
-            })
-
-            if (!keywords.length) {
-                throw new HttpException(
-                    `không tìm thấy keywords.`,
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            let likeString = ''
-            for (let i = 0; i < keywords.length; i++) {
-                const keyword = keywords[i]
-                if (i === 0) {
-                    likeString += `'\\\\b${keyword.keyword}\\\\b'`;
-                    continue;
-                }
-
-                likeString += ` or message RLIKE '\\\\b${keyword.keyword}\\\\b'`;
-            }
-
-            // comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and (message RLIKE ${likeString})`)
-        }
-
-        if (comments.length === 0) {
-            throw new HttpException(
-                `Không có comment nào để ẩn`,
-                HttpStatus.BAD_GATEWAY,
-            );
-        }
-
-        for (const comment of comments) {
+        if (type === HideBy.ALL || (type === HideBy.PHONE && comment.phoneNumber)) {
             const res = await this.callApihideCmt(comment.cmtId, cookie)
             if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
                 throw new HttpException(
@@ -97,6 +48,41 @@ export class HideCommentUseCase {
             }
             await this.commentRepository.save({ ...comment, hideCmt: true })
         }
+
+
+        // if (type === HideBy.KEYWORDS) {
+        //     const keywords = await this.keywordRepository.find({
+        //         where: {
+        //             userId
+        //         }
+        //     })
+
+        //     if (!keywords.length) {
+        //         throw new HttpException(
+        //             `không tìm thấy keywords.`,
+        //             HttpStatus.BAD_REQUEST,
+        //         );
+        //     }
+        //     let likeString = ''
+        //     for (let i = 0; i < keywords.length; i++) {
+        //         const keyword = keywords[i]
+        //         if (i === 0) {
+        //             likeString += `'\\\\b${keyword.keyword}\\\\b'`;
+        //             continue;
+        //         }
+
+        //         likeString += ` or message RLIKE '\\\\b${keyword.keyword}\\\\b'`;
+        //     }
+
+        //     // comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and (message RLIKE ${likeString})`)
+        // }
+
+        // if (comments.length === 0) {
+        //     throw new HttpException(
+        //         `Không có comment nào để ẩn`,
+        //         HttpStatus.BAD_GATEWAY,
+        //     );
+        // }
     }
 
 

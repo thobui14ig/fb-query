@@ -27,6 +27,7 @@ import { FacebookModule } from './modules/facebook/facebook.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MproxyModule } from './modules/mproxy/mproxy.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -74,7 +75,8 @@ import { MproxyModule } from './modules/mproxy/mproxy.module';
     SettingModule,
     FacebookModule,
     MonitoringModule,
-    MproxyModule
+    MproxyModule,
+    EventEmitterModule.forRoot()
   ],
   controllers: [AppController],
   providers: [

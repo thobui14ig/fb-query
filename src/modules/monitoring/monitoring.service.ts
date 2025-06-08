@@ -22,6 +22,7 @@ import { firstValueFrom } from 'rxjs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 const proxy_check = require('proxy-check');
 
 dayjs.extend(utc);
@@ -63,6 +64,7 @@ export class MonitoringService implements OnModuleInit {
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
     private readonly httpService: HttpService,
+    private eventEmitter: EventEmitter2
   ) {
   }
 
@@ -299,7 +301,11 @@ export class MonitoringService implements OnModuleInit {
           linkEntities.push(linkEntity)
         }
 
-        await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
+        const [comments, _] = await Promise.all([this.commentRepository.save(commentEntities), this.linkRepository.save(linkEntities)])
+        this.eventEmitter.emit(
+          'hide.cmt',
+          comments,
+        );
       } catch (error) {
         console.log(`Crawl comment with postId ${link.postId} Error.`, error?.message)
       } finally {

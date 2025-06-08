@@ -154,7 +154,8 @@ export class LinkService {
             l.count_after AS countAfter,
             l.like_before AS likeBefore,
             l.like_after AS likeAfter,
-            l.hide_cmt as hideCmt
+            l.hide_cmt as hideCmt,
+            l.hide_by as hideBy
         FROM 
             links l
         JOIN 

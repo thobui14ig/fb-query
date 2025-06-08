@@ -137,34 +137,34 @@ export class CommentsService {
   }
 
   async hideCmt(cmtId: string, userId: number) {
-    const cookie = await this.cookieRepository.findOne({
-      where: {
-        createdBy: userId
-      }
-    })
-    if (!cookie) {
-      throw new HttpException(
-        `không tìm thấy cookie.`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    // const cookie = await this.cookieRepository.findOne({
+    //   where: {
+    //     createdBy: userId
+    //   }
+    // })
+    // if (!cookie) {
+    //   throw new HttpException(
+    //     `không tìm thấy cookie.`,
+    //     HttpStatus.BAD_REQUEST,
+    //   );
+    // }
 
-    const res = await this.facebookService.hideCmt(cmtId, cookie)
-    if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
-      throw new HttpException(
-        `Comment đã được ẩn.`,
-        HttpStatus.BAD_GATEWAY,
-      );
-    }
+    // const res = await this.facebookService.hideCmt(cmtId, cookie)
+    // if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
+    //   throw new HttpException(
+    //     `Comment đã được ẩn.`,
+    //     HttpStatus.BAD_GATEWAY,
+    //   );
+    // }
 
-    const cmt = await this.repo.findOne({
-      where: {
-        cmtId
-      }
-    })
+    // const cmt = await this.repo.findOne({
+    //   where: {
+    //     cmtId
+    //   }
+    // })
 
-    if (cmt) {
-      return this.repo.save({ ...cmt, hideCmt: true })
-    }
+    // if (cmt) {
+    //   return this.repo.save({ ...cmt, hideCmt: true })
+    // }
   }
 }
