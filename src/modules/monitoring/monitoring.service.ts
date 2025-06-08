@@ -338,7 +338,7 @@ export class MonitoringService implements OnModuleInit {
           userIdComment,
           userNameComment,
           commentCreatedAt,
-        } = dataComment
+        } = dataComment || {}
 
         if (!commentId || !userIdComment) continue;
         const links = await this.selectLinkUpdate(link.postId)
