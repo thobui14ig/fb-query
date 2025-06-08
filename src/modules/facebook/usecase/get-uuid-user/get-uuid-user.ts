@@ -19,7 +19,6 @@ export class GetUuidUserUseCase {
     async getUuidUserPublic(uuid: string): Promise<string | null> {
         try {
             const proxy = await this.proxyService.getRandomProxy()
-            console.log("🚀 ~ GetUuidUserUseCase ~ getUuidUserPublic ~ proxy:", proxy)
             const httpsAgent = getHttpAgent(proxy)
             if (!proxy) { return null }
 
@@ -140,7 +139,6 @@ export class GetUuidUserUseCase {
 
     async getUuidUser(uuid: string) {
         let uidPublic = await this.getUuidUserPublic(uuid)
-        console.log("🚀 ~ GetUuidUserUseCase ~ getUuidUser ~ uidPublic:", uidPublic)
         if (uidPublic) return uidPublic
         const uidPrivate = await this.getUuidUserToken(uuid)
 
