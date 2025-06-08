@@ -23,9 +23,12 @@ export class GetCommentPublicUseCase {
 
 
     async getCmtPublic(postId: string, isCheckInfoLink: boolean = false): Promise<IGetCmtPublicResponse | null> {
+        const postIdString = `feedback:${postId}`;
+        const encodedPostId = Buffer.from(postIdString, 'utf-8').toString('base64');
+
         try {
             const headers = getHeaderComment(this.fbUrl);
-            const body = getBodyComment(postId);
+            const body = getBodyComment(encodedPostId);
             const proxy = await this.proxyService.getRandomProxy()
             if (!proxy) return null
             const httpsAgent = getHttpAgent(proxy)
@@ -57,8 +60,6 @@ export class GetCommentPublicUseCase {
             let dataComment = await this.handleDataComment(response)
 
             if (!dataComment && typeof response.data === 'string') {
-
-                //story
                 const text = response.data
                 const lines = text.trim().split('\n');
                 const data = JSON.parse(lines[0])

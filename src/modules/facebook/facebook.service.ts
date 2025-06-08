@@ -199,10 +199,9 @@ export class FacebookService {
 
   async getCmtPublic(postIdStr: string, postId) {
     const commentsRes = await this.getCommentPublicUseCase.getCmtPublic(postIdStr)
-    // if (commentsRes.hasData) {//có data nhưng ko lấy dc ở public
-    //   const commensToken = await this.getCommentPrivateUseCase.getCommentPrivate(postId)
-    //   return commensToken.data
-    // }
+    if (!commentsRes) {//hết proxy or token
+      return null
+    }
 
     return commentsRes.data
   }
