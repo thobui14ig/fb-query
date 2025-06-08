@@ -11,6 +11,7 @@ import { TokenStatus } from 'src/modules/token/entities/token.entity';
 import { LinkEntity, LinkType } from 'src/modules/links/entities/links.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IGetCmtPrivateResponse } from './get-comment-private.i';
 
 
 dayjs.extend(utc);
@@ -28,7 +29,7 @@ export class GetCommentPrivateUseCase {
     ) { }
 
 
-    async getCommentPrivate(postId: string) {
+    async getCommentPrivate(postId: string): Promise<IGetCmtPrivateResponse | null> {
         const proxy = await this.proxyService.getRandomProxy()
         const token = await this.tokenService.getTokenEAAAAAYActiveFromDb()
         try {
@@ -85,7 +86,7 @@ export class GetCommentPrivateUseCase {
                     phoneNumber: extractPhoneNumber(res?.message),
                     userIdComment: res?.from?.id,
                     commentCreatedAt: dayjs(res?.created_time).utc().format('YYYY-MM-DD HH:mm:ss')
-                } : {}
+                } : null
             }
         } catch (error) {
             if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {

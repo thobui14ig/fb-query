@@ -5,9 +5,10 @@ import { ProxyModule } from "src/modules/proxy/proxy.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { LinkEntity } from "src/modules/links/entities/links.entity";
 import { GetCommentPublicUseCase } from "./get-comment-public";
+import { GetUuidUserUseCaseModule } from "../get-uuid-user/get-uuid-user.module";
 
 @Module({
-    imports: [HttpModule, forwardRef(() => TokenModule), ProxyModule, TypeOrmModule.forFeature([LinkEntity])],
+    imports: [HttpModule, forwardRef(() => TokenModule), ProxyModule, GetUuidUserUseCaseModule, TypeOrmModule.forFeature([LinkEntity])],
     controllers: [],
     providers: [GetCommentPublicUseCase],
     exports: [GetCommentPublicUseCase],

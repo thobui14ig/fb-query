@@ -13,6 +13,4 @@ export interface ICommentResponse {
     phoneNumber: string,
     userIdComment: string,
     commentCreatedAt: string,
-    totalCount: number,
-    totalLike: number
 }
