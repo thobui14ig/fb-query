@@ -89,7 +89,7 @@ export class GetCommentPrivateUseCase {
                 } : null
             }
         } catch (error) {
-            console.log("🚀 ~ GetCommentPrivateUseCase ~ getCommentPrivate ~ error:", error?.message)
+            console.log("🚀 ~ GetCommentPrivateUseCase ~ getCommentPrivate ~ error:", error.response.data)
             if (error.response?.data?.error?.code === 100 && (error?.response?.data?.error?.message as string)?.includes('Unsupported get request. Object with ID')) {
                 const link = await this.linkRepository.findOne({
                     where: {
