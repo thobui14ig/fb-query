@@ -144,7 +144,6 @@ export class MonitoringService implements OnModuleInit {
         await this.facebookService.updateProxyDie(proxy)
       });
     }
-    console.log('-----------------------------------------')
     this.isCheckProxy = false
   }
 
