@@ -104,21 +104,6 @@ export class TokenService {
     return randomToken
   }
 
-  async getTokenCrawCmtActiveOrLimitFromDb(): Promise<TokenEntity> {
-    const tokens = await this.repo.find({
-      where: {
-        status: In([TokenStatus.ACTIVE, TokenStatus.LIMIT]),
-        tokenValueV1: Not(IsNull()),
-        type: TokenHandle.CRAWL_CMT
-      }
-    })
-
-    const randomIndex = Math.floor(Math.random() * tokens.length);
-    const randomToken = tokens[randomIndex];
-
-    return randomToken
-  }
-
   async getTokenGetInfoActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.repo.find({
       where: {
