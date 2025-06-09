@@ -20,12 +20,10 @@ export class HideCommentUseCase {
         private cookieRepository: Repository<CookieEntity>,
         @InjectRepository(CommentEntity)
         private commentRepository: Repository<CommentEntity>,
-        @InjectRepository(KeywordEntity)
-        private keywordRepository: Repository<KeywordEntity>,
     ) {
     }
 
-    async hideComment(userId: number, type: HideBy, comment: CommentEntity) {
+    async hideComment(userId: number, type: HideBy, comment: CommentEntity, keywords: KeywordEntity[]) {
         const cookie = await this.cookieRepository.findOne({
             where: {
                 createdBy: userId
@@ -37,8 +35,9 @@ export class HideCommentUseCase {
                 HttpStatus.BAD_REQUEST,
             );
         }
+        let isHide = this.checkHide(type, comment, keywords)
 
-        if (type === HideBy.ALL || (type === HideBy.PHONE && comment.phoneNumber)) {
+        if (isHide) {
             const res = await this.callApihideCmt(comment.cmtId, cookie)
             if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
                 throw new HttpException(
@@ -48,41 +47,27 @@ export class HideCommentUseCase {
             }
             await this.commentRepository.save({ ...comment, hideCmt: true })
         }
+    }
+
+    checkHide(type: HideBy, comment: CommentEntity, keywords: KeywordEntity[]) {
+        let isHide = false
+
+        if (type === HideBy.ALL || (type === HideBy.PHONE && comment.phoneNumber)) {
+            isHide = true
+            return isHide
+        }
 
 
-        // if (type === HideBy.KEYWORDS) {
-        //     const keywords = await this.keywordRepository.find({
-        //         where: {
-        //             userId
-        //         }
-        //     })
+        if (type === HideBy.KEYWORDS) {
+            for (const keyword of keywords) {
+                if (comment.message.includes(keyword.keyword)) {
+                    isHide = true
+                    return isHide
+                }
+            }
+        }
 
-        //     if (!keywords.length) {
-        //         throw new HttpException(
-        //             `không tìm thấy keywords.`,
-        //             HttpStatus.BAD_REQUEST,
-        //         );
-        //     }
-        //     let likeString = ''
-        //     for (let i = 0; i < keywords.length; i++) {
-        //         const keyword = keywords[i]
-        //         if (i === 0) {
-        //             likeString += `'\\\\b${keyword.keyword}\\\\b'`;
-        //             continue;
-        //         }
-
-        //         likeString += ` or message RLIKE '\\\\b${keyword.keyword}\\\\b'`;
-        //     }
-
-        //     // comments = await this.connection.query(`select cmtid as cmtId from comments where link_id = ${linkId} and (message RLIKE ${likeString})`)
-        // }
-
-        // if (comments.length === 0) {
-        //     throw new HttpException(
-        //         `Không có comment nào để ẩn`,
-        //         HttpStatus.BAD_GATEWAY,
-        //     );
-        // }
+        return isHide
     }
 
 

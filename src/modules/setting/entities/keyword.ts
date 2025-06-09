@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { LinkEntity } from 'src/modules/links/entities/links.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
 export interface IKeyword {
     id: number;
@@ -20,4 +21,11 @@ export class KeywordEntity {
 
     @Column({ name: 'user_id', type: 'int' })
     userId: number;
+
+    @Column({ name: 'link_id', type: 'int' })
+    linkId: number;
+
+    @ManyToOne(() => LinkEntity, (link) => link.comments)
+    @JoinColumn({ name: 'link_id' })
+    link: LinkEntity
 }

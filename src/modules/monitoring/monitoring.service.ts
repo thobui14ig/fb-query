@@ -12,7 +12,7 @@ import {
 } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
-import { TokenEntity, TokenStatus } from '../token/entities/token.entity';
+import { TokenEntity, TokenHandle, TokenStatus } from '../token/entities/token.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
 import { GroupedLinksByType } from './monitoring.service.i';
@@ -576,7 +576,8 @@ export class MonitoringService implements OnModuleInit {
   async getTokenActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.tokenRepository.find({
       where: {
-        status: TokenStatus.ACTIVE
+        status: TokenStatus.ACTIVE,
+        type: TokenHandle.CRAWL_CMT
       }
     })
 

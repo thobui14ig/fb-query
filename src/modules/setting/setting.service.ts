@@ -18,6 +18,21 @@ export class SettingService {
 
   async createKeyword(params: CreateKeywordDto, userId: number) {
     return await this.dataSource.transaction(async (manager) => {
+      await manager.delete(KeywordEntity, { linkId: params.linkId });
+
+      const delayEntities: Partial<KeywordEntity>[] = params.keywords.map((keyword) => ({
+        keyword,
+        userId,
+        linkId: params.linkId
+      }));
+
+      return await manager.insert(KeywordEntity, delayEntities);
+    });
+
+  }
+
+  async createKeywordLink(params: CreateKeywordDto, userId: number) {
+    return await this.dataSource.transaction(async (manager) => {
       await manager.delete(KeywordEntity, { userId });
 
       const delayEntities: Partial<KeywordEntity>[] = params.keywords.map((keyword) => ({

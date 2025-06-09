@@ -7,10 +7,19 @@ import { SettingService } from './setting.service';
 
 @Controller('setting')
 export class SettingController {
-  constructor(private readonly settingService: SettingService) {}
+  constructor(private readonly settingService: SettingService) { }
 
   @Post('/create-keyword')
   createKeyword(
+    @Req() req: Request,
+    @Body() createKeywordDto: CreateKeywordDto,
+  ) {
+    const user = getUser(req);
+    return this.settingService.createKeyword(createKeywordDto, user.id);
+  }
+
+  @Post('/create-keyword-link')
+  createKeywordLink(
     @Req() req: Request,
     @Body() createKeywordDto: CreateKeywordDto,
   ) {

@@ -21,7 +21,7 @@ export class GetInfoLinkUseCase {
 
     async getInfoLink(postId: string): Promise<IGetInfoLinkResponse> | null {
         const proxy = await this.proxyService.getRandomProxy()
-        const token = await this.tokenService.getTokenActiveOrLimitFromDb()
+        const token = await this.tokenService.getTokenCrawCmtActiveOrLimitFromDb()
         if (!proxy || !token) {
             return {
                 linkType: LinkType.UNDEFINED

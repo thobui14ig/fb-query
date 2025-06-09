@@ -1,7 +1,7 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { UpdateTokenDto } from './dto/update-token.dto';
-import { TokenEntity, TokenStatus, TokenType } from './entities/token.entity';
+import { TokenEntity, TokenHandle, TokenStatus, TokenType } from './entities/token.entity';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FacebookService } from '../facebook/facebook.service';
@@ -19,6 +19,7 @@ export class TokenService {
     //chưa code trường hợp có cookie
     const tokenValid = [];
     const tokenInValid = [];
+    const type = params.type
 
     for (const item of params.tokens) {
       let token = item;
@@ -47,7 +48,8 @@ export class TokenService {
       if (!isExit) {
         tokenValid.push({
           tokenValue: token,
-          tokenValueV1: tokenV1
+          tokenValueV1: tokenV1,
+          type
         });
         continue;
       }
@@ -87,11 +89,12 @@ export class TokenService {
     return this.repo.delete(id);
   }
 
-  async getTokenActiveFromDb(): Promise<TokenEntity> {
+  async getTokenCrawCmtActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.repo.find({
       where: {
         status: In([TokenStatus.ACTIVE]),
-        tokenValueV1: Not(IsNull())
+        tokenValueV1: Not(IsNull()),
+        type: TokenHandle.CRAWL_CMT
       }
     })
 
@@ -101,11 +104,27 @@ export class TokenService {
     return randomToken
   }
 
-  async getTokenActiveOrLimitFromDb(): Promise<TokenEntity> {
+  async getTokenCrawCmtActiveOrLimitFromDb(): Promise<TokenEntity> {
+    const tokens = await this.repo.find({
+      where: {
+        status: In([TokenStatus.ACTIVE, TokenStatus.LIMIT]),
+        tokenValueV1: Not(IsNull()),
+        type: TokenHandle.CRAWL_CMT
+      }
+    })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
+  }
+
+  async getTokenGetInfoActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.repo.find({
       where: {
         status: In([TokenStatus.ACTIVE]),
-        tokenValueV1: Not(IsNull())
+        tokenValueV1: Not(IsNull()),
+        type: TokenHandle.GET_INFO
       }
     })
 

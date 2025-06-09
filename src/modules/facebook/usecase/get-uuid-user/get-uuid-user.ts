@@ -91,7 +91,7 @@ export class GetUuidUserUseCase {
 
     async getUuidUserToken(uuid: string): Promise<string | null> {
         const proxy = await this.proxyService.getRandomProxy()
-        const token = await this.tokenService.getTokenActiveFromDb()
+        const token = await this.tokenService.getTokenCrawCmtActiveFromDb()
         if (!proxy || !token) { return null }
         const httpsAgent = getHttpAgent(proxy)
         const params = {

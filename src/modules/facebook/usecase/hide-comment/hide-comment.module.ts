@@ -9,7 +9,7 @@ import { CookieEntity } from "src/modules/cookie/entities/cookie.entity";
 import { KeywordEntity } from "src/modules/setting/entities/keyword";
 
 @Module({
-    imports: [HttpModule, ProxyModule, TokenModule, TypeOrmModule.forFeature([CommentEntity, CookieEntity, KeywordEntity])],
+    imports: [HttpModule, ProxyModule, TokenModule, TypeOrmModule.forFeature([CommentEntity, CookieEntity])],
     controllers: [],
     providers: [HideCommentUseCase],
     exports: [HideCommentUseCase],

@@ -13,6 +13,7 @@ import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { FacebookService } from '../facebook/facebook.service';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { KeywordEntity } from '../setting/entities/keyword';
+import { link } from 'fs';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -220,5 +221,16 @@ export class LinkService {
     }
 
     return null
+  }
+
+  getkeywordsByLink(linkId: number) {
+    return this.repo.findOne({
+      where: {
+        id: linkId
+      },
+      relations: {
+        keywords: true
+      }
+    })
   }
 }

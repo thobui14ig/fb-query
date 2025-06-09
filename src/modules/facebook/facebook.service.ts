@@ -19,7 +19,7 @@ import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
 import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity';
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
-import { TokenEntity, TokenStatus, TokenType } from '../token/entities/token.entity';
+import { TokenEntity, TokenHandle, TokenStatus, TokenType } from '../token/entities/token.entity';
 import { GetInfoLinkUseCase } from './usecase/get-info-link/get-info-link';
 import {
   getBodyComment,
@@ -671,7 +671,8 @@ export class FacebookService {
   async getTokenActiveFromDb(): Promise<TokenEntity> {
     const tokens = await this.tokenRepository.find({
       where: {
-        status: TokenStatus.ACTIVE
+        status: TokenStatus.ACTIVE,
+        type: TokenHandle.CRAWL_CMT
       }
     })
 
@@ -685,7 +686,9 @@ export class FacebookService {
     const tokens = await this.tokenRepository.find({
       where: {
         status: In([TokenStatus.LIMIT, TokenStatus.ACTIVE]),
-        tokenValueV1: Not(IsNull())
+        tokenValueV1: Not(IsNull()),
+        type: TokenHandle.CRAWL_CMT
+
       }
     })
 
@@ -771,12 +774,15 @@ export class FacebookService {
           id: comment.id
         },
         relations: {
-          link: true
+          link: {
+            keywords: true
+          }
         }
       })
+      const keywords = infoComment.link.keywords
 
       if (infoComment.link.hideCmt && !infoComment.hideCmt) {
-        await this.hideCommentUseCase.hideComment(infoComment.link.userId, infoComment.link.hideBy, comment)
+        await this.hideCommentUseCase.hideComment(infoComment.link.userId, infoComment.link.hideBy, comment, keywords)
       }
     }
   }

@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from '../../user/entities/user.entity';
 import { CommentEntity } from 'src/modules/comments/entities/comment.entity';
+import { KeywordEntity } from 'src/modules/setting/entities/keyword';
 
 export enum LinkStatus {
   Pending = 'pending',
@@ -106,4 +107,7 @@ export class LinkEntity {
 
   @OneToMany(() => CommentEntity, (comment) => comment.link)
   comments: CommentEntity[];
+
+  @OneToMany(() => KeywordEntity, (keyword) => keyword.link)
+  keywords: KeywordEntity[];
 }

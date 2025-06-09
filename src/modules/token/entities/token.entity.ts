@@ -11,6 +11,11 @@ export enum TokenType {
   EAAAAAY = 'EAAAAAY',
 }
 
+export enum TokenHandle {
+  CRAWL_CMT = 1,
+  GET_INFO = 2
+}
+
 @Entity('token')
 export class TokenEntity {
   @PrimaryGeneratedColumn()
@@ -24,6 +29,9 @@ export class TokenEntity {
 
   @Column({ type: 'enum', enum: TokenStatus, default: TokenStatus.ACTIVE })
   status: TokenStatus;
+
+  @Column({ type: 'enum', enum: TokenHandle, default: TokenHandle.CRAWL_CMT })
+  type: TokenHandle;
 
   @Column({ name: 'retry_count', type: 'int', default: 0, nullable: true })
   retryCount?: number;

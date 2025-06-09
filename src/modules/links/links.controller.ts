@@ -59,4 +59,10 @@ export class LinkController {
 
     return this.linkService.hideCmt(linkId, type, user.id)
   }
+
+
+  @Get('get-keywords/:id')
+  getkeywordsByLink(@Param('id') id: number) {
+    return this.linkService.getkeywordsByLink(id);
+  }
 }
