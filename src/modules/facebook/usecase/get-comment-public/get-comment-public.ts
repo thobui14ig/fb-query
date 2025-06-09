@@ -10,6 +10,9 @@ import * as utc from 'dayjs/plugin/utc';
 import { IGetCmtPublicResponse } from "./get-comment-public.i";
 import { ProxyEntity } from "src/modules/proxy/entities/proxy.entity";
 import { GetUuidUserUseCase } from "../get-uuid-user/get-uuid-user";
+import { CommentEntity } from "src/modules/comments/entities/comment.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
 dayjs.extend(utc);
 
@@ -20,7 +23,9 @@ export class GetCommentPublicUseCase {
 
     constructor(private readonly httpService: HttpService,
         private proxyService: ProxyService,
-        private getUuidUserUseCase: GetUuidUserUseCase
+        private getUuidUserUseCase: GetUuidUserUseCase,
+        @InjectRepository(CommentEntity)
+        private cmtRepository: Repository<CommentEntity>,
     ) { }
 
 
@@ -102,7 +107,16 @@ export class GetCommentPublicUseCase {
         const totalCount = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
         const totalLike = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.count
 
-        userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
+        const commentEnity = await this.cmtRepository.findOne({
+            where: {
+                cmtId: commentId
+            }
+        })
+        if (!commentEnity) {
+            userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
+        } else {
+            userIdComment = commentEnity.userId
+        }
 
         return {
             commentId,
@@ -237,9 +251,17 @@ export class GetCommentPublicUseCase {
         const commentCreatedAt = dayjs(comment?.created_time * 1000).utc().format('YYYY-MM-DD HH:mm:ss');
         const serialized = comment?.discoverable_identity_badges_web?.[0]?.serialized;
         let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
+        const commentEnity = await this.cmtRepository.findOne({
+            where: {
+                cmtId: commentId
+            }
+        })
+        if (!commentEnity) {
+            userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
+        } else {
+            userIdComment = commentEnity.userId
+        }
 
-
-        userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
         const totalCount = commentCount
         const totalLike = likeCount
 
