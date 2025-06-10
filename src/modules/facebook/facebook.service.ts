@@ -533,7 +533,7 @@ export class FacebookService {
 
   async getTotalCountWithToken(link: LinkEntity) {
     const proxy = await this.getRandomProxy()
-    const token = await this.getTokenEAAAAAYActiveFromDb()
+    const token = await this.getTokenGetInfoActiveFromDb()
     try {
 
       if (!proxy || !token) { return null }
@@ -697,6 +697,22 @@ export class FacebookService {
 
     return randomToken
   }
+
+  async getTokenGetInfoActiveFromDb(): Promise<TokenEntity> {
+    const tokens = await this.tokenRepository.find({
+      where: {
+        status: In([TokenStatus.ACTIVE]),
+        tokenValueV1: Not(IsNull()),
+        type: TokenHandle.GET_INFO
+      }
+    })
+
+    const randomIndex = Math.floor(Math.random() * tokens.length);
+    const randomToken = tokens[randomIndex];
+
+    return randomToken
+  }
+
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
