@@ -106,7 +106,7 @@ export class GetCommentPublicUseCase {
         let userIdComment = serialized ? JSON.parse(serialized).actor_id : comment?.author.id
         const totalCount = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.total_count
         const totalLike = response?.data?.data?.node?.comment_rendering_instance_for_feed_location?.comments?.count
-
+        userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
         const commentEnity = await this.cmtRepository.findOne({
             where: {
                 cmtId: commentId
@@ -115,7 +115,7 @@ export class GetCommentPublicUseCase {
         if (!commentEnity) {
             userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
         } else {
-            userIdComment = commentEnity.userId
+            userIdComment = commentEnity.uid
         }
 
         return {
