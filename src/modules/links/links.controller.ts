@@ -15,7 +15,7 @@ import { CreateLinkDTO } from './dto/create-link.dto';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
-import { BodyLinkQuery } from './links.service.i';
+import { BodyLinkQuery, ISettingLinkDto } from './links.service.i';
 
 @Controller('links')
 export class LinkController {
@@ -58,6 +58,11 @@ export class LinkController {
     const user = getUser(req);
 
     return this.linkService.hideCmt(linkId, type, user.id)
+  }
+
+  @Post('/setting-link')
+  settingLink(@Body() body: ISettingLinkDto) {
+    return this.linkService.settingLink(body)
   }
 
 

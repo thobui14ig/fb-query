@@ -18,3 +18,10 @@ export interface BodyLinkQuery {
     likeTo?: number
     userId: number
 }
+
+export interface ISettingLinkDto {
+    isDelete: boolean
+    onOff: boolean
+    delay: number
+    linkIds: number[]
+}

@@ -3,12 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import { DataSource, IsNull, Not, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
-import { BodyLinkQuery, CreateLinkParams } from './links.service.i';
+import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
 import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { FacebookService } from '../facebook/facebook.service';
 import { CommentEntity } from '../comments/entities/comment.entity';
@@ -232,5 +232,33 @@ export class LinkService {
         keywords: true
       }
     })
+  }
+
+  async settingLink(setting: ISettingLinkDto) {
+    if (setting.isDelete) {
+      return this.repo.delete(setting.linkIds)
+    }
+
+    const links = await this.repo.find({
+      where: {
+        id: In(setting.linkIds)
+      }
+    })
+
+    const newLinks = links.map((item) => {
+      if (setting.onOff) {
+        item.status = LinkStatus.Started
+      } else {
+        item.status = LinkStatus.Pending
+      }
+
+      if (setting.delay) {
+        item.delayTime = setting.delay
+      }
+
+      return item
+    })
+
+    return this.repo.save(newLinks)
   }
 }
