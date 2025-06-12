@@ -22,9 +22,9 @@ export class UserController {
 
   @Get('/info')
   getUserInfo(@Req() req: Request) {
-    const response = getUser(req);
+    const user = getUser(req);
 
-    return response
+    return this.userService.getInfo(user.id)
   }
 
   @Get('/:id')
