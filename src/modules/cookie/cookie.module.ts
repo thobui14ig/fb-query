@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { CookieService } from './cookie.service';
-import { CookieController } from './cookie.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CookieController } from './cookie.controller';
+import { CookieService } from './cookie.service';
 import { CookieEntity } from './entities/cookie.entity';
 
 @Module({

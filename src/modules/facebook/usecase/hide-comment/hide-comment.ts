@@ -39,13 +39,9 @@ export class HideCommentUseCase {
 
         if (isHide) {
             const res = await this.callApihideCmt(comment.cmtId, cookie)
-            if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
-                throw new HttpException(
-                    `Comment đã được ẩn.`,
-                    HttpStatus.BAD_GATEWAY,
-                );
+            if (res) {
+                await this.commentRepository.save({ ...comment, hideCmt: true })
             }
-            await this.commentRepository.save({ ...comment, hideCmt: true })
         }
     }
 
@@ -145,6 +141,38 @@ export class HideCommentUseCase {
         }
     }
 
+    // async callApihideCmtV1(cmtId: string, cookie: CookieEntity) {
+    //     try {
+    //         const proxy = await this.proxyService.getRandomProxy()
+    //         const httpsAgent = getHttpAgent(proxy)
+    //         const cookies = changeCookiesFb(cookie.cookie);
+    //         const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookie.cookie)
+
+    //         console.log(`🚀 ~ HideCommentUseCase ~ callApihideCmt ~ { facebookId, fbDtsg, jazoest }:`, { facebookId, fbDtsg, jazoest })
+    //         if (!proxy) {
+    //             return false
+    //         }
+
+    //         const response = await firstValueFrom(
+    //             this.httpService.post(`https://graph.facebook.com/v23.0/${cmtId}`, null, {
+    //                 "headers": {
+    //                     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
+    //                     "cookie": formatCookies(cookies)
+    //                 },
+    //                 httpsAgent,
+    //                 params: {
+    //                     is_hidden: true,
+    //                     access_token: cookie.token
+    //                 }
+    //             }),
+    //         );
+    //         console.log("🚀 ~ HideCommentUseCase ~ callApihideCmtV1 ~ response.data:", response.data)
+    //         return true
+    //     } catch (error) {
+    //         console.log("🚀 ~ HideCommentUseCase ~ callApihideCmtV1 ~ error:", error.response.data)
+    //         return false
+    //     }
+    // }
 
     async getInfoAccountsByCookie(cookie: string) {
         const maxRetries = 3;

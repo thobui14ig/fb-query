@@ -94,6 +94,23 @@ function formatCookies(cookies: Record<string, string>): string {
         .join('; ');
 }
 
+function decodeCommentId(encodedStr) {
+    try {
+        const decoded = Buffer.from(encodedStr, 'base64').toString('utf-8');
+
+        const match = decoded.match(/^comment:.*_(\d+)$/);
+
+        if (match && match[1]) {
+            return match[1];
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Lỗi giải mã comment ID:', error.message);
+        return null;
+    }
+}
+
 export {
-    extractPhoneNumber, extractFacebookId, getHttpAgent, changeCookiesFb, formatCookies
+    extractPhoneNumber, extractFacebookId, getHttpAgent, changeCookiesFb, formatCookies, decodeCommentId
 }

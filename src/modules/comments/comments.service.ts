@@ -51,11 +51,11 @@ export class CommentsService {
           linkId: true,
           hideCmt: true,
           user: {
-            email: true
+            email: true,
           },
           link: {
             linkName: true,
-            linkUrl: true
+            linkUrl: true,
           }
         },
         order: {
@@ -91,6 +91,7 @@ export class CommentsService {
           },
           link: {
             linkName: true,
+            linkUrl: true,
             hideCmt: true
           }
         },

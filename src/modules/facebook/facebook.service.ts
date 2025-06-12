@@ -802,4 +802,15 @@ export class FacebookService {
       }
     }
   }
+
+  @OnEvent('gen-token-user')
+  async genTokenByCookieUser(payload: CookieEntity) {
+    const { cookie } = payload
+    const profile = await this.getDataProfileFb(cookie, TokenType.EAADo1);
+    if (profile.accessToken) {
+      payload.token = profile.accessToken
+
+      return await this.cookieRepository.save(payload)
+    }
+  }
 }

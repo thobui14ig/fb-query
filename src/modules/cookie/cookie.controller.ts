@@ -13,7 +13,7 @@ export class CookieController {
   create(@Body() createCookieDto: CreateCookieDto, @Req() req: Request) {
     const user = getUser(req);
 
-    return this.cookieService.create(createCookieDto, user.id);
+    return this.cookieService.create(createCookieDto, user.id, user.level);
   }
 
   @Get()

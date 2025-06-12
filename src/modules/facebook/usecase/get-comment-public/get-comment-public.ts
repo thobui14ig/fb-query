@@ -1,7 +1,7 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { firstValueFrom } from "rxjs";
-import { extractPhoneNumber, getHttpAgent } from "src/common/utils/helper";
+import { decodeCommentId, extractPhoneNumber, getHttpAgent } from "src/common/utils/helper";
 import { ProxyService } from "src/modules/proxy/proxy.service";
 import { getBodyComment, getHeaderComment } from "../../utils";
 import { isNumeric } from "src/common/utils/check-utils";
@@ -92,7 +92,7 @@ export class GetCommentPublicUseCase {
             response?.data?.data?.node?.comment_rendering_instance_for_feed_location
                 ?.comments.edges?.[0]?.node;
         if (!comment) return null
-        const commentId = comment?.id
+        const commentId = decodeCommentId(comment?.id) ?? comment?.id
 
         const commentMessage =
             comment?.preferred_body && comment?.preferred_body?.text
@@ -240,7 +240,7 @@ export class GetCommentPublicUseCase {
                 ?.comments.edges?.reverse()?.[0]?.node;
 
         if (!comment) return null
-        const commentId = comment?.id
+        const commentId = decodeCommentId(comment?.id) ?? comment?.id
         const commentMessage =
             comment?.preferred_body && comment?.preferred_body?.text
                 ? comment?.preferred_body?.text
@@ -259,7 +259,7 @@ export class GetCommentPublicUseCase {
         if (!commentEnity) {
             userIdComment = (isNumeric(userIdComment) ? userIdComment : (await this.getUuidUserUseCase.getUuidUser(comment?.author.id)) || userIdComment)
         } else {
-            userIdComment = commentEnity.userId
+            userIdComment = commentEnity.uid
         }
 
         const totalCount = commentCount
