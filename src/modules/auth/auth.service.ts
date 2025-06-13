@@ -15,11 +15,14 @@ export class AuthService {
   async signIn(email: string, pass: string) {
     const { password, ...user } = await this.usersService.findByEmail(email) || {};
 
-    console.log("🚀 ~ AuthService ~ signIn ~ password:", password, pass)
+    console.log(`🚀 ~ AuthService ~ signIn ~ { password, ...user }:`, { password, ...user })
     if (!user || password !== pass) {
       throw new UnauthorizedException();
     }
+
     const payload = { ...user };
+    console.log("🚀 ~ AuthService ~ signIn ~ payload:", payload)
+
     return {
       token: await this.createToken(payload),
       info: {
