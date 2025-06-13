@@ -51,7 +51,7 @@ export class CommentsService {
           linkId: true,
           hideCmt: true,
           user: {
-            email: true,
+            username: true,
           },
           link: {
             linkName: true,
@@ -87,7 +87,7 @@ export class CommentsService {
           linkId: true,
           hideCmt: true,
           user: {
-            email: true
+            username: true
           },
           link: {
             linkName: true,

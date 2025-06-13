@@ -1,8 +1,8 @@
-import { IsDateString, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateUserDto {
-  @IsEmail({}, { message: 'Email không hợp lệ!' })
-  email: string;
+  @IsString()
+  username: string;
 
   @IsNumber()
   @IsOptional()

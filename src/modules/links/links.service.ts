@@ -150,7 +150,7 @@ export class LinkService {
             l.last_comment_time as lastCommentTime,
             l.process,
             l.type,
-            u.email, 
+            u.username, 
             l.count_before AS countBefore,
             l.count_after AS countAfter,
             l.like_before AS likeBefore,
@@ -165,7 +165,7 @@ export class LinkService {
             comments c ON c.link_id = l.id
         WHERE ${queryEntends}
         GROUP BY 
-            l.id, u.email
+            l.id, u.username
             order by l.id desc
       `, [])
 

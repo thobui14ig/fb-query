@@ -1,6 +1,6 @@
 
 export class CreateAuthDto {
-  email: string;
+  username: string;
 
   nickName: string;
 

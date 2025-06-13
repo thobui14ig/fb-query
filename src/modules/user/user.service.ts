@@ -19,11 +19,12 @@ export class UserService {
     private connection: DataSource,
   ) { }
 
-  async findByEmail(email: string) {
+  async findByEmail(username: string) {
+    console.log("🚀 ~ UserService ~ findByEmail ~ username:", username)
     const res = await this.connection.query(`
             SELECT
             u.id,
-            u.email,
+            u.username,
             u.password,
             u.created_at as createdAt,
             u.expired_at as expiredAt,
@@ -35,7 +36,7 @@ export class UserService {
             (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.type = 'public' AND l2.status = 'started') AS totalPublicRunning,
             (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.type = 'private' AND l3.status = 'started') AS totalPrivateRunning
         FROM users u
-        WHERE u.email = '${email}';
+        WHERE u.username = '${username}';
       `)
     if (res && res.length > 0) {
       const user = res[0]
@@ -65,7 +66,7 @@ export class UserService {
     const res = await this.connection.query(`
       SELECT 
           u.id,
-          u.email,
+          u.username,
           u.created_at as createdAt,
           u.expired_at as expiredAt,
           u.link_add_limit as linkAddLimit,
@@ -76,7 +77,6 @@ export class UserService {
           (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending') AS totalPending
 
       FROM users u
-      WHERE u.level = 0
       ORDER BY u.id DESC;
       `)
     return res.map((item) => {
@@ -99,7 +99,7 @@ export class UserService {
     const res = await this.connection.query(`
       SELECT
         u.id,
-        u.email,
+        u.username,
         u.created_at as createdAt,
         u.expired_at as expiredAt,
         u.link_add_limit as linkAddLimit,

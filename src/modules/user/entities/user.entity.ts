@@ -20,7 +20,7 @@ export class UserEntity {
   id?: number;
 
   @Column()
-  email: string;
+  username: string;
 
   @Column()
   password: string;
