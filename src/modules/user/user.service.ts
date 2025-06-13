@@ -41,7 +41,8 @@ export class UserService {
     if (res && res.length > 0) {
       const user = res[0]
       user.createdAt = dayjs(user.createdAt).utc().format('YYYY-MM-DD');
-      user.expiredAt = dayjs(user.expiredAt).utc().format('YYYY-MM-DD');
+      user.expiredAt = user.expiredAt ? dayjs(user.expiredAt).utc().format('YYYY-MM-DD') : null
+      user.password = user.password
 
       return user
     }
