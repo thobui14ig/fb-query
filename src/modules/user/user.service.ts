@@ -22,21 +22,20 @@ export class UserService {
   async findByEmail(email: string) {
     const res = await this.connection.query(`
             SELECT
-          u.id
-          ,u.email
-          ,u.password
-          ,u.created_at as createdAt
-          ,u.expired_at as expiredAt
-          ,u.link_add_limit as linkAddLimit
-          ,u.link_start_limit as linkStartLimit
-          ,u.level
-          ,count(l.id) as totalPublic, count(l1.id)as totalPrivate, count(l2.id) as totalPublicRunning, count(l3.id) as totalPrivateRunning  FROM users  u
-          left join links l on l.user_id= u.id and l.type='public'
-          left join links l1 on l1.user_id= u.id and l1.type='private'
-          left join links l2 on l2.user_id= u.id and l2.type='public' and l2.status='started'
-          left join links l3 on l3.user_id= u.id and l3.type='private' and l3.status='started'
-          where u.email='${email}'
-          group by u.id
+            u.id,
+            u.email,
+            u.password,
+            u.created_at as createdAt,
+            u.expired_at as expiredAt,
+            u.link_add_limit as linkAddLimit,
+            u.link_start_limit as linkStartLimit,
+            u.level,
+            (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
+            (SELECT COUNT(*) FROM links l1 WHERE l1.user_id = u.id AND l1.type = 'private') AS totalPrivate,
+            (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.type = 'public' AND l2.status = 'started') AS totalPublicRunning,
+            (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.type = 'private' AND l3.status = 'started') AS totalPrivateRunning
+        FROM users u
+        WHERE u.email = '${email}';
       `)
     if (res && res.length > 0) {
       const user = res[0]
@@ -97,21 +96,26 @@ export class UserService {
 
   async getInfo(userId: number) {
     const res = await this.connection.query(`
-      SELECT 
-      u.id
-      ,u.email
-      ,u.created_at as createdAt
-      ,u.expired_at as expiredAt
-      ,u.link_add_limit as linkAddLimit
-      ,u.link_start_limit as linkStartLimit
-      ,u.level
-      ,count(l.id) as totalPublic, count(l1.id)as totalPrivate, count(l2.id) as totalPublicRunning, count(l3.id) as totalPrivateRunning  FROM users  u
-      left join links l on l.user_id= u.id and l.type='public'
-      left join links l1 on l1.user_id= u.id and l1.type='private'
-      left join links l2 on l2.user_id= u.id and l2.type='public' and l2.status='started'
-      left join links l3 on l3.user_id= u.id and l3.type='private' and l3.status='started'
-      where u.id=${userId}
-      group by u.id
+      SELECT
+        u.id,
+        u.email,
+        u.created_at as createdAt,
+        u.expired_at as expiredAt,
+        u.link_add_limit as linkAddLimit,
+        u.link_start_limit as linkStartLimit,
+        u.level,
+
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
+
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'private') AS totalPrivate,
+
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public' AND l.status = 'started') AS totalPublicRunning,
+
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'private' AND l.status = 'started') AS totalPrivateRunning
+
+    FROM users u
+    WHERE u.id = ${userId};
+
     `)
     const user = res[0]
     user.createdAt = dayjs(user.createdAt).utc().format('YYYY-MM-DD');

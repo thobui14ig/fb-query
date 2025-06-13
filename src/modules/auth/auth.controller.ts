@@ -30,7 +30,6 @@ export class AuthController {
       signInDto.email,
       signInDto.password,
     );
-    console.log("🚀 ~ AuthController ~ response:", response)
 
     res.setHeader('Set-Cookie', [`token=${response.token.accessToken}; HttpOnly; Path=/`]);
 
