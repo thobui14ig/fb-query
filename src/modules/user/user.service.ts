@@ -63,20 +63,21 @@ export class UserService {
 
   async getAll() {
     const res = await this.connection.query(`
-        SELECT       
-        u.id
-        ,u.email
-        ,u.created_at as createdAt
-        ,u.expired_at as expiredAt
-        ,u.link_add_limit as linkAddLimit
-        ,u.link_start_limit as linkStartLimit
-        ,u.level
-      ,count(l2.id) as totalRunning, count(l3.id) as totalPending  FROM users  u
-        left join links l2 on l2.user_id= u.id  and l2.status='started'
-        left join links l3 on l3.user_id= u.id  and l3.status='pending'
-        where u.level = 0
-        group by u.id
-        order by u.id desc
+      SELECT 
+          u.id,
+          u.email,
+          u.created_at as createdAt,
+          u.expired_at as expiredAt,
+          u.link_add_limit as linkAddLimit,
+          u.link_start_limit as linkStartLimit,
+          u.level,
+
+          (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started') AS totalRunning,
+          (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending') AS totalPending
+
+      FROM users u
+      WHERE u.level = 0
+      ORDER BY u.id DESC;
       `)
     return res.map((item) => {
       return {
