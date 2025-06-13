@@ -20,7 +20,6 @@ export class UserService {
   ) { }
 
   async findByEmail(username: string) {
-    console.log("🚀 ~ UserService ~ findByEmail ~ username:", username)
     const res = await this.connection.query(`
             SELECT
             u.id,
