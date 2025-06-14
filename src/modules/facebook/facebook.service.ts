@@ -4,15 +4,14 @@
 import { faker } from '@faker-js/faker';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
-import { isArray } from 'class-validator';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { firstValueFrom } from 'rxjs';
-import { isAlpha, isNumeric } from 'src/common/utils/check-utils';
-import { extractFacebookId, extractPhoneNumber } from 'src/common/utils/helper';
+import { extractFacebookId } from 'src/common/utils/helper';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity, CookieStatus } from '../cookie/entities/cookie.entity';
@@ -20,19 +19,16 @@ import { LinkEntity, LinkStatus, LinkType } from '../links/entities/links.entity
 import { ProxyEntity, ProxyStatus } from '../proxy/entities/proxy.entity';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { TokenEntity, TokenHandle, TokenStatus, TokenType } from '../token/entities/token.entity';
+import { GetCommentPrivateUseCase } from './usecase/get-comment-private/get-comment-private';
+import { GetCommentPublicUseCase } from './usecase/get-comment-public/get-comment-public';
 import { GetInfoLinkUseCase } from './usecase/get-info-link/get-info-link';
+import { GetUuidUserUseCase } from './usecase/get-uuid-user/get-uuid-user';
+import { HideCommentUseCase } from './usecase/hide-comment/hide-comment';
 import {
-  getBodyComment,
   getBodyToken,
-  getHeaderComment,
   getHeaderProfileFb,
   getHeaderToken
 } from './utils';
-import { GetCommentPublicUseCase } from './usecase/get-comment-public/get-comment-public';
-import { GetCommentPrivateUseCase } from './usecase/get-comment-private/get-comment-private';
-import { GetUuidUserUseCase } from './usecase/get-uuid-user/get-uuid-user';
-import { HideCommentUseCase } from './usecase/hide-comment/hide-comment';
-import { OnEvent } from '@nestjs/event-emitter';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);

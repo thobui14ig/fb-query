@@ -295,8 +295,9 @@ export class MonitoringService implements OnModuleInit {
             timeCreated: commentCreatedAt as any,
           }
           const comment = await this.getComment(link.id, link.userId, commentId)
-          commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
-
+          if (!comment) {
+            commentEntities.push(commentEntity as CommentEntity)
+          }
           const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt : link.lastCommentTime }
           linkEntities.push(linkEntity)
         }
