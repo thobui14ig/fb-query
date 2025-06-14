@@ -15,16 +15,11 @@ export class AuthService {
   async signIn(username: string, pass: string) {
     const { password, ...user } = await this.usersService.findByEmail(username) || {};
 
-    console.log("🚀 ~ AuthService ~ signIn ~ user:", user)
     if (!user || password !== pass) {
       throw new UnauthorizedException();
     }
-    const isExpireDate = dayjs().format('DD-MM-YYYY') > dayjs(user.expiredAt).format('DD-MM-YYYY');
-    console.log("🚀 ~ AuthService ~ signIn ~ isExpireDate:", dayjs().format('DD-MM-YYYY'))
-    console.log("🚀 ~ AuthService ~ signIn ~ isExpireDate:", dayjs(user.expiredAt).format('DD-MM-YYYY'))
-
-    console.log("🚀 ~ AuthService ~ signIn ~ isExpireDate:", isExpireDate)
-
+    const isExpireDate = dayjs(dayjs(), 'DD-MM-YYYY').format('YYYY-MM-DD') >
+      dayjs(user.expiredAt, 'DD-MM-YYYY').format('YYYY-MM-DD');
     if (isExpireDate) {
       throw new HttpException(
         `User hết hạn`,
