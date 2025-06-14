@@ -3,17 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
-import { DelayEntity } from '../setting/entities/delay.entity';
-import { LEVEL } from '../user/entities/user.entity';
-import { UpdateLinkDTO } from './dto/update-link.dto';
-import { HideBy, LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
-import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
+import { DataSource, In, Repository } from 'typeorm';
+import { CommentEntity } from '../comments/entities/comment.entity';
 import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { FacebookService } from '../facebook/facebook.service';
-import { CommentEntity } from '../comments/entities/comment.entity';
+import { DelayEntity } from '../setting/entities/delay.entity';
 import { KeywordEntity } from '../setting/entities/keyword';
-import { link } from 'fs';
+import { LEVEL } from '../user/entities/user.entity';
+import { UpdateLinkDTO } from './dto/update-link.dto';
+import { HideBy, LinkEntity, LinkStatus } from './entities/links.entity';
+import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -261,4 +260,16 @@ export class LinkService {
 
     return this.repo.save(newLinks)
   }
+
+  async getTotalLinkUser(userId: number, status: LinkStatus) {
+    return await this.connection
+      .getRepository(LinkEntity)
+      .count({
+        where: {
+          userId,
+          status
+        },
+      });
+  }
+
 }

@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import * as dayjs from 'dayjs';
 import { Response } from 'express';
+import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
-import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +17,13 @@ export class AuthService {
 
     if (!user || password !== pass) {
       throw new UnauthorizedException();
+    }
+    const isExpireDate = dayjs().format('DD-MM-YYYY') > dayjs(user.expiredAt).format('DD-MM-YYYY');
+    if (isExpireDate) {
+      throw new HttpException(
+        `User hết hạn`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const payload = { ...user };

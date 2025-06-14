@@ -12,7 +12,7 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  @IsDateString()
+  // @IsDateString()
   expiredAt: Date
 
   @IsNumber()

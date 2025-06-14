@@ -27,8 +27,8 @@ export class UserService {
             u.password,
             u.created_at as createdAt,
             u.expired_at as expiredAt,
-            u.link_add_limit as linkAddLimit,
-            u.link_start_limit as linkStartLimit,
+            u.link_on_limit as linkOnLimit,
+            u.link_off_limit as linkOffLimit,
             u.level,
             (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
             (SELECT COUNT(*) FROM links l1 WHERE l1.user_id = u.id AND l1.type = 'private') AS totalPrivate,
@@ -40,7 +40,7 @@ export class UserService {
     if (res && res.length > 0) {
       const user = res[0]
       user.createdAt = dayjs(user.createdAt).utc().format('YYYY-MM-DD');
-      user.expiredAt = user.expiredAt ? dayjs(user.expiredAt).utc().format('YYYY-MM-DD') : null
+      user.expiredAt = user.expiredAt ? dayjs(user.expiredAt).format('YYYY-MM-DD') : null
       user.password = user.password
 
       return user
@@ -68,8 +68,8 @@ export class UserService {
           u.username,
           u.created_at as createdAt,
           u.expired_at as expiredAt,
-          u.link_add_limit as linkAddLimit,
-          u.link_start_limit as linkStartLimit,
+          u.link_on_limit as linkOnLimit,
+          u.link_off_limit as linkOffLimit,
           u.level,
 
           (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started') AS totalRunning,
@@ -81,7 +81,7 @@ export class UserService {
     return res.map((item) => {
       return {
         ...item,
-        expiredAt: dayjs(item.expiredAt).utc().format('YYYY-MM-DD'),
+        expiredAt: dayjs(item.expiredAt).format('YYYY-MM-DD'),
       }
     })
   }
@@ -101,8 +101,8 @@ export class UserService {
         u.username,
         u.created_at as createdAt,
         u.expired_at as expiredAt,
-        u.link_add_limit as linkAddLimit,
-        u.link_start_limit as linkStartLimit,
+        u.link_on_limit as linkOnLimit,
+        u.link_off_limit as linkOffLimit,
         u.level,
 
         (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
@@ -118,8 +118,8 @@ export class UserService {
 
     `)
     const user = res[0]
-    user.createdAt = dayjs(user.createdAt).utc().format('YYYY-MM-DD');
-    user.expiredAt = dayjs(user.expiredAt).utc().format('YYYY-MM-DD');
+    user.createdAt = dayjs(user.createdAt).format('YYYY-MM-DD');
+    user.expiredAt = dayjs(user.expiredAt).format('YYYY-MM-DD');
 
     return user
   }

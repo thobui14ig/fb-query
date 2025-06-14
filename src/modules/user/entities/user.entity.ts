@@ -28,11 +28,11 @@ export class UserEntity {
   @Column({ name: 'expired_at' })
   expiredAt: Date;
 
-  @Column({ name: 'link_add_limit', default: null })
-  linkAddLimit?: number;
+  @Column({ name: 'link_on_limit', default: null })
+  linkOnLimit?: number;
 
-  @Column({ name: 'link_start_limit', default: null })
-  linkStartLimit?: number;
+  @Column({ name: 'link_off_limit', default: null })
+  linkOffLimit?: number;
 
   @Column({ default: LEVEL.USER })
   level?: LEVEL;

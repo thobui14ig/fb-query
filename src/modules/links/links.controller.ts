@@ -8,6 +8,7 @@ import {
   Put,
   Query,
   Req,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { getUser } from 'src/common/utils/user';
@@ -16,14 +17,17 @@ import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
 import { BodyLinkQuery, ISettingLinkDto } from './links.service.i';
+import { CheckLimitLinkUserInterceptor } from './interceptor/handle-check-limit-link-user.interceptor';
 
 @Controller('links')
 export class LinkController {
   constructor(private readonly linkService: LinkService) { }
 
   @Post()
+  @UseInterceptors(CheckLimitLinkUserInterceptor)
   create(@Req() req: Request, @Body() createLinkDto: CreateLinkDTO) {
     const user = getUser(req);
+
     return this.linkService.create({
       ...createLinkDto,
       userId: user.id,
