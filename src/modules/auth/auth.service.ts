@@ -20,7 +20,11 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     const isExpireDate = dayjs().format('DD-MM-YYYY') > dayjs(user.expiredAt).format('DD-MM-YYYY');
+    console.log("🚀 ~ AuthService ~ signIn ~ isExpireDate:", dayjs().format('DD-MM-YYYY'))
+    console.log("🚀 ~ AuthService ~ signIn ~ isExpireDate:", dayjs(user.expiredAt).format('DD-MM-YYYY'))
+
     console.log("🚀 ~ AuthService ~ signIn ~ isExpireDate:", isExpireDate)
+
     if (isExpireDate) {
       throw new HttpException(
         `User hết hạn`,
