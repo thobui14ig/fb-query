@@ -36,8 +36,6 @@ services:
       dockerfile: Dockerfile
     container_name: facebook-sync
     restart: always
-    # depends_on:
-    #   - db
     environment:
       - DB_TYPE=mysql
       - DB_HOST=91.99.31.157
