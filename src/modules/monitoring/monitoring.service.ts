@@ -270,7 +270,7 @@ export class MonitoringService implements OnModuleInit {
         }
 
         if (!res?.commentId || !res?.userIdComment) continue;
-        const links = await this.selectLinkUpdate(link.postId)
+        const links = await this.selectLinkUpdate(link.id)
         const commentEntities: CommentEntity[] = []
         const linkEntities: LinkEntity[] = []
         const {
@@ -348,7 +348,7 @@ export class MonitoringService implements OnModuleInit {
         } = dataComment || {}
 
         if (!commentId || !userIdComment) continue;
-        const links = await this.selectLinkUpdate(link.postId)
+        const links = await this.selectLinkUpdate(link.id)
         const commentEntities: CommentEntity[] = []
         const linkEntities: LinkEntity[] = []
 
@@ -365,7 +365,9 @@ export class MonitoringService implements OnModuleInit {
             timeCreated: commentCreatedAt as any,
           }
           const comment = await this.getComment(link.id, link.userId, commentId)
-          commentEntities.push({ ...comment, ...commentEntity } as CommentEntity)
+          if (!comment) {
+            commentEntities.push(commentEntity as CommentEntity)
+          }
 
           const linkEntity: LinkEntity = { ...link, lastCommentTime: !link.lastCommentTime as any || dayjs.utc(commentCreatedAt).isAfter(dayjs.utc(link.lastCommentTime)) ? commentCreatedAt as any : link.lastCommentTime as any }
           linkEntities.push(linkEntity)
@@ -506,10 +508,10 @@ export class MonitoringService implements OnModuleInit {
     }, {} as Record<'public' | 'private', typeof links>);
   }
 
-  selectLinkUpdate(postId: string) {
+  selectLinkUpdate(id: number) {
     return this.linkRepository.find({
       where: {
-        postId,
+        id,
         // status: LinkStatus.Started
       }
     })
