@@ -32,9 +32,9 @@ services:
       - '9000:9000'
   facebook-sync:
     build:
-      context: ./../facebook-sync
+      context: ./../fb-sync
       dockerfile: Dockerfile
-    container_name: facebook-sync
+    container_name: fb-sync
     restart: always
     environment:
       - DB_TYPE=mysql
