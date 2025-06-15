@@ -46,3 +46,19 @@ services:
       - NODE_OPTIONS=--max-old-space-size=4096  
     ports:
       - '7000:7000'
+  facebook-sync-post-v1:
+    build:
+      context: ./../facebook-sync-post-v1
+      dockerfile: Dockerfile
+    container_name: facebook-sync-post-v1
+    restart: always
+    environment:
+      - DB_TYPE=mysql
+      - DB_HOST=91.99.31.157
+      - DB_PORT=3306
+      - DB_USER_NAME=root
+      - DB_PASSWORD=HoangChuong@1111
+      - DB_DATABASE=crawl-fb
+      - NODE_OPTIONS=--max-old-space-size=4096  
+    ports:
+      - '6000:6000'
