@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateProxyDto } from './dto/create-proxy.dto';
 import { UpdateProxyDto } from './dto/update-proxy.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ProxyEntity, ProxyStatus } from './entities/proxy.entity';
 
 @Injectable()
@@ -10,6 +10,7 @@ export class ProxyService {
   constructor(
     @InjectRepository(ProxyEntity)
     private repo: Repository<ProxyEntity>,
+    private connection: DataSource,
   ) { }
 
   async create(params: CreateProxyDto) {
@@ -73,7 +74,17 @@ export class ProxyService {
   }
 
   remove(id: number) {
-    return this.repo.delete(id);
+    return this.connection.transaction(async (manager) => {
+      const record = await manager
+        .getRepository(ProxyEntity)
+        .createQueryBuilder("e")
+        .setLock("pessimistic_write")
+        .where("e.id = :id", { id })
+        .getOneOrFail();
+
+
+      await manager.remove(record);
+    });
   }
 
   async getRandomProxy() {

@@ -2,7 +2,7 @@ import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nest
 import { CreateTokenDto } from './dto/create-token.dto';
 import { UpdateTokenDto } from './dto/update-token.dto';
 import { TokenEntity, TokenHandle, TokenStatus, TokenType } from './entities/token.entity';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FacebookService } from '../facebook/facebook.service';
 
@@ -13,6 +13,7 @@ export class TokenService {
     private repo: Repository<TokenEntity>,
     @Inject(forwardRef(() => FacebookService))
     private facebookService: FacebookService,
+    private connection: DataSource,
   ) { }
 
   async create(params: CreateTokenDto) {
@@ -86,7 +87,17 @@ export class TokenService {
   }
 
   remove(id: number) {
-    return this.repo.delete(id);
+    return this.connection.transaction(async (manager) => {
+      const record = await manager
+        .getRepository(TokenEntity)
+        .createQueryBuilder("e")
+        .setLock("pessimistic_write")
+        .where("e.id = :id", { id })
+        .getOneOrFail();
+
+
+      await manager.remove(record);
+    });
   }
 
   async getTokenCrawCmtActiveFromDb(): Promise<TokenEntity> {

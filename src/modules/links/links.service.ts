@@ -200,7 +200,18 @@ export class LinkService {
       argUpdate.type = params.type;
     }
 
-    return this.repo.save(argUpdate);
+    return this.connection.transaction(async (manager) => {
+      const record = await manager
+        .getRepository(LinkEntity)
+        .createQueryBuilder("e")
+        .setLock("pessimistic_write")
+        .where("e.id = :id", { id: argUpdate.id })
+        .getOneOrFail();
+
+      Object.assign(record, argUpdate);
+
+      await manager.save(record);
+    });
   }
 
   delete(id: number) {
