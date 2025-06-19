@@ -46,6 +46,8 @@ services:
       - NODE_OPTIONS=--max-old-space-size=4096  
     ports:
       - '7000:7000'
+    networks:
+      - app-tier
   redis:
     image: redis:latest
     ports:
