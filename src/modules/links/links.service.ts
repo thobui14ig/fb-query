@@ -163,11 +163,11 @@ export class LinkService {
       const now = dayjs().utc()
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
       const diff = now.diff(utcLastCommentTime, 'minute')
-      const utcTimeCreate = dayjs.utc(item.createdAt).tz(this.vnTimezone).format('YYYY-MM-DD HH:mm:ss')
+      const utcTime = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
 
       return {
         ...item,
-        createdAt: dayjs(utcTimeCreate).tz(this.vnTimezone).format('YYYY-MM-DD HH:mm:ss'),
+        createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
         lastCommentTime: item.lastCommentTime ? diff : null
       }
     })
