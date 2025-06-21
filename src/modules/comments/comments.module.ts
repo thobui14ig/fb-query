@@ -7,7 +7,7 @@ import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { FacebookModule } from '../facebook/facebook.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CommentEntity, CookieEntity]), FacebookModule],
+  imports: [TypeOrmModule.forFeature([CommentEntity]), FacebookModule],
   controllers: [CommentsController],
   providers: [CommentsService],
 })

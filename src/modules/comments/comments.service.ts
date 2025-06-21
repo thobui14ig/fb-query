@@ -1,16 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
-import { CommentEntity } from './entities/comment.entity';
-import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import { CookieEntity } from '../cookie/entities/cookie.entity';
-import { FacebookService } from '../facebook/facebook.service';
+import { Between, Repository } from 'typeorm';
+import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import { IGetCommentParams } from './comments.service.i';
+import { UpdateCommentDto } from './dto/update-comment.dto';
+import { CommentEntity } from './entities/comment.entity';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -21,9 +18,6 @@ export class CommentsService {
   constructor(
     @InjectRepository(CommentEntity)
     private repo: Repository<CommentEntity>,
-    @InjectRepository(CookieEntity)
-    private cookieRepository: Repository<CookieEntity>,
-    private facebookService: FacebookService
   ) { }
   async findAll(user: UserEntity, hideCmt: boolean, params: IGetCommentParams) {
     const vnNowStart = dayjs(params.startDate).tz(this.vnTimezone)// thời gian hiện tại theo giờ VN
