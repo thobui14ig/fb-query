@@ -72,9 +72,10 @@ export class UserService {
           u.link_off_limit as linkOffLimit,
           u.level,
 
-          (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started') AS totalRunning,
-          (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending') AS totalPending
-
+          (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started' AND l2.hide_cmt = FALSE) AS totalRunning,
+          (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending' AND l3.hide_cmt = FALSE) AS totalPending,
+          (SELECT COUNT(*) FROM links l4 WHERE l4.user_id = u.id AND l4.status = 'started' AND l4.hide_cmt = TRUE) AS totalLinkHideRunning,
+		  (SELECT COUNT(*) FROM links l5 WHERE l5.user_id = u.id AND l5.status = 'pending' AND l5.hide_cmt = TRUE) AS totalLinkHidePending
       FROM users u
       ORDER BY u.id DESC;
       `)

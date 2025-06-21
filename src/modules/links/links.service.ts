@@ -4,11 +4,7 @@ import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
 import { DataSource, In, Repository } from 'typeorm';
-import { CommentEntity } from '../comments/entities/comment.entity';
-import { CookieEntity } from '../cookie/entities/cookie.entity';
-import { FacebookService } from '../facebook/facebook.service';
 import { DelayEntity } from '../setting/entities/delay.entity';
-import { KeywordEntity } from '../setting/entities/keyword';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkEntity, LinkStatus } from './entities/links.entity';
@@ -19,20 +15,14 @@ dayjs.extend(timezone);
 
 @Injectable()
 export class LinkService {
-  ukTimezone = 'Asia/Ho_Chi_Minh';
+  vnTimezone = 'Asia/Bangkok';
+
   constructor(
     @InjectRepository(LinkEntity)
     private repo: Repository<LinkEntity>,
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
     private connection: DataSource,
-    @InjectRepository(CookieEntity)
-    private cookieRepository: Repository<CookieEntity>,
-    @InjectRepository(CommentEntity)
-    private commentRepository: Repository<CommentEntity>,
-    @InjectRepository(KeywordEntity)
-    private keywordRepository: Repository<KeywordEntity>,
-    private facebookService: FacebookService
   ) { }
 
   async create(params: CreateLinkParams) {
@@ -142,10 +132,11 @@ export class LinkService {
             l.link_name as linkName,
             l.link_url as linkUrl,
             l.like,
+            l.content,
             l.post_id as postId,
             l.delay_time as delayTime,
             l.status,
-            l.created_at as createdAt,
+            CONVERT_TZ(l.created_at, @@session.time_zone, '+07:00') AS createdAt,
             l.last_comment_time as lastCommentTime,
             l.process,
             l.type,
@@ -172,12 +163,11 @@ export class LinkService {
       const now = dayjs().utc()
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
       const diff = now.diff(utcLastCommentTime, 'minute')
-      const utcTimeCreate = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
-
+      const utcTimeCreate = dayjs.utc(item.createdAt).tz(this.vnTimezone).format('YYYY-MM-DD HH:mm:ss')
 
       return {
         ...item,
-        createdAt: dayjs.utc(utcTimeCreate).format('YYYY-MM-DD HH:mm:ss'),
+        createdAt: dayjs(utcTimeCreate).tz(this.vnTimezone).format('YYYY-MM-DD HH:mm:ss'),
         lastCommentTime: item.lastCommentTime ? diff : null
       }
     })
@@ -273,14 +263,14 @@ export class LinkService {
   }
 
   async getTotalLinkUser(userId: number, status: LinkStatus) {
-    return await this.connection
+    const count = await this.connection
       .getRepository(LinkEntity)
-      .count({
-        where: {
-          userId,
-          status
-        },
-      });
+      .countBy({
+        userId,
+        status
+      })
+
+    return count
   }
 
 }

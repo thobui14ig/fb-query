@@ -40,6 +40,9 @@ export class LinkEntity {
   @Column({ length: 255, name: 'link_name', nullable: true })
   linkName: string;
 
+  @Column({ name: 'content', nullable: true })
+  content: string;
+
   @Column({ length: 255, name: 'link_url' })
   linkUrl: string;
 
@@ -97,7 +100,6 @@ export class LinkEntity {
   @CreateDateColumn({
     type: 'datetime',
     name: 'created_at',
-    default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
