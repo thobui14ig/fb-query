@@ -136,7 +136,7 @@ export class LinkService {
             l.post_id as postId,
             l.delay_time as delayTime,
             l.status,
-            CONVERT_TZ(l.created_at, @@session.time_zone, '+07:00') AS createdAt,
+            l.created_at AS createdAt,
             l.last_comment_time as lastCommentTime,
             l.process,
             l.type,
