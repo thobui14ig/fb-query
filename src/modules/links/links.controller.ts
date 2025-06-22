@@ -17,14 +17,14 @@ import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
 import { BodyLinkQuery, ISettingLinkDto } from './links.service.i';
-import { CheckLimitLinkUserInterceptor } from './interceptor/handle-check-limit-link-user.interceptor';
+import { CheckLimitLinkUserWhenAddLinkInterceptor } from '../monitoring/interceptor/handle-check-limit-link-user-when-add-link.interceptor';
 
 @Controller('links')
 export class LinkController {
   constructor(private readonly linkService: LinkService) { }
 
   @Post()
-  @UseInterceptors(CheckLimitLinkUserInterceptor)
+  @UseInterceptors(CheckLimitLinkUserWhenAddLinkInterceptor)
   create(@Req() req: Request, @Body() createLinkDto: CreateLinkDTO) {
     const user = getUser(req);
 

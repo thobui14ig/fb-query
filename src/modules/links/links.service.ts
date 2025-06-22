@@ -262,12 +262,13 @@ export class LinkService {
     return this.repo.save(newLinks)
   }
 
-  async getTotalLinkUserByStatus(userId: number, status: LinkStatus) {
+  async getTotalLinkUserByStatus(userId: number, status: LinkStatus, hideCmt: boolean) {
     const count = await this.connection
       .getRepository(LinkEntity)
       .countBy({
         userId,
-        status
+        status,
+        hideCmt
       })
 
     return count
