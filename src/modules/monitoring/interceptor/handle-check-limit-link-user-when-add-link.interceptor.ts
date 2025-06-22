@@ -33,27 +33,31 @@ export class CheckLimitLinkUserWhenAddLinkInterceptor implements NestInterceptor
                         `Vượt giới hạn được thêm link on.`,
                         HttpStatus.BAD_REQUEST,
                     );
+                } else {
+                    if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffLimit) {
+                        throw new HttpException(
+                            `Vượt giới hạn được thêm link off.`,
+                            HttpStatus.BAD_REQUEST,
+                        );
+                    }
                 }
-                if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffLimit) {
+
+            } else {
+                if (status === LinkStatus.Started && totalLink > userFromDb.linkOnHideLimit) {
                     throw new HttpException(
-                        `Vượt giới hạn được thêm link off.`,
+                        `Vượt giới hạn được thêm link on ẩn.`,
                         HttpStatus.BAD_REQUEST,
                     );
+                } else {
+                    if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffHideLimit) {
+                        throw new HttpException(
+                            `Vượt giới hạn được thêm link off ẩn.`,
+                            HttpStatus.BAD_REQUEST,
+                        );
+                    }
                 }
             }
 
-            if (status === LinkStatus.Started && totalLink > userFromDb.linkOnHideLimit) {
-                throw new HttpException(
-                    `Vượt giới hạn được thêm link on ẩn.`,
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
-            if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffHideLimit) {
-                throw new HttpException(
-                    `Vượt giới hạn được thêm link off ẩn.`,
-                    HttpStatus.BAD_REQUEST,
-                );
-            }
             return next.handle()
         } else {
             throw new HttpException(
@@ -61,5 +65,6 @@ export class CheckLimitLinkUserWhenAddLinkInterceptor implements NestInterceptor
                 HttpStatus.BAD_REQUEST,
             );
         }
+        return next.handle()
     }
 }
