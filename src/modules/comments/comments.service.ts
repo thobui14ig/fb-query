@@ -48,6 +48,7 @@ export class CommentsService {
             username: true,
           },
           link: {
+            id: true,
             linkName: true,
             linkUrl: true,
           }
@@ -84,6 +85,7 @@ export class CommentsService {
             username: true
           },
           link: {
+            id: true,
             linkName: true,
             linkUrl: true,
             hideCmt: true

@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Request } from 'express';
 import { getUser } from 'src/common/utils/user';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CheckLimitLinkUserInterceptor } from './interceptor/handle-check-limit-link-user.interceptor';
 
 @Controller('users')
 export class UserController {
@@ -33,6 +34,7 @@ export class UserController {
   }
 
   @Put()
+  @UseInterceptors(CheckLimitLinkUserInterceptor)
   updateUser(@Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(updateUserDto)
   }

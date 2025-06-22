@@ -262,7 +262,7 @@ export class LinkService {
     return this.repo.save(newLinks)
   }
 
-  async getTotalLinkUser(userId: number, status: LinkStatus) {
+  async getTotalLinkUserByStatus(userId: number, status: LinkStatus) {
     const count = await this.connection
       .getRepository(LinkEntity)
       .countBy({
@@ -273,4 +273,14 @@ export class LinkService {
     return count
   }
 
+  async getTotalLinkUser(userId: number) {
+    const response = await this.connection.query(`
+        SELECT
+          (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started') AS totalLinkOn,
+          (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending') AS totalLinkOff
+          FROM users u
+          WHERE u.id = ${userId};
+      `)
+    return response[0]
+  }
 }

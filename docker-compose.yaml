@@ -1,17 +1,5 @@
 version: '3'
 services:
-  # db:
-  #   image: mysql:latest
-  #   container_name: mysql
-  #   restart: always
-  #   ports:
-  #     - "3306:3306"
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=111111
-  #     - MYSQL_DATABASE=crawl-fb
-  #   volumes:
-  #   - ../mysql-data:/var/lib/mysql
-
   backend:
     build:
       context: .
@@ -21,6 +9,7 @@ services:
     # depends_on:
     #   - db
     environment:
+      - PORT=9000
       - DB_TYPE=mysql
       - DB_HOST=91.99.31.157
       - DB_PORT=3306
@@ -30,30 +19,6 @@ services:
       - NODE_OPTIONS=--max-old-space-size=4096  
     ports:
       - '9000:9000'
-  facebook-sync:
-    build:
-      context: ./../fb-sync
-      dockerfile: Dockerfile
-    container_name: fb-sync
-    restart: always
-    environment:
-      - DB_TYPE=mysql
-      - DB_HOST=91.99.31.157
-      - DB_PORT=3306
-      - DB_USER_NAME=root
-      - DB_PASSWORD=HoangChuong@1111
-      - DB_DATABASE=crawl-fb
-      - NODE_OPTIONS=--max-old-space-size=4096  
-    ports:
-      - '7000:7000'
-  redis:
-    image: redis:latest
-    container_name: my-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
 
 volumes:
   redis-data:

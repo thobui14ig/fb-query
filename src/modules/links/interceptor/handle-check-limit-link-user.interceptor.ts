@@ -23,7 +23,7 @@ export class CheckLimitLinkUserInterceptor implements NestInterceptor {
         const user = request["user"]
         const status = request.body["status"] as LinkStatus
         const userFromDb = await this.userService.findById(user["id"])
-        const totalLink = await this.linkService.getTotalLinkUser(user["id"], status) + request.body.links.length
+        const totalLink = await this.linkService.getTotalLinkUserByStatus(user["id"], status) + request.body.links.length
 
         if (userFromDb && userFromDb.linkOnLimit && !isNullOrUndefined(totalLink)) {
             if (status === LinkStatus.Started && totalLink > userFromDb.linkOnLimit) {
