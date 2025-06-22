@@ -34,7 +34,7 @@ export class UserController {
   }
 
   @Put()
-  @UseInterceptors(CheckLimitLinkUserInterceptor)
+  // @UseInterceptors(CheckLimitLinkUserInterceptor)
   updateUser(@Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(updateUserDto)
   }
