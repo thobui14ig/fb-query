@@ -7,15 +7,13 @@ import {
     Injectable,
     NestInterceptor,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { UserService } from 'src/modules/user/user.service';
-import { LinkService } from '../../links/links.service';
-import { LinkStatus, LinkType } from '../../links/entities/links.entity';
 import { isNullOrUndefined } from 'src/common/utils/check-utils';
+import { LinkStatus } from 'src/modules/links/entities/links.entity';
+import { LinkService } from 'src/modules/links/links.service';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
-export class CheckLimitLinkUserWhenAddLinkInterceptor implements NestInterceptor {
+export class CheckLimitLinkUserWhenEditLinkInterceptor implements NestInterceptor {
     constructor(private userService: UserService, private linkService: LinkService) { }
 
     async intercept(context: ExecutionContext, next: CallHandler) {
@@ -24,7 +22,7 @@ export class CheckLimitLinkUserWhenAddLinkInterceptor implements NestInterceptor
         const status = request.body["status"] as LinkStatus
         const isHideCmt = request.body["hideCmt"]
         const userFromDb = await this.userService.findById(user["id"])
-        const totalLink = await this.linkService.getTotalLinkUserByStatus(user["id"], status, isHideCmt) + request.body.links.length
+        const totalLink = await this.linkService.getTotalLinkUserByStatus(user["id"], status, isHideCmt) + 1
 
         if (userFromDb && !isNullOrUndefined(totalLink)) {
             if (isHideCmt === false) {
@@ -33,28 +31,25 @@ export class CheckLimitLinkUserWhenAddLinkInterceptor implements NestInterceptor
                         `Vượt giới hạn được thêm link on.`,
                         HttpStatus.BAD_REQUEST,
                     );
-                } else {
-                    if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffLimit) {
-                        throw new HttpException(
-                            `Vượt giới hạn được thêm link off.`,
-                            HttpStatus.BAD_REQUEST,
-                        );
-                    }
                 }
-
+                if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffLimit) {
+                    throw new HttpException(
+                        `Vượt giới hạn được thêm link off.`,
+                        HttpStatus.BAD_REQUEST,
+                    );
+                }
             } else {
                 if (status === LinkStatus.Started && totalLink > userFromDb.linkOnHideLimit) {
                     throw new HttpException(
                         `Vượt giới hạn được thêm link on ẩn.`,
                         HttpStatus.BAD_REQUEST,
                     );
-                } else {
-                    if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffHideLimit) {
-                        throw new HttpException(
-                            `Vượt giới hạn được thêm link off ẩn.`,
-                            HttpStatus.BAD_REQUEST,
-                        );
-                    }
+                }
+                if (status === LinkStatus.Pending && totalLink > userFromDb.linkOffHideLimit) {
+                    throw new HttpException(
+                        `Vượt giới hạn được thêm link off ẩn.`,
+                        HttpStatus.BAD_REQUEST,
+                    );
                 }
             }
 
@@ -65,6 +60,7 @@ export class CheckLimitLinkUserWhenAddLinkInterceptor implements NestInterceptor
                 HttpStatus.BAD_REQUEST,
             );
         }
-        return next.handle()
+
+
     }
 }

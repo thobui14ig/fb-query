@@ -24,7 +24,7 @@ export class SettingController {
     @Body() createKeywordDto: CreateKeywordDto,
   ) {
     const user = getUser(req);
-    return this.settingService.createKeyword(createKeywordDto, user.id);
+    return this.settingService.createKeywordLink(createKeywordDto, user.id);
   }
 
   @Post('/create-delay')
