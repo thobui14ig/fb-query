@@ -16,7 +16,7 @@ export class SettingService {
     @InjectDataSource() private readonly dataSource: DataSource,
   ) { }
 
-  async createKeyword(params: CreateKeywordDto, userId: number) {
+  async createKeywordLink(params: CreateKeywordDto, userId: number) {
     return await this.dataSource.transaction(async (manager) => {
       await manager.delete(KeywordEntity, { linkId: params.linkId });
 
@@ -31,7 +31,7 @@ export class SettingService {
 
   }
 
-  async createKeywordLink(params: CreateKeywordDto, userId: number) {
+  async createKeyword(params: CreateKeywordDto, userId: number) {
     return await this.dataSource.transaction(async (manager) => {
       await manager.delete(KeywordEntity, { userId });
 

@@ -3,7 +3,7 @@ import { MonitoringService } from './monitoring.service';
 import { ProcessDTO } from './dto/process.dto';
 import { getUser } from 'src/common/utils/user';
 import { Request } from 'express';
-import { CheckLimitLinkUserWhenEditLinkInterceptor } from '../links/interceptor/handle-check-limit-link-user-when-edit-link.interceptor';
+import { CheckLimitLinkUserWhenEditLinkInterceptor } from './interceptors/handle-check-limit-link-user-when-edit-link.interceptor';
 
 @Controller('monitoring')
 export class MonitoringController {

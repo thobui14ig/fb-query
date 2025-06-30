@@ -17,7 +17,7 @@ import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
 import { BodyLinkQuery, ISettingLinkDto } from './links.service.i';
-import { CheckLimitLinkUserWhenAddLinkInterceptor } from '../monitoring/interceptor/handle-check-limit-link-user-when-add-link.interceptor';
+import { CheckLimitLinkUserWhenAddLinkInterceptor } from './interceptors/handle-check-limit-link-user-when-add-link.interceptor';
 
 @Controller('links')
 export class LinkController {
