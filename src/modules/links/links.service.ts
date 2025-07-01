@@ -9,6 +9,7 @@ import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkEntity, LinkStatus } from './entities/links.entity';
 import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
+import { isNullOrUndefined } from 'src/common/utils/check-utils';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -172,8 +173,8 @@ export class LinkService {
       }
     })
 
-    if (lastCommentFrom && lastCommentTo) {
-      return res.filter((item) => item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
+    if (!isNullOrUndefined(lastCommentFrom) && !isNullOrUndefined(lastCommentTo)) {
+      return res.filter((item) => item.lastCommentTime && item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
     }
 
     return res
