@@ -18,6 +18,7 @@ import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
 import { BodyLinkQuery, ISettingLinkDto } from './links.service.i';
 import { CheckLimitLinkUserWhenAddLinkInterceptor } from './interceptors/handle-check-limit-link-user-when-add-link.interceptor';
+import { CheckLimitLinkUserWhenUpdateMultipleLinkInterceptor } from './interceptors/handle-check-limit-link-user-when-update-multiple-link.interceptor';
 
 @Controller('links')
 export class LinkController {
@@ -65,6 +66,7 @@ export class LinkController {
   }
 
   @Post('/setting-link')
+  @UseInterceptors(CheckLimitLinkUserWhenUpdateMultipleLinkInterceptor)
   settingLink(@Body() body: ISettingLinkDto) {
     return this.linkService.settingLink(body)
   }
