@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Not, Repository } from 'typeorm';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
@@ -163,7 +163,7 @@ export class LinkService {
     const res = response.map((item) => {
       const now = dayjs().utc()
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
-      const diff = now.diff(utcLastCommentTime, 'minute')
+      const diff = now.diff(utcLastCommentTime, 'hour')
       const utcTime = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
 
       return {
@@ -273,6 +273,20 @@ export class LinkService {
       })
 
     return count
+  }
+
+  async getTotalLinkUserWhenUpdateMultipleLink(userId: number, status: LinkStatus, hideCmt: boolean, linkIds: number[]) {
+    const a = await this.getTotalLinkUserByStatus(userId, status, hideCmt)
+    const b = await this.connection
+      .getRepository(LinkEntity)
+      .countBy({
+        userId,
+        status: status === LinkStatus.Pending ? LinkStatus.Started : LinkStatus.Pending,
+        hideCmt,
+        id: In(linkIds)
+      })
+
+    return a + b
   }
 
   async getTotalLinkUser(userId: number) {
