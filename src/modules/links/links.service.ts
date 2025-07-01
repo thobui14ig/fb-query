@@ -3,12 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Not, Repository } from 'typeorm';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkEntity, LinkStatus } from './entities/links.entity';
 import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
+import { isNullOrUndefined } from 'src/common/utils/check-utils';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -162,7 +163,7 @@ export class LinkService {
     const res = response.map((item) => {
       const now = dayjs().utc()
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
-      const diff = now.diff(utcLastCommentTime, 'minute')
+      const diff = now.diff(utcLastCommentTime, 'hour')
       const utcTime = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
 
       return {
@@ -172,7 +173,7 @@ export class LinkService {
       }
     })
 
-    if (lastCommentFrom && lastCommentTo) {
+    if (!isNullOrUndefined(lastCommentFrom) && !isNullOrUndefined(lastCommentTo)) {
       return res.filter((item) => item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
     }
 
@@ -272,6 +273,20 @@ export class LinkService {
       })
 
     return count
+  }
+
+  async getTotalLinkUserWhenUpdateMultipleLink(userId: number, status: LinkStatus, hideCmt: boolean, linkIds: number[]) {
+    const a = await this.getTotalLinkUserByStatus(userId, status, hideCmt)
+    const b = await this.connection
+      .getRepository(LinkEntity)
+      .countBy({
+        userId,
+        status: status === LinkStatus.Pending ? LinkStatus.Started : LinkStatus.Pending,
+        hideCmt,
+        id: In(linkIds)
+      })
+
+    return a + b
   }
 
   async getTotalLinkUser(userId: number) {

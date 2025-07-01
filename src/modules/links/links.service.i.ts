@@ -24,4 +24,5 @@ export interface ISettingLinkDto {
     onOff: boolean
     delay: number
     linkIds: number[]
+    hideCmt: boolean
 }
