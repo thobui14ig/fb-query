@@ -20,7 +20,7 @@ export class CookieService {
     const cookies = params.cookies.map((cookie) => {
       return {
         cookie,
-        status: CookieStatus.INACTIVE,
+        status: CookieStatus.ACTIVE,
         createdBy: userId
       }
     })
