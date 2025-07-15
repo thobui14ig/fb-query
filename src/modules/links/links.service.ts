@@ -169,7 +169,7 @@ export class LinkService {
       return {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: item.lastCommentTime ? diff : null
+        lastCommentTime: item.lastCommentTime ? diff : 9999
       }
     })
 
