@@ -13,6 +13,10 @@ import {
   getHeaderProfileFb,
   getHeaderToken
 } from './utils';
+import { OnEvent } from '@nestjs/event-emitter';
+import { CookieEntity } from '../cookie/entities/cookie.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);
@@ -27,6 +31,8 @@ export class FacebookService {
   browser = null
 
   constructor(private readonly httpService: HttpService,
+    @InjectRepository(CookieEntity)
+    private cookieRepository: Repository<CookieEntity>,
   ) {
   }
 
@@ -163,6 +169,17 @@ export class FacebookService {
           }
         });
       return result;
+    }
+  }
+
+  @OnEvent('gen-token-user')
+  async genTokenByCookieUser(payload: CookieEntity) {
+    const { cookie } = payload
+    const profile = await this.getDataProfileFb(cookie, TokenType.EAAAAAY);
+    if (profile.accessToken) {
+      payload.token = profile.accessToken
+
+      return await this.cookieRepository.save(payload)
     }
   }
 }

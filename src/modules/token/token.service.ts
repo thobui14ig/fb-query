@@ -16,6 +16,27 @@ export class TokenService {
     private connection: DataSource,
   ) { }
 
+  handleCookie(rawCookie) {
+    // Danh sách các key cookie cần giữ lại và theo thứ tự mong muốn
+    const keysOrder = ['fr', 'c_user', 'datr', 'sb', 'presence', 'wd', 'xs', 'ps_n', 'ps_l'];
+
+    // Chuyển cookie thành object
+    const cookieObj = Object.fromEntries(
+      rawCookie.split('; ').map(pair => {
+        const [key, ...val] = pair.split('=');
+        return [key, val.join('=')];
+      })
+    );
+
+    // Lọc và sắp xếp cookie
+    const filteredSortedCookie = keysOrder
+      .filter(key => cookieObj[key] !== undefined)
+      .map(key => `${key}=${cookieObj[key]}`)
+      .join('; ');
+
+    return filteredSortedCookie
+  }
+
   async create(params: CreateTokenDto) {
     //chưa code trường hợp có cookie
     const tokenValid = [];
