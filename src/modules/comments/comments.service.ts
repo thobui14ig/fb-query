@@ -8,6 +8,8 @@ import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import { IGetCommentParams } from './comments.service.i';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentEntity } from './entities/comment.entity';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom } from 'rxjs';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -18,6 +20,7 @@ export class CommentsService {
   constructor(
     @InjectRepository(CommentEntity)
     private repo: Repository<CommentEntity>,
+    private readonly httpService: HttpService,
   ) { }
   async findAll(user: UserEntity, hideCmt: boolean, params: IGetCommentParams) {
     const vnNowStart = dayjs(params.startDate).tz(this.vnTimezone)// thời gian hiện tại theo giờ VN
@@ -133,35 +136,9 @@ export class CommentsService {
     return this.repo.delete(id)
   }
 
-  async hideCmt(cmtId: string, userId: number) {
-    // const cookie = await this.cookieRepository.findOne({
-    //   where: {
-    //     createdBy: userId
-    //   }
-    // })
-    // if (!cookie) {
-    //   throw new HttpException(
-    //     `không tìm thấy cookie.`,
-    //     HttpStatus.BAD_REQUEST,
-    //   );
-    // }
-
-    // const res = await this.facebookService.hideCmt(cmtId, cookie)
-    // if (res?.errors?.length > 0 && res?.errors[0].code === 1446036) {
-    //   throw new HttpException(
-    //     `Comment đã được ẩn.`,
-    //     HttpStatus.BAD_GATEWAY,
-    //   );
-    // }
-
-    // const cmt = await this.repo.findOne({
-    //   where: {
-    //     cmtId
-    //   }
-    // })
-
-    // if (cmt) {
-    //   return this.repo.save({ ...cmt, hideCmt: true })
-    // }
+  async hideCmt(comment: CommentEntity) {
+    console.log("🚀 ~ CommentsService ~ hideCmt ~ comment:", comment)
+    await lastValueFrom(this.httpService.post("http://91.99.31.157:7000/facebook/hide-cmt", comment))
+    return true
   }
 }

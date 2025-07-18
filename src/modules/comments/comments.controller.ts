@@ -5,6 +5,7 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { getUser } from 'src/common/utils/user';
 import { Request } from 'express';
 import { IGetCommentParams } from './comments.service.i';
+import { CommentEntity } from './entities/comment.entity';
 
 @Controller('comments')
 export class CommentsController {
@@ -31,10 +32,8 @@ export class CommentsController {
     return this.commentsService.remove(+id);
   }
 
-  @Post('/hide-cmt/:cmtId')
-  hideCmt(@Req() req: Request, @Param('cmtId') cmtId: string) {
-    const user = getUser(req);
-
-    return this.commentsService.hideCmt(cmtId, user.id)
+  @Post('/hide-cmt')
+  hideCmt(@Body() body: CommentEntity) {
+    return this.commentsService.hideCmt(body)
   }
 }
