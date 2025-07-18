@@ -21,4 +21,8 @@ export class UpdateLinkDTO {
     @IsBoolean()
     @IsOptional()
     hideCmt?: boolean;
+
+    @IsNumber()
+    @IsOptional()
+    thread?: number;
 }

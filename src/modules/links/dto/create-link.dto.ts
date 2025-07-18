@@ -44,4 +44,7 @@ export class CreateLinkDTO {
 
   @IsBoolean()
   hideCmt: boolean
+
+  @IsNumber()
+  thread: number
 }

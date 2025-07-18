@@ -46,7 +46,8 @@ export class LinkService {
           delayTime: params.status === LinkStatus.Started ? config[0].delayOnPublic ?? 10 : config[0].delayOff ?? 10,
           status: params.status,
           linkName: link.name,
-          hideCmt: params.hideCmt
+          hideCmt: params.hideCmt,
+          thread: params.thread
         }
         linkEntities.push(entity)
         continue
@@ -169,7 +170,7 @@ export class LinkService {
       return {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: item.lastCommentTime ? diff : 9999
+        lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999
       }
     })
 
@@ -189,6 +190,7 @@ export class LinkService {
     if (level === LEVEL.ADMIN) {
       argUpdate.delayTime = params.delayTime;
       argUpdate.type = params.type;
+      argUpdate.thread = params.thread
     }
 
     return this.connection.transaction(async (manager) => {

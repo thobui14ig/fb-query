@@ -97,6 +97,9 @@ export class LinkEntity {
   @Column({ name: 'hide_by', default: 'all' })
   hideBy: HideBy;
 
+  @Column({ name: 'thread', default: 1 })
+  thread: number;
+
   @CreateDateColumn({
     type: 'datetime',
     name: 'created_at',
