@@ -1,22 +1,19 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { firstValueFrom } from 'rxjs';
+import { Repository } from 'typeorm';
+import { CookieEntity } from '../cookie/entities/cookie.entity';
 import { TokenType } from '../token/entities/token.entity';
 import {
   getBodyToken,
   getHeaderProfileFb,
   getHeaderToken
 } from './utils';
-import { OnEvent } from '@nestjs/event-emitter';
-import { CookieEntity } from '../cookie/entities/cookie.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 
 dayjs.extend(utc);
 // dayjs.extend(timezone);

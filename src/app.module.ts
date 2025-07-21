@@ -1,33 +1,32 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { UserEntity } from './modules/user/entities/user.entity';
-import { JwtModule } from '@nestjs/jwt';
-import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './modules/auth/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
-import { LinkModule } from './modules/links/links.module';
-import { LinkEntity } from './modules/links/entities/links.entity';
 import { CommentsModule } from './modules/comments/comments.module';
 import { CommentEntity } from './modules/comments/entities/comment.entity';
 import { CookieModule } from './modules/cookie/cookie.module';
-import { TokenModule } from './modules/token/token.module';
-import { ProxyModule } from './modules/proxy/proxy.module';
-import { ProxyEntity } from './modules/proxy/entities/proxy.entity';
 import { CookieEntity } from './modules/cookie/entities/cookie.entity';
-import { TokenEntity } from './modules/token/entities/token.entity';
-import { SettingModule } from './modules/setting/setting.module';
-import { KeywordEntity } from './modules/setting/entities/keyword';
-import { DelayEntity } from './modules/setting/entities/delay.entity';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { join } from 'path';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { FacebookModule } from './modules/facebook/facebook.module';
+import { LinkEntity } from './modules/links/entities/links.entity';
+import { LinkModule } from './modules/links/links.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { MproxyModule } from './modules/mproxy/mproxy.module';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ProxyEntity } from './modules/proxy/entities/proxy.entity';
+import { ProxyModule } from './modules/proxy/proxy.module';
+import { DelayEntity } from './modules/setting/entities/delay.entity';
+import { KeywordEntity } from './modules/setting/entities/keyword';
+import { SettingModule } from './modules/setting/setting.module';
+import { TokenEntity } from './modules/token/entities/token.entity';
+import { TokenModule } from './modules/token/token.module';
+import { UserEntity } from './modules/user/entities/user.entity';
 
 @Module({
   imports: [
@@ -75,7 +74,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     SettingModule,
     FacebookModule,
     MonitoringModule,
-    MproxyModule,
     EventEmitterModule.forRoot()
   ],
   controllers: [AppController],

@@ -12,7 +12,6 @@ export class CreateUserDto {
   @IsString()
   password: string;
 
-  // @IsDateString()
   expiredAt: Date
 
   @IsNumber()
@@ -22,4 +21,8 @@ export class CreateUserDto {
   @IsNumber()
   @IsOptional()
   linkStartLimit?: number
+
+  @IsNumber()
+  @IsOptional()
+  delayOnPrivate?: number
 }

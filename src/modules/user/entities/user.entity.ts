@@ -40,6 +40,9 @@ export class UserEntity {
   @Column({ name: 'link_off_hide_limit', default: 0 })
   linkOffHideLimit?: number;
 
+  @Column({ name: 'delay_on_private', default: 5 })
+  delayOnPrivate?: number;
+
   @Column({ default: LEVEL.USER })
   level?: LEVEL;
 
