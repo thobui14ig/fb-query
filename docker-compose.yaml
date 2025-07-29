@@ -16,9 +16,25 @@ services:
       - DB_USER_NAME=root
       - DB_PASSWORD=HoangChuong@1111
       - DB_DATABASE=crawl-fb
-      - NODE_OPTIONS=--max-old-space-size=4096  
+      - NODE_OPTIONS=--max-old-space-size=4096
     ports:
       - '9000:9000'
-
-volumes:
-  redis-data:
+  fb-hide:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fb-hide
+    restart: always
+    # depends_on:
+    #   - db
+    environment:
+      - PORT=8000
+      - DB_TYPE=mysql
+      - DB_HOST=91.99.31.157
+      - DB_PORT=3306
+      - DB_USER_NAME=root
+      - DB_PASSWORD=HoangChuong@1111
+      - DB_DATABASE=crawl-fb
+      - NODE_OPTIONS=--max-old-space-size=4096
+    ports:
+      - '8000:8000'
