@@ -36,5 +36,9 @@ services:
       - DB_PASSWORD=HoangChuong@1111
       - DB_DATABASE=crawl-fb
       - NODE_OPTIONS=--max-old-space-size=4096
+      # redis
+      - REDIS_HOST=91.99.31.157
+      - REDIS_PORT=6379
+      - REDIS_TYPE=single
     ports:
       - '8000:8000'
