@@ -25,6 +25,15 @@ export class CookieEntity {
     @Column({ type: 'enum', enum: CookieStatus, default: CookieStatus.ACTIVE })
     status: CookieStatus;
 
+    @Column({ name: 'fb_id', })
+    fbId: string;
+
+    @Column({ name: 'fb_dtsg', })
+    fbDtsg: string;
+
+    @Column({ name: 'jazoest', })
+    jazoest: string;
+
     @ManyToOne(() => UserEntity, (user) => user.links)
     @JoinColumn({ name: 'created_by' })
     user: UserEntity;

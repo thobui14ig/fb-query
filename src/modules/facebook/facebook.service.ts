@@ -173,10 +173,53 @@ export class FacebookService {
   async genTokenByCookieUser(payload: CookieEntity) {
     const { cookie } = payload
     const profile = await this.getDataProfileFb(cookie, TokenType.EAAAAAY);
-    if (profile.accessToken) {
-      payload.token = profile.accessToken
+    const { facebookId, fbDtsg, jazoest } = await this.getInfoAccountsByCookie(cookie) || {}
+    console.log(`🚀 ~ FacebookService ~ genTokenByCookieUser ~ { facebookId, fbDtsg, jazoest }:`, { facebookId, fbDtsg, jazoest })
+    payload.token = profile?.accessToken
+    payload.fbId = facebookId
+    payload.fbDtsg = fbDtsg
+    payload.jazoest = jazoest
 
-      return await this.cookieRepository.save(payload)
+    return await this.cookieRepository.save(payload)
+  }
+
+
+
+  async getInfoAccountsByCookie(cookie: string) {
+    const maxRetries = 3;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const cookies = this.changeCookiesFb(cookie);
+
+        const dataUser = await firstValueFrom(
+          this.httpService.get('https://www.facebook.com', {
+            headers: {
+              Cookie: this.formatCookies(cookies),
+            },
+          }),
+        );
+
+        const dtsgMatch = dataUser.data.match(/DTSGInitialData",\[\],{"token":"(.*?)"}/);
+        const jazoestMatch = dataUser.data.match(/&jazoest=(.*?)"/);
+        const userIdMatch = dataUser.data.match(/"USER_ID":"(.*?)"/);
+
+        if (dtsgMatch && jazoestMatch && userIdMatch) {
+          const fbDtsg = dtsgMatch[1];
+          const jazoest = jazoestMatch[1];
+          const facebookId = userIdMatch[1];
+          return { fbDtsg, jazoest, facebookId };
+        }
+
+      } catch (error) {
+        console.warn(`⚠️ Attempt ${attempt} failed: ${error.message}`);
+      }
+
+      // Optional: delay giữa các lần thử (nếu cần tránh spam)
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 giây
     }
+
+    // Sau 3 lần đều fail
+    return null;
   }
 }
