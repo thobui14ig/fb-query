@@ -47,4 +47,8 @@ export class CreateLinkDTO {
 
   @IsNumber()
   thread: number
+
+  @IsOptional()
+  @IsNumber()
+  tablePageId: number
 }

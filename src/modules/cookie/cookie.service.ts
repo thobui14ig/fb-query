@@ -21,7 +21,8 @@ export class CookieService {
       return {
         cookie,
         status: CookieStatus.ACTIVE,
-        createdBy: userId
+        createdBy: userId,
+        pageId: params.pageId
       }
     })
     await this.repo.save(cookies)
@@ -40,6 +41,9 @@ export class CookieService {
       return this.repo.find({
         where: {
           createdBy: userId
+        },
+        relations: {
+          page: true
         },
         order: {
           id: "DESC"

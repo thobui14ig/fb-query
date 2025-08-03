@@ -25,4 +25,8 @@ export class UpdateLinkDTO {
     @IsNumber()
     @IsOptional()
     thread?: number;
+
+    @IsOptional()
+    @IsNumber()
+    tablePageId: number
 }

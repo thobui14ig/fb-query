@@ -1,15 +1,16 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  OneToMany,
-} from 'typeorm';
-import { UserEntity } from '../../user/entities/user.entity';
 import { CommentEntity } from 'src/modules/comments/entities/comment.entity';
 import { KeywordEntity } from 'src/modules/setting/entities/keyword';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { UserEntity } from '../../user/entities/user.entity';
+import { PageEntity } from 'src/modules/page/entities/pages.entity';
 
 export enum LinkStatus {
   Pending = 'pending',
@@ -100,6 +101,9 @@ export class LinkEntity {
   @Column({ name: 'thread', default: 1 })
   thread: number;
 
+  @Column({ name: 'table_page_id' })
+  tablePageId: number;
+
   @CreateDateColumn({
     type: 'datetime',
     name: 'created_at',
@@ -115,4 +119,8 @@ export class LinkEntity {
 
   @OneToMany(() => KeywordEntity, (keyword) => keyword.link)
   keywords: KeywordEntity[];
+
+  @ManyToOne(() => PageEntity, (user) => user.links)
+  @JoinColumn({ name: 'table_page_id' })
+  page: PageEntity;
 }

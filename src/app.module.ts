@@ -27,6 +27,8 @@ import { SettingModule } from './modules/setting/setting.module';
 import { TokenEntity } from './modules/token/entities/token.entity';
 import { TokenModule } from './modules/token/token.module';
 import { UserEntity } from './modules/user/entities/user.entity';
+import { PageModule } from './modules/page/page.module';
+import { PageEntity } from './modules/page/entities/pages.entity';
 
 @Module({
   imports: [
@@ -56,6 +58,7 @@ import { UserEntity } from './modules/user/entities/user.entity';
           TokenEntity,
           KeywordEntity,
           DelayEntity,
+          PageEntity
         ],
         // logging: true,
         // synchronize: true, // chỉ dùng trong dev!
@@ -74,6 +77,7 @@ import { UserEntity } from './modules/user/entities/user.entity';
     SettingModule,
     FacebookModule,
     MonitoringModule,
+    PageModule,
     EventEmitterModule.forRoot()
   ],
   controllers: [AppController],

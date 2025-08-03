@@ -47,7 +47,10 @@ export class LinkService {
           status: params.status,
           linkName: link.name,
           hideCmt: params.hideCmt,
-          thread: params.thread
+          thread: params.thread,
+        }
+        if (params.hideCmt) {
+          entity.tablePageId = params.tablePageId
         }
         linkEntities.push(entity)
         continue
@@ -191,6 +194,10 @@ export class LinkService {
       argUpdate.delayTime = params.delayTime;
       argUpdate.type = params.type;
       argUpdate.thread = params.thread
+    }
+
+    if (params.hideCmt && params.tablePageId) {
+      argUpdate.tablePageId = params.tablePageId
     }
 
     return this.connection.transaction(async (manager) => {
