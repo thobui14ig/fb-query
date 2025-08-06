@@ -46,6 +46,9 @@ export class UserEntity {
   @Column({ default: LEVEL.USER })
   level?: LEVEL;
 
+  @Column({ default: true, name: 'get_phone' })
+  getPhone: Boolean;
+
   @CreateDateColumn({ type: 'datetime', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

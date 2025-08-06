@@ -30,6 +30,7 @@ export class UserService {
             u.link_on_limit as linkOnLimit,
             u.link_off_limit as linkOffLimit,
             u.level,
+            u.get_phone as getPhone,
             (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
             (SELECT COUNT(*) FROM links l1 WHERE l1.user_id = u.id AND l1.type = 'private') AS totalPrivate,
             (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.type = 'public' AND l2.status = 'started') AS totalPublicRunning,
@@ -72,7 +73,7 @@ export class UserService {
           u.link_off_limit as linkOffLimit,
           u.level,
           u.delay_on_private as delayOnPrivate,
-
+          u.get_phone as getPhone,
           (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started' AND l2.hide_cmt = FALSE) AS totalRunning,
           (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending' AND l3.hide_cmt = FALSE) AS totalPending,
           (SELECT COUNT(*) FROM links l4 WHERE l4.user_id = u.id AND l4.status = 'started' AND l4.hide_cmt = TRUE) AS totalLinkHideRunning,
@@ -106,7 +107,7 @@ export class UserService {
         u.link_on_limit as linkOnLimit,
         u.link_off_limit as linkOffLimit,
         u.level,
-
+        u.get_phone as getPhone,
         (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
 
         (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'private') AS totalPrivate,

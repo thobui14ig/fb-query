@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateUserDto {
   @IsString()
@@ -25,4 +25,8 @@ export class CreateUserDto {
   @IsNumber()
   @IsOptional()
   delayOnPrivate?: number
+
+  @IsBoolean()
+  @IsOptional()
+  getPhone?: boolean
 }
