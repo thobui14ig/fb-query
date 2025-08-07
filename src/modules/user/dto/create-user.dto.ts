@@ -1,3 +1,4 @@
+import { Optional } from "@nestjs/common";
 import { IsBoolean, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateUserDto {
@@ -29,4 +30,8 @@ export class CreateUserDto {
   @IsBoolean()
   @IsOptional()
   getPhone?: boolean
+
+  @Optional()
+  @IsString()
+  accountFbUuid: string;
 }
