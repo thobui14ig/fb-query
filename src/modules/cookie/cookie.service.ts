@@ -50,19 +50,12 @@ export class CookieService {
         }
       })
     }
-    return this.repo.find({
-      order: {
-        id: "DESC"
-      },
-      relations: {
-        user: true
-      },
-      where: {
-        user: {
-          level: 1
-        }
-      }
-    })
+    return this.repo
+      .createQueryBuilder("c")
+      .innerJoinAndSelect("c.user", "user")
+      .innerJoinAndSelect("c.page", "page")
+      .orderBy("c.id", "DESC")
+      .getMany();
   }
 
   findOne(id: number) {

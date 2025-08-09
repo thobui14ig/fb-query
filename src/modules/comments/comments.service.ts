@@ -23,8 +23,8 @@ export class CommentsService {
     private readonly httpService: HttpService,
   ) { }
   async findAll(user: UserEntity, hideCmt: boolean, params: IGetCommentParams) {
-    const vnNowStart = dayjs(params.startDate).tz(this.vnTimezone)// thời gian hiện tại theo giờ VN
-    const vnNowEnd = dayjs(params.endDate).tz(this.vnTimezone)// thời gian hiện tại theo giờ VN
+    const vnNowStart = dayjs(params.startDate).tz(this.vnTimezone)
+    const vnNowEnd = dayjs(params.endDate).tz(this.vnTimezone)
     const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
     const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
 
@@ -85,7 +85,8 @@ export class CommentsService {
           linkId: true,
           hideCmt: true,
           user: {
-            username: true
+            username: true,
+            getPhone: true
           },
           link: {
             id: true,

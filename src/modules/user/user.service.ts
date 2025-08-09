@@ -13,6 +13,7 @@ dayjs.extend(timezone);
 
 @Injectable()
 export class UserService {
+  vnTimezone = 'Asia/Bangkok';
   constructor(
     @InjectRepository(UserEntity)
     private repo: Repository<UserEntity>,
@@ -29,6 +30,8 @@ export class UserService {
             u.expired_at as expiredAt,
             u.link_on_limit as linkOnLimit,
             u.link_off_limit as linkOffLimit,
+            u.link_on_hide_limit as linkOnHideLimit,
+            u.link_off_hide_limit as linkOffHideLimit,
             u.level,
             u.get_phone as getPhone,
             (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
@@ -71,6 +74,8 @@ export class UserService {
           u.expired_at as expiredAt,
           u.link_on_limit as linkOnLimit,
           u.link_off_limit as linkOffLimit,
+          u.link_on_hide_limit as linkOnHideLimit,
+          u.link_off_hide_limit as linkOffHideLimit,
           u.level,
           u.delay_on_private as delayOnPrivate,
           u.get_phone as getPhone,
@@ -98,6 +103,11 @@ export class UserService {
   }
 
   async getInfo(userId: number) {
+    const vnNowStart = dayjs().tz(this.vnTimezone)
+    const vnNowEnd = dayjs().tz(this.vnTimezone)
+    const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD 00:00:00');
+    const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD 23:59:59');
+
     const res = await this.connection.query(`
       SELECT
         u.id,
@@ -106,19 +116,22 @@ export class UserService {
         u.expired_at as expiredAt,
         u.link_on_limit as linkOnLimit,
         u.link_off_limit as linkOffLimit,
+        u.link_on_hide_limit as linkOnHideLimit,
+        u.link_off_hide_limit as linkOffHideLimit,
         u.level,
         u.get_phone as getPhone,
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
-
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'private') AS totalPrivate,
-
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public' AND l.status = 'started') AS totalPublicRunning,
-
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'private' AND l.status = 'started') AS totalPrivateRunning
-
-    FROM users u
-    WHERE u.id = ${userId};
-
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = false) AS totalLinkOn,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'pending' and l.hide_cmt = false) AS totalLinkOff,
+		    (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = true) AS totalLinkOnHide,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'pending' and l.hide_cmt = true) AS totalLinkOffHide,
+        (
+          SELECT COUNT(*) FROM comments c
+          join links l on l.id = c.link_id
+          join users u on u.id = l.user_id
+          where u.id = ${userId} and (c.time_created between '${startDate}' and '${endDate}' )
+        ) AS totalComments
+        FROM users u
+        WHERE u.id = ${userId};
     `)
     const user = res[0]
     user.createdAt = dayjs(user.createdAt).format('YYYY-MM-DD');

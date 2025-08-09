@@ -163,6 +163,17 @@ export class LinkService {
             l.id, u.username
             order by l.id desc
       `, [])
+    const linkComment = await this.connection.query(`
+      select l.id as linkId, count(c.id) as totalComment from links l 
+        join comments c 
+        on c.link_id = l.id
+        where l.id in(${response.map(item => item.id) ?? 0})
+        group by l.id  
+    `)
+
+    const linkCommentMap = new Map(
+      linkComment.map(lc => [lc.linkId, lc.totalComment])
+    );
 
     const res = response.map((item) => {
       const now = dayjs().utc()
@@ -173,7 +184,8 @@ export class LinkService {
       return {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999
+        lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
+        totalComment: linkCommentMap.get(item.id) || 0
       }
     })
 
