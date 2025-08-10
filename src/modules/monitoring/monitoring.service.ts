@@ -26,28 +26,17 @@ export class MonitoringService {
 
 
   async updateProcess(processDTO: ProcessDTO, level: LEVEL, userId: number) {
-    if (level === LEVEL.USER) {
-      const link = await this.linkRepository.findOne({
-        where: {
-          userId,
-          id: processDTO.id
-        },
-      });
-
-      if (!link) {
-        throw new HttpException(`Bạn không có quyền.`, HttpStatus.CONFLICT);
-      }
-    }
-
     const link = await this.linkRepository.findOne({
       where: {
         id: processDTO.id
       },
+      relations: {
+        user: true
+      }
     });
-    const delayTime = await this.getDelayTime(processDTO.status, link.type)
+    const delayTime = await this.getDelayTime(processDTO.status, link.type, link.user.delayOnPrivate)
     const dataUpdate = { ...processDTO, delayTime }
-
-    const response = await this.linkRepository.save(dataUpdate);
+    const response = await this.linkRepository.save({ ...dataUpdate, createdAt: dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any });
 
     throw new HttpException(
       `${response.status === LinkStatus.Started ? 'Start' : 'Stop'} monitoring for link_id ${processDTO.id}`,
@@ -55,8 +44,23 @@ export class MonitoringService {
     );
   }
 
-  async getDelayTime(status: LinkStatus, type: LinkType) {
+  async getDelayTime(status: LinkStatus, type: LinkType, delayOnPrivateUser: number) {
     const setting = await this.delayRepository.find()
-    return status === LinkStatus.Pending ? setting[0].delayOff * 60 : (type === LinkType.PUBLIC ? setting[0].delayOnPublic : setting[0].delayOffPrivate)
+
+    if (status === LinkStatus.Started && type === LinkType.PRIVATE) {
+      return delayOnPrivateUser
+    }
+
+    if (status === LinkStatus.Pending && type === LinkType.PRIVATE) {
+      return setting[0].delayOffPrivate
+    }
+
+    if (status === LinkStatus.Started && type === LinkType.PUBLIC) {
+      return setting[0].delayOnPublic
+    }
+
+    if (status === LinkStatus.Pending && type === LinkType.PUBLIC) {
+      return setting[0].delayOff
+    }
   }
 }

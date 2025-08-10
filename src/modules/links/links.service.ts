@@ -163,13 +163,13 @@ export class LinkService {
             l.id, u.username
             order by l.id desc
       `, [])
-    const linkComment = await this.connection.query(`
+    const linkComment = response.length > 0 ? await this.connection.query(`
       select l.id as linkId, count(c.id) as totalComment from links l 
         join comments c 
         on c.link_id = l.id
-        where l.id in(${response.map(item => item.id) ?? 0})
+        where l.id in(${response?.map(item => item.id) ?? 0})
         group by l.id  
-    `)
+    `) : []
 
     const linkCommentMap = new Map(
       linkComment.map(lc => [lc.linkId, lc.totalComment])
@@ -270,8 +270,10 @@ export class LinkService {
     const newLinks = links.map((item) => {
       if (setting.onOff) {
         item.status = LinkStatus.Started
+        item.createdAt = dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any
       } else {
         item.status = LinkStatus.Pending
+        item.createdAt = dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any
       }
 
       if (setting.delay) {
