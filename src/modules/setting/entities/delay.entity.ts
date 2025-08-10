@@ -28,8 +28,8 @@ export class DelayEntity {
     @Column({ name: 'delay_on_public', type: 'int', default: 0 })
     delayOnPublic: number;
 
-    @Column({ name: 'delay_on_private', type: 'int', default: 0 })
-    delayOnPrivate: number;
+    @Column({ name: 'delay_off_private', type: 'int', default: 0 })
+    delayOffPrivate: number;
 
     @Column({ name: 'delay_off', type: 'int', default: 0 })
     delayOff: number;

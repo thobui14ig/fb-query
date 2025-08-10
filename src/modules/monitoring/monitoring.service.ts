@@ -57,6 +57,6 @@ export class MonitoringService {
 
   async getDelayTime(status: LinkStatus, type: LinkType) {
     const setting = await this.delayRepository.find()
-    return status === LinkStatus.Pending ? setting[0].delayOff * 60 : (type === LinkType.PUBLIC ? setting[0].delayOnPublic : setting[0].delayOnPrivate)
+    return status === LinkStatus.Pending ? setting[0].delayOff * 60 : (type === LinkType.PUBLIC ? setting[0].delayOnPublic : setting[0].delayOffPrivate)
   }
 }
