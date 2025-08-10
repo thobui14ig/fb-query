@@ -181,7 +181,7 @@ export class LinkService {
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
       const utcTimeCraw = dayjs.utc(item.timeCrawUpdate);
       const diff = now.diff(utcLastCommentTime, 'hour')
-      const diffTimeCraw = utcTimeCraw.diff(utcLastCommentTime, 'hour')
+      const diffTimeCraw = utcLastCommentTime.diff(utcTimeCraw, 'hour')
       const utcTime = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
 
       return {
