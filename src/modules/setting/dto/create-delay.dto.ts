@@ -9,4 +9,7 @@ export class CreateDelayDTO {
 
     @IsNumber()
     refreshProxy: number;
+
+    @IsNumber()
+    timeRemoveProxySlow: number
 }

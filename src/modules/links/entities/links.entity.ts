@@ -59,6 +59,9 @@ export class LinkEntity {
   @Column({ type: 'datetime', nullable: true, name: 'last_comment_time' })
   lastCommentTime: Date | null;
 
+  @Column({ type: 'datetime', nullable: true, name: 'time_craw_update' })
+  timeCrawUpdate: Date | null;
+
   @Column({ type: 'int', default: 0, name: 'comment_count' })
   commentCount: number;
 

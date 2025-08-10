@@ -36,4 +36,7 @@ export class DelayEntity {
 
     @Column({ name: 'delay_comment_count', type: 'int', default: 0 })
     delayCommentCount: number;
+
+    @Column({ name: 'time_remove_proxy_slow', type: 'int', default: 0 })
+    timeRemoveProxySlow: number;
 }

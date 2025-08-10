@@ -151,7 +151,8 @@ export class LinkService {
             l.like_before AS likeBefore,
             l.like_after AS likeAfter,
             l.hide_cmt as hideCmt,
-            l.hide_by as hideBy
+            l.hide_by as hideBy,
+            l.time_craw_update as timeCrawUpdate
         FROM 
             links l
         JOIN 
@@ -178,14 +179,17 @@ export class LinkService {
     const res = response.map((item) => {
       const now = dayjs().utc()
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
+      const utcTimeCraw = dayjs.utc(item.timeCrawUpdate);
       const diff = now.diff(utcLastCommentTime, 'hour')
+      const diffTimeCraw = utcTimeCraw.diff(utcLastCommentTime, 'hour')
       const utcTime = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
 
       return {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
         lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
-        totalComment: linkCommentMap.get(item.id) || 0
+        totalComment: linkCommentMap.get(item.id) || 0,
+        timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
       }
     })
 
