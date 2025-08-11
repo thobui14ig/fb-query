@@ -152,7 +152,8 @@ export class LinkService {
             l.like_after AS likeAfter,
             l.hide_cmt as hideCmt,
             l.hide_by as hideBy,
-            l.time_craw_update as timeCrawUpdate
+            l.time_craw_update as timeCrawUpdate,
+            l.comment_count as totalComment
         FROM 
             links l
         JOIN 
@@ -188,7 +189,7 @@ export class LinkService {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
         lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
-        totalComment: linkCommentMap.get(item.id) || 0,
+        totalCommentNewest: linkCommentMap.get(item.id) || 0,
         timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
       }
     })
