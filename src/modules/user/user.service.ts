@@ -105,8 +105,8 @@ export class UserService {
   async getInfo(userId: number) {
     const vnNowStart = dayjs().tz(this.vnTimezone)
     const vnNowEnd = dayjs().tz(this.vnTimezone)
-    const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD 00:00:00');
-    const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD 23:59:59');
+    const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
 
     const res = await this.connection.query(`
       SELECT
@@ -121,13 +121,13 @@ export class UserService {
         u.level,
         u.get_phone as getPhone,
         (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = false) AS totalLinkOn,
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'pending' and l.hide_cmt = false) AS totalLinkOff,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' and l.hide_cmt = false) AS totalLinkOff,
 		    (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = true) AS totalLinkOnHide,
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'pending' and l.hide_cmt = true) AS totalLinkOffHide,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' and l.hide_cmt = true) AS totalLinkOffHide,
         (
           SELECT COUNT(*) FROM comments c
-          join links l on l.id = c.link_id
-          join users u on u.id = l.user_id
+          left join links l on l.id = c.link_id
+          left join users u on u.id = l.user_id
           where u.id = ${userId} and (c.time_created between '${startDate}' and '${endDate}' )
         ) AS totalComments
         FROM users u

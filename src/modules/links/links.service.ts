@@ -129,7 +129,7 @@ export class LinkService {
     if (level === LEVEL.USER) {
       queryEntends += ` AND l.user_id = ${userIdByUerLogin}`
     }
-
+    console.log(1)
     let response: any[] = await this.connection.query(`
         SELECT 
             l.id,
@@ -172,11 +172,9 @@ export class LinkService {
         where l.id in(${response?.map(item => item.id) ?? 0})
         group by l.id  
     `) : []
-
     const linkCommentMap = new Map(
       linkComment.map(lc => [lc.linkId, lc.totalComment])
     );
-
     const res = response.map((item) => {
       const now = dayjs().utc()
       const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
@@ -193,8 +191,7 @@ export class LinkService {
         timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
       }
     })
-
-    if (!isNullOrUndefined(lastCommentFrom) && !isNullOrUndefined(lastCommentTo)) {
+    if ((!isNullOrUndefined(lastCommentFrom) && lastCommentFrom != "" as any) && (!isNullOrUndefined(lastCommentTo) && lastCommentTo != "" as any)) {
       return res.filter((item) => item.lastCommentTime && item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
     }
 
