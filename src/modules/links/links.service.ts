@@ -129,7 +129,7 @@ export class LinkService {
     if (level === LEVEL.USER) {
       queryEntends += ` AND l.user_id = ${userIdByUerLogin}`
     }
-    console.log(1)
+
     let response: any[] = await this.connection.query(`
         SELECT 
             l.id,
@@ -163,7 +163,7 @@ export class LinkService {
         WHERE ${queryEntends}
         GROUP BY 
             l.id, u.username
-            order by l.id desc
+            order by l.created_at desc
       `, [])
     const linkComment = response.length > 0 ? await this.connection.query(`
       select l.id as linkId, count(c.id) as totalComment from links l 
@@ -172,8 +172,24 @@ export class LinkService {
         where l.id in(${response?.map(item => item.id) ?? 0})
         group by l.id  
     `) : []
+
+    const vnNowStart = dayjs().tz(this.vnTimezone)
+    const vnNowEnd = dayjs().tz(this.vnTimezone)
+    const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const linkCommentToday = response.length > 0 ? await this.connection.query(`
+      select l.id as linkId, count(c.id) as totalComment from links l 
+        join comments c 
+        on c.link_id = l.id
+        where l.id in(${response?.map(item => item.id) ?? 0})
+        and c.time_created between '${startDate}' and '${endDate}'
+        group by l.id  
+    `) : []
     const linkCommentMap = new Map(
       linkComment.map(lc => [lc.linkId, lc.totalComment])
+    );
+    const linkCommentTodayMap = new Map(
+      linkCommentToday.map(lc => [lc.linkId, lc.totalComment])
     );
     const res = response.map((item) => {
       const now = dayjs().utc()
@@ -188,6 +204,7 @@ export class LinkService {
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
         lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
         totalCommentNewest: linkCommentMap.get(item.id) || 0,
+        totalCommentToday: linkCommentTodayMap.get(item.id) || 0,
         timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
       }
     })
