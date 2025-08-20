@@ -91,7 +91,7 @@ export class LinkService {
   }
 
   async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean, hideCmt: boolean) {
-    const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo, likeFrom, likeTo } = body
+    const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo, likeFrom, likeTo, diffTimeFrom, diffTimeTo, totalCmtTodayFrom, totalCmtTodayTo } = body
     let queryEntends = ``
     if (hideCmt) {
       queryEntends += ` l.hide_cmt = true`
@@ -211,7 +211,17 @@ export class LinkService {
     if ((!isNullOrUndefined(lastCommentFrom) && lastCommentFrom != "" as any) && (!isNullOrUndefined(lastCommentTo) && lastCommentTo != "" as any)) {
       return res.filter((item) => item.lastCommentTime && item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
     }
+    if ((!isNullOrUndefined(totalCmtTodayFrom) && totalCmtTodayFrom != "" as any) && (!isNullOrUndefined(totalCmtTodayTo) && totalCmtTodayTo != "" as any)) {
+      return res.filter((item) => item.totalCommentToday && item.totalCommentToday >= totalCmtTodayFrom && item.totalCommentToday <= totalCmtTodayTo)
+    }
+    // diffTimeFrom, diffTimeTo
+    if ((!isNullOrUndefined(diffTimeFrom) && diffTimeFrom != "" as any) && (!isNullOrUndefined(diffTimeTo) && diffTimeTo != "" as any)) {
+      return res.filter((item) => {
+        const condition = item.countAfter - (item.totalCommentNewest - item.totalComment)
 
+        return condition >= diffTimeFrom && condition <= diffTimeTo
+      })
+    }
     return res
   }
 

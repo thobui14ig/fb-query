@@ -17,6 +17,10 @@ export interface BodyLinkQuery {
     likeFrom?: number
     likeTo?: number
     userId: number
+    diffTimeFrom?: number
+    diffTimeTo?: number
+    totalCmtTodayFrom?: number
+    totalCmtTodayTo?: number
 }
 
 export interface ISettingLinkDto {
