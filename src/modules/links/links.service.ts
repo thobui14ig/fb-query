@@ -202,27 +202,29 @@ export class LinkService {
       return {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
+        lastCommentTime: 0,
         totalCommentNewest: linkCommentMap.get(item.id) || 0,
         totalCommentToday: linkCommentTodayMap.get(item.id) || 0,
         timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
       }
     })
+    let result = res
     if ((!isNullOrUndefined(lastCommentFrom) && lastCommentFrom != "" as any) && (!isNullOrUndefined(lastCommentTo) && lastCommentTo != "" as any)) {
-      return res.filter((item) => item.lastCommentTime && item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
+      result = result.filter((item) => !isNullOrUndefined(item.lastCommentTime) && item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
     }
     if ((!isNullOrUndefined(totalCmtTodayFrom) && totalCmtTodayFrom != "" as any) && (!isNullOrUndefined(totalCmtTodayTo) && totalCmtTodayTo != "" as any)) {
-      return res.filter((item) => item.totalCommentToday && item.totalCommentToday >= totalCmtTodayFrom && item.totalCommentToday <= totalCmtTodayTo)
+      result = result.filter((item) => !isNullOrUndefined(item.totalCommentToday) && item.totalCommentToday >= totalCmtTodayFrom && item.totalCommentToday <= totalCmtTodayTo)
     }
-    // diffTimeFrom, diffTimeTo
+
     if ((!isNullOrUndefined(diffTimeFrom) && diffTimeFrom != "" as any) && (!isNullOrUndefined(diffTimeTo) && diffTimeTo != "" as any)) {
-      return res.filter((item) => {
+      result = result.filter((item) => {
         const condition = item.countAfter - (item.totalCommentNewest - item.totalComment)
 
         return condition >= diffTimeFrom && condition <= diffTimeTo
       })
     }
-    return res
+
+    return result
   }
 
   update(params: UpdateLinkDTO, level: LEVEL) {
