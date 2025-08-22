@@ -202,7 +202,7 @@ export class LinkService {
       return {
         ...item,
         createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: 0,
+        lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
         totalCommentNewest: linkCommentMap.get(item.id) || 0,
         totalCommentToday: linkCommentTodayMap.get(item.id) || 0,
         timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
