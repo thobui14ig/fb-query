@@ -29,6 +29,7 @@ import { TokenModule } from './modules/token/token.module';
 import { UserEntity } from './modules/user/entities/user.entity';
 import { PageModule } from './modules/page/page.module';
 import { PageEntity } from './modules/page/entities/pages.entity';
+import { VpsModule } from './modules/vps/vps.module';
 
 @Module({
   imports: [
@@ -78,7 +79,8 @@ import { PageEntity } from './modules/page/entities/pages.entity';
     FacebookModule,
     MonitoringModule,
     PageModule,
-    EventEmitterModule.forRoot()
+    EventEmitterModule.forRoot(),
+    VpsModule
   ],
   controllers: [AppController],
   providers: [

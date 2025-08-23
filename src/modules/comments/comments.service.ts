@@ -138,7 +138,6 @@ export class CommentsService {
   }
 
   async hideCmt(comment: CommentEntity) {
-    console.log("🚀 ~ CommentsService ~ hideCmt ~ comment:", comment)
     await lastValueFrom(this.httpService.post("http://160.25.232.64:7000/facebook/hide-cmt", comment))
     return true
   }
