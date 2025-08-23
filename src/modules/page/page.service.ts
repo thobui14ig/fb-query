@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { PageEntity } from "./entities/pages.entity";
 import { CreatePageDto } from "./dto/create-page.dto";
+import { LEVEL } from "../user/entities/user.entity";
 
 @Injectable()
 export class PageService {
@@ -11,11 +12,18 @@ export class PageService {
         private repo: Repository<PageEntity>,
     ) { }
 
-    getAll() {
-        return this.repo.find()
+    getAll(userId: number, level: LEVEL) {
+        if (level === LEVEL.ADMIN) {
+            return this.repo.find()
+        }
+        return this.repo.find({
+            where: {
+                createdBy: userId
+            }
+        })
     }
 
-    async create(params: CreatePageDto) {
+    async create(params: CreatePageDto, userId: number) {
         const pagesValid = [];
         const pagesInValid = [];
 
@@ -35,6 +43,7 @@ export class PageService {
             if (!isExit) {
                 pagesValid.push({
                     name: page,
+                    createdBy: userId
                 });
                 continue;
             }

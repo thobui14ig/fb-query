@@ -10,6 +10,9 @@ export class PageEntity {
     @Column({ type: 'varchar', length: 255 })
     name: string
 
+    @Column({ name: 'created_by' })
+    createdBy: number;
+
     @OneToMany(() => LinkEntity, (links) => links.page)
     links: LinkEntity[];
 
