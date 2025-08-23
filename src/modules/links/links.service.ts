@@ -299,10 +299,11 @@ export class LinkService {
     })
 
     const newLinks = links.map((item) => {
-      if (setting.onOff) {
+      if (setting.onOff && setting.type === LinkStatus.Pending) {
         item.status = LinkStatus.Started
         item.createdAt = dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any
-      } else {
+      }
+      if (!setting.onOff && setting.type === LinkStatus.Started) {
         item.status = LinkStatus.Pending
         item.createdAt = dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any
       }

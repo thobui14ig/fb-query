@@ -48,13 +48,13 @@ export class LinkController {
   }
 
   @Put()
-  updateUser(@Req() req: Request, @Body() updateLinkDto: UpdateLinkDTO) {
+  updateLink(@Req() req: Request, @Body() updateLinkDto: UpdateLinkDTO) {
     const user = getUser(req);
     return this.linkService.update(updateLinkDto, user.level);
   }
 
   @Delete('/:id')
-  deleteUser(@Param('id') id: number) {
+  deleteLink(@Param('id') id: number) {
     return this.linkService.delete(id);
   }
 

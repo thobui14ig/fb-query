@@ -1,6 +1,6 @@
 import { UserEntity } from "../user/entities/user.entity";
 import { CreateLinkDTO } from "./dto/create-link.dto";
-import { LinkType } from "./entities/links.entity";
+import { LinkStatus, LinkType } from "./entities/links.entity";
 
 export interface CreateLinkParams extends CreateLinkDTO {
     userId: number
@@ -29,4 +29,5 @@ export interface ISettingLinkDto {
     delay: number
     linkIds: number[]
     hideCmt: boolean
+    type: LinkStatus
 }
