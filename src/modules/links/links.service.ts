@@ -4,11 +4,11 @@ import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
 import { isNullOrUndefined } from 'src/common/utils/check-utils';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
-import { HideBy, LinkEntity, LinkStatus } from './entities/links.entity';
+import { HideBy, LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
 import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
 
 dayjs.extend(utc);
@@ -353,5 +353,19 @@ export class LinkService {
           WHERE u.id = ${userId};
       `)
     return response[0]
+  }
+
+  getPostStarted(): Promise<LinkEntity[]> {
+    return this.repo.find({
+      where: {
+        status: In([LinkStatus.Started, LinkStatus.Pending]),
+        type: Not(LinkType.DIE),
+        delayTime: MoreThanOrEqual(0),
+        hideCmt: false,
+      },
+      relations: {
+        user: true
+      }
+    })
   }
 }

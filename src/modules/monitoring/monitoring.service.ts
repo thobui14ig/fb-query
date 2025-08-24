@@ -11,6 +11,11 @@ import {
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { ProcessDTO } from './dto/process.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { LinkService } from '../links/links.service';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { VpsEntity, VpsStatus } from '../vps/entities/vps.entity';
 
 dayjs.extend(utc);
 
@@ -21,6 +26,10 @@ export class MonitoringService {
     private linkRepository: Repository<LinkEntity>,
     @InjectRepository(DelayEntity)
     private delayRepository: Repository<DelayEntity>,
+    private linkService: LinkService,
+    private httpService: HttpService,
+    @InjectRepository(VpsEntity)
+    private vpsRepository: Repository<VpsEntity>,
   ) {
   }
 
@@ -63,4 +72,44 @@ export class MonitoringService {
       return setting[0].delayOff
     }
   }
+
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async startMonitoring() {
+    const vpsLive = await this.vpsRepository.find({
+      where: {
+        status: VpsStatus.Live
+      }
+    })
+    const postsStarted = await this.linkService.getPostStarted()
+    if (!postsStarted?.length) return;
+
+    const chunkSize = (postsStarted.length / vpsLive.length);
+    let stt = 0
+    for (let i = 0; i < postsStarted.length; i += chunkSize) {
+      const chunk = postsStarted.slice(i, i + chunkSize);
+      const linkIds = chunk.map(item => item.id)
+      const vps = vpsLive[stt]
+      try {
+        await firstValueFrom(this.httpService.post(`http://${vps.ip}:${vps.port}/monitoring`, { linkIds }))
+      } catch (e) { }
+      stt = stt + 1
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async checkStatusService() {
+    const vpss = await this.vpsRepository.find()
+
+    for (const vps of vpss) {
+      try {
+        const data = await firstValueFrom(this.httpService.get(`http://${vps.ip}:${vps.port}/health-check`))
+        vps.status = data.data ? VpsStatus.Live : VpsStatus.Die
+      } catch (e) {
+        vps.status = VpsStatus.Die
+      }
+      await this.vpsRepository.save(vps)
+    }
+  }
+
 }

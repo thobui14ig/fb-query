@@ -1,7 +1,7 @@
 import { IsArray, IsString } from "class-validator";
 
-export class CreatePageDto {
+export class CreateVpsDto {
     @IsArray({ message: "Danh sách truyền lên phải là 1 mảng" })
-    @IsString({ each: true, message: "Page phải là string" })
-    pages: string[]
+    @IsString({ each: true, message: "Vps phải là string" })
+    vps: string[]
 }

@@ -30,6 +30,7 @@ import { UserEntity } from './modules/user/entities/user.entity';
 import { PageModule } from './modules/page/page.module';
 import { PageEntity } from './modules/page/entities/pages.entity';
 import { VpsModule } from './modules/vps/vps.module';
+import { VpsEntity } from './modules/vps/entities/vps.entity';
 
 @Module({
   imports: [
@@ -59,7 +60,8 @@ import { VpsModule } from './modules/vps/vps.module';
           TokenEntity,
           KeywordEntity,
           DelayEntity,
-          PageEntity
+          PageEntity,
+          VpsEntity
         ],
         // logging: true,
         // synchronize: true, // chỉ dùng trong dev!

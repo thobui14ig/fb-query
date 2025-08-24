@@ -12,9 +12,10 @@ import { DelayEntity } from '../setting/entities/delay.entity';
 import { HttpModule } from '@nestjs/axios';
 import { UserModule } from '../user/user.module';
 import { LinkModule } from '../links/links.module';
+import { VpsEntity } from '../vps/entities/vps.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LinkEntity, CommentEntity, TokenEntity, CookieEntity, ProxyEntity, DelayEntity]), FacebookModule, HttpModule, UserModule, LinkModule],
+  imports: [TypeOrmModule.forFeature([LinkEntity, CommentEntity, TokenEntity, CookieEntity, ProxyEntity, DelayEntity, VpsEntity]), FacebookModule, HttpModule, UserModule, LinkModule],
   controllers: [MonitoringController],
   providers: [MonitoringService],
   exports: [MonitoringService],
