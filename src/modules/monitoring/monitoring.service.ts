@@ -81,6 +81,12 @@ export class MonitoringService {
         status: VpsStatus.Live
       }
     })
+    // const vpsLive = [{
+    //   id: 1,
+    //   ip: "localhost",
+    //   port: 20000,
+    //   status: VpsStatus.Live
+    // }]
     const postsStarted = await this.linkService.getPostStarted()
     if (!postsStarted?.length) return;
 
@@ -101,13 +107,17 @@ export class MonitoringService {
   async checkStatusService() {
     const vpss = await this.vpsRepository.find()
 
-    for (const vps of vpss) {
+    for (const vps of vpss as any) {
       try {
-        const data = await firstValueFrom(this.httpService.get(`http://${vps.ip}:${vps.port}/health-check`))
-        vps.status = data.data ? VpsStatus.Live : VpsStatus.Die
+        const response = await firstValueFrom(this.httpService.get(`http://${vps.ip}:${vps.port}/health-check`))
+        const { status, speed } = response.data
+        vps.status = status ? VpsStatus.Live : VpsStatus.Die
+        vps.speed = speed
       } catch (e) {
         vps.status = VpsStatus.Die
+        vps.speed = 0
       }
+
       await this.vpsRepository.save(vps)
     }
   }

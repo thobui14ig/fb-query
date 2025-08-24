@@ -18,6 +18,9 @@ export class VpsEntity {
     @Column()
     port: number;
 
+    @Column()
+    speed: string;
+
     @Column({ default: VpsStatus.Live })
     status: VpsStatus;
 }
