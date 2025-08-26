@@ -71,6 +71,10 @@ export class LinkController {
     return this.linkService.settingLink(body)
   }
 
+  @Post('/priority')
+  priority(@Body() body: { priority: boolean, linkId: number }) {
+    return this.linkService.priority(body)
+  }
 
   @Get('get-keywords/:id')
   getkeywordsByLink(@Param('id') id: number) {

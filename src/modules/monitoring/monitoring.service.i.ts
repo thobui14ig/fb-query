@@ -10,3 +10,8 @@ export interface IPostStarted {
     status: LinkStatus,
     type: LinkType
 }
+
+export enum ENV {
+    DEVELOPMENT = 'dev',
+    PRODUCTION = 'production'
+}

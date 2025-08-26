@@ -16,11 +16,15 @@ import { LinkService } from '../links/links.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { VpsEntity, VpsStatus } from '../vps/entities/vps.entity';
+import { ConfigService } from '@nestjs/config';
+import { ENV } from './monitoring.service.i';
 
 dayjs.extend(utc);
 
 @Injectable()
 export class MonitoringService {
+  env: string = ENV.DEVELOPMENT
+
   constructor(
     @InjectRepository(LinkEntity)
     private linkRepository: Repository<LinkEntity>,
@@ -30,7 +34,9 @@ export class MonitoringService {
     private httpService: HttpService,
     @InjectRepository(VpsEntity)
     private vpsRepository: Repository<VpsEntity>,
+    private configService: ConfigService
   ) {
+    this.env = this.configService.get<string>('ENV');
   }
 
 
@@ -76,17 +82,22 @@ export class MonitoringService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async startMonitoring() {
-    const vpsLive = await this.vpsRepository.find({
-      where: {
+    let vpsLive = []
+    if (this.env == ENV.DEVELOPMENT) {
+      vpsLive = [{
+        id: 1,
+        ip: "localhost",
+        port: 20000,
         status: VpsStatus.Live
-      }
-    })
-    // const vpsLive = [{
-    //   id: 1,
-    //   ip: "localhost",
-    //   port: 20000,
-    //   status: VpsStatus.Live
-    // }]
+      }]
+    } else {
+      vpsLive = await this.vpsRepository.find({
+        where: {
+          status: VpsStatus.Live
+        }
+      })
+    }
+
     const postsStarted = await this.linkService.getPostStarted()
     if (!postsStarted?.length) return;
 
@@ -105,6 +116,8 @@ export class MonitoringService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async checkStatusService() {
+    if (this.env == ENV.DEVELOPMENT) return;
+
     const vpss = await this.vpsRepository.find()
 
     for (const vps of vpss as any) {

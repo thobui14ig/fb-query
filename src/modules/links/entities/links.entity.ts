@@ -71,6 +71,9 @@ export class LinkEntity {
   @Column({ type: 'int', default: 0 })
   like: number;
 
+  @Column({ default: false })
+  priority: boolean;
+
   @Column({ default: 'pending' })
   status: LinkStatus;
 

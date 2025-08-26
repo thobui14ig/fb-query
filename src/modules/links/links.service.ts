@@ -153,7 +153,8 @@ export class LinkService {
             l.hide_cmt as hideCmt,
             l.hide_by as hideBy,
             l.time_craw_update as timeCrawUpdate,
-            l.comment_count as totalComment
+            l.comment_count as totalComment,
+            l.priority
         FROM 
             links l
         JOIN 
@@ -362,10 +363,15 @@ export class LinkService {
         type: Not(LinkType.DIE),
         delayTime: MoreThanOrEqual(0),
         hideCmt: false,
+        priority: false
       },
       relations: {
         user: true
       }
     })
+  }
+
+  priority(body: { priority: boolean, linkId: number }) {
+    return this.repo.save({ id: body.linkId, priority: body.priority })
   }
 }

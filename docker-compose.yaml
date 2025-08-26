@@ -17,5 +17,6 @@ services:
       - DB_PASSWORD=HoangChuong@1111
       - DB_DATABASE=crawl-fb
       - NODE_OPTIONS=--max-old-space-size=4096
+      - ENV=production
     ports:
       - '9000:9000'
