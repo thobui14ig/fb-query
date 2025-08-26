@@ -31,6 +31,7 @@ import { PageModule } from './modules/page/page.module';
 import { PageEntity } from './modules/page/entities/pages.entity';
 import { VpsModule } from './modules/vps/vps.module';
 import { VpsEntity } from './modules/vps/entities/vps.entity';
+import { GatewayModules } from './infra/socket/gateway.modules';
 
 @Module({
   imports: [
@@ -82,7 +83,8 @@ import { VpsEntity } from './modules/vps/entities/vps.entity';
     MonitoringModule,
     PageModule,
     EventEmitterModule.forRoot(),
-    VpsModule
+    VpsModule,
+    GatewayModules
   ],
   controllers: [AppController],
   providers: [
