@@ -122,16 +122,18 @@ export class MonitoringService {
 
     for (const vps of vpss as any) {
       try {
-        const response = await firstValueFrom(this.httpService.get(`http://${vps.ip}:${vps.port}/health-check`))
-        const { status, speed } = response.data
-        vps.status = status ? VpsStatus.Live : VpsStatus.Die
-        vps.speed = speed
-      } catch (e) {
-        vps.status = VpsStatus.Die
-        vps.speed = 0
-      }
+        try {
+          const response = await firstValueFrom(this.httpService.get(`http://${vps.ip}:${vps.port}/health-check`))
+          const { status, speed } = response.data
+          vps.status = status ? VpsStatus.Live : VpsStatus.Die
+          vps.speed = speed
+        } catch (e) {
+          vps.status = VpsStatus.Die
+          vps.speed = 0
+        }
 
-      await this.vpsRepository.save(vps)
+        await this.vpsRepository.update(vps.id, { status: vps.status, speed: vps.speed })
+      } catch (error) { }
     }
   }
 
