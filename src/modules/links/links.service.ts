@@ -204,8 +204,6 @@ export class LinkService {
 
       `
     let response: any[] = await this.connection.query(query, [])
-    console.log(limit)
-    console.log(query)
 
     return {
       data: response,
