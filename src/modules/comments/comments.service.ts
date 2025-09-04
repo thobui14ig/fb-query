@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import { Between, Repository } from 'typeorm';
+import { Between, DataSource, Repository } from 'typeorm';
 import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import { IGetCommentParams } from './comments.service.i';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -21,6 +21,7 @@ export class CommentsService {
     @InjectRepository(CommentEntity)
     private repo: Repository<CommentEntity>,
     private readonly httpService: HttpService,
+    private readonly connection: DataSource,
   ) { }
   async findAll(user: UserEntity, hideCmt: boolean, params: IGetCommentParams) {
     const vnNowStart = dayjs(params.startDate).tz(this.vnTimezone)
@@ -28,97 +29,62 @@ export class CommentsService {
     const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
     const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
 
-    let response: CommentEntity[] = []
-    if (user.level === LEVEL.ADMIN) {
-      response = await this.repo.find({
-        relations: {
-          user: true,
-          link: true
-        },
-        select: {
-          id: true,
-          postId: true,
-          userId: true,
-          uid: true,
-          name: true,
-          message: true,
-          timeCreated: true,
-          phoneNumber: true,
-          cmtId: true,
-          linkId: true,
-          hideCmt: true,
-          user: {
-            username: true,
-          },
-          link: {
-            id: true,
-            linkName: true,
-            linkUrl: true,
-          }
-        },
-        order: {
-          timeCreated: "DESC"
-        },
-        where: {
-          timeCreated: Between(startDate, endDate) as any,
-          link: {
-            hideCmt
-          }
-        }
-      })
-    } else {
-      response = await this.repo.find({
-        relations: {
-          user: true,
-          link: true
-        },
-        select: {
-          id: true,
-          postId: true,
-          userId: true,
-          uid: true,
-          name: true,
-          message: true,
-          timeCreated: true,
-          phoneNumber: true,
-          cmtId: true,
-          linkId: true,
-          hideCmt: true,
-          user: {
-            username: true,
-            getPhone: true
-          },
-          link: {
-            id: true,
-            linkName: true,
-            linkUrl: true,
-            hideCmt: true
-          }
-        },
-        where: {
-          userId: user.id,
-          link: {
-            userId: user.id,
-            hideCmt
-          },
-          timeCreated: Between(startDate, endDate) as any,
+    let response = []
+    const limit = params.limit
+    const offset = params.offset
 
-        },
-        order: {
-          timeCreated: "DESC"
-        }
-      })
-    }
+    const condition = user.level as LEVEL === LEVEL.ADMIN ? `` : `c.user_id = ${user.id} AND `
+    const query = `
+      SELECT 
+          c.id,
+          c.post_id       AS postId,
+          c.user_id       AS userId,
+          c.uid,
+          c.name,
+          c.message,
+          c.time_created  AS timeCreated,
+          c.phone_number  AS phoneNumber,
+          c.cmtid        AS cmtId,
+          c.link_id       AS linkId,
+          c.hide_cmt      AS hideCmt,
+          JSON_OBJECT(
+              'id', u.id,
+              'username', u.username,
+              'getPhone', u.get_phone
+          ) AS user,
+          JSON_OBJECT(
+              'id', l.id,
+              'linkName', l.link_name,
+              'linkUrl', l.link_url,
+              'hideCmt', l.hide_cmt
+          ) AS link,
+          COUNT(*) OVER() AS totalCount
+      FROM comments c
+      JOIN users u 
+          ON u.id = c.user_id
+      JOIN links l 
+          ON l.id = c.link_id
+      WHERE 
+        ${condition}
+          l.hide_cmt = ${hideCmt}
+          AND c.time_created BETWEEN '${startDate}' AND '${endDate}'
+      ORDER BY c.time_created DESC
+      LIMIT ${limit} OFFSET ${offset};
+    `
+    response = await this.connection.query(query)
 
-    const res = response.map((item) => {
+    const res = response.length > 0 ? response.map((item) => {
       const utcTime = dayjs(item.timeCreated).format('YYYY-MM-DD HH:mm:ss')
 
       return {
         ...item,
         timeCreated: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss')
       }
-    })
-    return res
+    }) : []
+    return {
+      data: res,
+      totalCount: response.length > 0 ? response[0].totalCount : 0,
+    }
   }
 
   findOne(id: number) {

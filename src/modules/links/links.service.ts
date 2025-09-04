@@ -90,7 +90,7 @@ export class LinkService {
     });
   }
 
-  async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean, hideCmt: boolean) {
+  async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean, hideCmt: boolean, limit: number, offset: number) {
     const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo, likeFrom, likeTo, diffTimeFrom, diffTimeTo, totalCmtTodayFrom, totalCmtTodayTo } = body
     let queryEntends = ``
     if (hideCmt) {
@@ -130,102 +130,87 @@ export class LinkService {
       queryEntends += ` AND l.user_id = ${userIdByUerLogin}`
     }
 
-    let response: any[] = await this.connection.query(`
-        SELECT 
-            l.id,
-            l.error_message as errorMessage,
-            l.link_name as linkName,
-            l.link_url as linkUrl,
-            l.like,
-            l.content,
-            l.post_id as postId,
-            l.delay_time as delayTime,
-            l.status,
-            l.created_at AS createdAt,
-            l.last_comment_time as lastCommentTime,
-            l.process,
-            l.type,
-            u.username, 
-            l.count_before AS countBefore,
-            l.count_after AS countAfter,
-            l.like_before AS likeBefore,
-            l.like_after AS likeAfter,
-            l.hide_cmt as hideCmt,
-            l.hide_by as hideBy,
-            l.time_craw_update as timeCrawUpdate,
-            l.comment_count as totalComment,
-            l.priority
-        FROM 
-            links l
-        JOIN 
-            users u ON u.id = l.user_id
-        LEFT JOIN 
-            comments c ON c.link_id = l.id
-        WHERE ${queryEntends}
-        GROUP BY 
-            l.id, u.username
-            order by l.created_at desc
-      `, [])
-    const linkComment = response.length > 0 ? await this.connection.query(`
-      select l.id as linkId, count(c.id) as totalComment from links l 
-        join comments c 
-        on c.link_id = l.id
-        where l.id in(${response?.map(item => item.id) ?? 0})
-        group by l.id  
-    `) : []
+    const query = `
+      WITH filtered_links AS (
+          SELECT
+              l.id,
+              l.error_message AS errorMessage,
+              l.link_name AS linkName,
+              l.link_url AS linkUrl,
+              l.like,
+              l.post_id AS postId,
+              l.delay_time AS delayTime,
+              l.status,
+              DATE_FORMAT(CONVERT_TZ(l.created_at, '+00:00', '+07:00'), '%Y-%m-%d %H:%i:%s') AS createdAt,
+              CASE
+                  WHEN l.last_comment_time IS NOT NULL
+                      THEN TIMESTAMPDIFF(HOUR, l.last_comment_time, UTC_TIMESTAMP())
+                  ELSE 9999
+              END AS lastCommentTime,
+              u.username,
+              l.count_before AS countBefore,
+              l.count_after AS countAfter,
+              l.like_before AS likeBefore,
+              l.like_after AS likeAfter,
+              l.hide_cmt AS hideCmt,
+              l.hide_by AS hideBy,
+              l.type,
+              CASE
+                  WHEN l.time_craw_update IS NOT NULL
+                      THEN TIMESTAMPDIFF(HOUR, l.time_craw_update, l.last_comment_time)
+                  ELSE 9999
+              END AS timeCrawUpdate,
+              l.comment_count AS totalComment,
+              l.priority,
+              IFNULL(c1.totalCommentNewest, 0) AS totalCommentNewest,
+              IFNULL(c2.totalCommentToday, 0) AS totalCommentToday,
+              (l.count_after - (IFNULL(c1.totalCommentNewest, 0) - l.comment_count)) AS diffTimeCondition
+          FROM links l
+          JOIN users u ON u.id = l.user_id
+          LEFT JOIN (
+              SELECT link_id, COUNT(*) AS totalCommentNewest
+              FROM comments
+              GROUP BY link_id
+          ) c1 ON c1.link_id = l.id
+          LEFT JOIN (
+              SELECT link_id, COUNT(*) AS totalCommentToday
+              FROM comments
+              WHERE time_created BETWEEN
+                  UTC_TIMESTAMP() - INTERVAL (HOUR(UTC_TIMESTAMP())+MINUTE(UTC_TIMESTAMP())/60+SECOND(UTC_TIMESTAMP())/3600) HOUR
+                  AND UTC_TIMESTAMP()
+              GROUP BY link_id
+          ) c2 ON c2.link_id = l.id
+          WHERE ${queryEntends}
+            /* Filter lastCommentTime */
+            ${(!isNullOrUndefined(lastCommentFrom) && !isNullOrUndefined(lastCommentTo))
+        ? `AND (CASE WHEN l.last_comment_time IS NOT NULL 
+                          THEN TIMESTAMPDIFF(HOUR, l.last_comment_time, UTC_TIMESTAMP()) 
+                          ELSE 9999 END) BETWEEN ${lastCommentFrom} AND ${lastCommentTo}`
+        : ''}
+            /* Filter totalCommentToday */
+            ${(!isNullOrUndefined(totalCmtTodayFrom) && !isNullOrUndefined(totalCmtTodayTo))
+        ? `AND IFNULL(c2.totalCommentToday, 0) BETWEEN ${totalCmtTodayFrom} AND ${totalCmtTodayTo}`
+        : ''}
+            /* Filter diffTimeCondition */
+            ${(!isNullOrUndefined(diffTimeFrom) && !isNullOrUndefined(diffTimeTo))
+        ? `AND (l.count_after - (IFNULL(c1.totalCommentNewest, 0) - l.comment_count)) 
+                  BETWEEN ${diffTimeFrom} AND ${diffTimeTo}`
+        : ''}
+      )
+      SELECT *, (SELECT COUNT(*) FROM filtered_links) AS totalCount
+      FROM filtered_links
+      ORDER BY createdAt DESC
+      LIMIT ${limit} OFFSET ${offset};
 
-    const vnNowStart = dayjs().tz(this.vnTimezone)
-    const vnNowEnd = dayjs().tz(this.vnTimezone)
-    const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
-    const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
-    const linkCommentToday = response.length > 0 ? await this.connection.query(`
-      select l.id as linkId, count(c.id) as totalComment from links l 
-        join comments c 
-        on c.link_id = l.id
-        where l.id in(${response?.map(item => item.id) ?? 0})
-        and c.time_created between '${startDate}' and '${endDate}'
-        group by l.id  
-    `) : []
-    const linkCommentMap = new Map(
-      linkComment.map(lc => [lc.linkId, lc.totalComment])
-    );
-    const linkCommentTodayMap = new Map(
-      linkCommentToday.map(lc => [lc.linkId, lc.totalComment])
-    );
-    const res = response.map((item) => {
-      const now = dayjs().utc()
-      const utcLastCommentTime = dayjs.utc(item.lastCommentTime);
-      const utcTimeCraw = dayjs.utc(item.timeCrawUpdate);
-      const diff = now.diff(utcLastCommentTime, 'hour')
-      const diffTimeCraw = utcLastCommentTime.diff(utcTimeCraw, 'hour')
-      const utcTime = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
+      `
+    let response: any[] = await this.connection.query(query, [])
+    console.log(limit)
+    console.log(query)
 
-      return {
-        ...item,
-        createdAt: dayjs.utc(utcTime).tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss'),
-        lastCommentTime: item.lastCommentTime ? diff : diff === 0 ? diff : 9999,
-        totalCommentNewest: linkCommentMap.get(item.id) || 0,
-        totalCommentToday: linkCommentTodayMap.get(item.id) || 0,
-        timeCrawUpdate: item.timeCrawUpdate ? diffTimeCraw : 9999
-      }
-    })
-    let result = res
-    if ((!isNullOrUndefined(lastCommentFrom) && lastCommentFrom != "" as any) && (!isNullOrUndefined(lastCommentTo) && lastCommentTo != "" as any)) {
-      result = result.filter((item) => !isNullOrUndefined(item.lastCommentTime) && item.lastCommentTime >= lastCommentFrom && item.lastCommentTime <= lastCommentTo)
+    return {
+      data: response,
+      totalCount: response.length > 0 ? response[0].totalCount : 0
     }
-    if ((!isNullOrUndefined(totalCmtTodayFrom) && totalCmtTodayFrom != "" as any) && (!isNullOrUndefined(totalCmtTodayTo) && totalCmtTodayTo != "" as any)) {
-      result = result.filter((item) => !isNullOrUndefined(item.totalCommentToday) && item.totalCommentToday >= totalCmtTodayFrom && item.totalCommentToday <= totalCmtTodayTo)
-    }
-
-    if ((!isNullOrUndefined(diffTimeFrom) && diffTimeFrom != "" as any) && (!isNullOrUndefined(diffTimeTo) && diffTimeTo != "" as any)) {
-      result = result.filter((item) => {
-        const condition = item.countAfter - (item.totalCommentNewest - item.totalComment)
-
-        return condition >= diffTimeFrom && condition <= diffTimeTo
-      })
-    }
-
-    return result
   }
 
   update(params: UpdateLinkDTO, level: LEVEL) {

@@ -96,3 +96,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+CREATE INDEX idx_links_status_hide ON links(status, hide_cmt, created_at);
+CREATE INDEX idx_comments_linkid_time ON comments(link_id, time_created);
+```
