@@ -27,6 +27,10 @@ export class CreateUserDto {
   @IsOptional()
   delayOnPrivate?: number
 
+  @IsNumber()
+  @IsOptional()
+  delayOnPublic?: number
+
   @IsBoolean()
   @IsOptional()
   getPhone?: boolean

@@ -5,4 +5,5 @@ export interface IGetCommentParams {
     endDate: dayjs.Dayjs
     limit: number
     offset: number
+    keyword?: string
 }

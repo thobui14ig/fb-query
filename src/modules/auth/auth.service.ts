@@ -5,8 +5,14 @@ import { Response } from 'express';
 import { LEVEL, UserEntity } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 
+interface IUserFail {
+  username: string,
+  numberOfTime: number,
+  time: string
+}
 @Injectable()
 export class AuthService {
+  usersFail: IUserFail[] = []
   constructor(
     private usersService: UserService,
     private jwtService: JwtService,
@@ -14,10 +20,37 @@ export class AuthService {
 
   async signIn(username: string, pass: string) {
     const { password, ...user } = await this.usersService.findByEmail(username) || {};
+    const userFail = this.usersFail.find(item => item.username === username)
+
+    if (userFail && userFail.numberOfTime == 2 && dayjs().isBefore(dayjs(userFail.time).add(1, "minute"))) {
+      throw new HttpException(
+        `Vui lòng thử lại sau`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (userFail && userFail.numberOfTime == 2) {
+      this.usersFail = this.usersFail.filter(item => item.username !== username)
+    }
 
     if (!user || password !== pass) {
-      throw new UnauthorizedException();
+      if (userFail) {
+        userFail.time = dayjs().format('YYYY-MM-DD HH:mm:ss')
+        userFail.numberOfTime = userFail.numberOfTime + 1
+      } else {
+        const arg = {
+          username: username,
+          numberOfTime: 1,
+          time: dayjs().format('YYYY-MM-DD HH:mm:ss')
+        }
+        this.usersFail.push(arg)
+      }
+
+      throw new HttpException(
+        `Thông tin đăng nhập không hợp lệ`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
+    this.usersFail = this.usersFail.filter(item => item.username !== username)
     const isExpireDate = dayjs(dayjs(), 'DD-MM-YYYY').format('YYYY-MM-DD') >
       dayjs(user.expiredAt, 'DD-MM-YYYY').format('YYYY-MM-DD');
     if (isExpireDate) {

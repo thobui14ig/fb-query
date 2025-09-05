@@ -78,6 +78,7 @@ export class UserService {
           u.link_off_hide_limit as linkOffHideLimit,
           u.level,
           u.delay_on_private as delayOnPrivate,
+          u.delay_on_public as delayOnPublic,
           u.get_phone as getPhone,
           (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started' AND l2.hide_cmt = FALSE) AS totalRunning,
           (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending' AND l3.hide_cmt = FALSE) AS totalPending,

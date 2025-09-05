@@ -28,6 +28,7 @@ export class CommentsService {
     const vnNowEnd = dayjs(params.endDate).tz(this.vnTimezone)
     const startDate = vnNowStart.startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
     const endDate = vnNowEnd.endOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+    const keyword = params.keyword.length > 0 ? params.keyword.trim() : null
 
     let response = []
     const limit = params.limit
@@ -68,6 +69,7 @@ export class CommentsService {
         ${condition}
           l.hide_cmt = ${hideCmt}
           AND c.time_created BETWEEN '${startDate}' AND '${endDate}'
+          ${keyword ? `AND c.message REGEXP '${keyword}'` : ""}
       ORDER BY c.time_created DESC
       LIMIT ${limit} OFFSET ${offset};
     `

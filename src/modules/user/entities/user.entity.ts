@@ -43,6 +43,9 @@ export class UserEntity {
   @Column({ name: 'delay_on_private', default: 5 })
   delayOnPrivate?: number;
 
+  @Column({ name: 'delay_on_public', default: 5 })
+  delayOnPublic?: number;
+
   @Column({ default: LEVEL.USER })
   level?: LEVEL;
 

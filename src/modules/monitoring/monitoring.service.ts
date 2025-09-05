@@ -49,7 +49,7 @@ export class MonitoringService {
         user: true
       }
     });
-    const delayTime = await this.getDelayTime(processDTO.status, link.type, link.user.delayOnPrivate)
+    const delayTime = await this.getDelayTime(processDTO.status, link.type, link.user.delayOnPrivate, link.user.delayOnPublic)
     const dataUpdate = { ...processDTO, delayTime }
     const response = await this.linkRepository.save({ ...dataUpdate, createdAt: dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any });
 
@@ -59,7 +59,7 @@ export class MonitoringService {
     );
   }
 
-  async getDelayTime(status: LinkStatus, type: LinkType, delayOnPrivateUser: number) {
+  async getDelayTime(status: LinkStatus, type: LinkType, delayOnPrivateUser: number, delayOnPublic: number) {
     const setting = await this.delayRepository.find()
 
     if (status === LinkStatus.Started && type === LinkType.PRIVATE) {
@@ -71,7 +71,7 @@ export class MonitoringService {
     }
 
     if (status === LinkStatus.Started && type === LinkType.PUBLIC) {
-      return setting[0].delayOnPublic
+      return delayOnPublic
     }
 
     if (status === LinkStatus.Pending && type === LinkType.PUBLIC) {
