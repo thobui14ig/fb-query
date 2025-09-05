@@ -69,7 +69,14 @@ export class CommentsService {
         ${condition}
           l.hide_cmt = ${hideCmt}
           AND c.time_created BETWEEN '${startDate}' AND '${endDate}'
-          ${keyword ? `AND c.message REGEXP '${keyword}'` : ""}
+          ${keyword ? `AND (
+            c.message REGEXP '${keyword}' 
+            OR u.username REGEXP '${keyword}'
+            OR c.post_id REGEXP '${keyword}'
+            OR c.uid REGEXP '${keyword}'
+            OR c.name REGEXP '${keyword}'
+            OR c.phone_number REGEXP '${keyword}'
+          )` : ""}
       ORDER BY c.time_created DESC
       LIMIT ${limit} OFFSET ${offset};
     `
