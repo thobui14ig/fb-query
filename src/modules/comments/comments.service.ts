@@ -109,7 +109,7 @@ export class CommentsService {
   }
 
   remove(id: number) {
-    return this.repo.delete(id)
+    // return this.repo.delete(id)
   }
 
   async hideCmt(comment: CommentEntity) {
