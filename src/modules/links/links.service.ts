@@ -273,7 +273,7 @@ export class LinkService {
 
   async settingLink(setting: ISettingLinkDto) {
     if (setting.isDelete) {
-      return this.repo.delete(setting.linkIds)
+      // return this.repo.delete(setting.linkIds)
     }
 
     const links = await this.repo.find({

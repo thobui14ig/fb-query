@@ -92,6 +92,7 @@ CREATE TABLE cookie (
     fb_dtsg VARCHAR(255) NOT NULL,
     jazoest VARCHAR(255) NOT NULL,
     token VARCHAR(255) NOT NULL,
+    page_id INT NOT NULL,
     status ENUM('active','inactive','limit','die') NOT NULL DEFAULT 'active',
     CONSTRAINT fk_cookie_user FOREIGN KEY (created_by) REFERENCES users(id)
 );
@@ -122,4 +123,12 @@ CREATE TABLE pages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     created_by INT NOT NULL
+);
+
+CREATE TABLE vps (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(255) NOT NULL,
+    port INT NOT NULL,
+    speed VARCHAR(255) NOT NULL,
+    status ENUM('live', 'die') NOT NULL DEFAULT 'live'
 );
