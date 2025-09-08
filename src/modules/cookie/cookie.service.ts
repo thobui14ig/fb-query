@@ -52,8 +52,8 @@ export class CookieService {
     }
     return this.repo
       .createQueryBuilder("c")
-      .innerJoinAndSelect("c.user", "user")
-      .innerJoinAndSelect("c.page", "page")
+      .leftJoin("c.user", "user")
+      .leftJoin("c.page", "page")
       .orderBy("c.id", "DESC")
       .getMany();
   }

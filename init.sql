@@ -31,15 +31,15 @@ CREATE TABLE links (
     type ENUM('die','undefined','public','private') NOT NULL,
     error_message VARCHAR(255),
     process TINYINT(1) DEFAULT 0,
-    count_before INT NOT NULL,
-    count_after INT NOT NULL,
-    like_before INT NOT NULL,
-    like_after INT NOT NULL,
-    hide_cmt TINYINT(1) NOT NULL,
+    count_before INT NOT NULL DEFAULT 0,
+    count_after INT NOT NULL DEFAULT 0,
+    like_before INT NOT NULL DEFAULT 0,
+    like_after INT NOT NULL 0,
+    hide_cmt TINYINT(1) NOT NULL DEFAULT 0, 
     hide_by ENUM('all','phone','keywords') NOT NULL DEFAULT 'all',
-    post_id_die TINYINT(1) NOT NULL,
-    post_id_v1_die TINYINT(1) NOT NULL,
-    thread INT NOT NULL,
+    post_id_die TINYINT(1) NOT NULL DEFAULT 0,
+    post_id_v1_die TINYINT(1) NOT NULL DEFAULT 0,
+    thread INT NOT NULL DEFAULT 0,
     priority TINYINT(0) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_links_user FOREIGN KEY (user_id) REFERENCES users(id)
@@ -72,7 +72,7 @@ CREATE TABLE keywords (
     keyword VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_id INT NOT NULL,
-    link_id INT NOT NULL,
+    link_id INT NOT NULL DEFAULT 0,
     CONSTRAINT fk_keywords_link FOREIGN KEY (link_id) REFERENCES links(id)
 );
 
@@ -88,11 +88,11 @@ CREATE TABLE cookie (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cookie TEXT NOT NULL,
     created_by INT NOT NULL,
-    fb_id VARCHAR(255) NOT NULL,
-    fb_dtsg VARCHAR(255) NOT NULL,
-    jazoest VARCHAR(255) NOT NULL,
-    token VARCHAR(255) NOT NULL,
-    page_id INT NOT NULL,
+    fb_id VARCHAR(255) NULL,
+    fb_dtsg VARCHAR(255) NULL,
+    jazoest VARCHAR(255) NULL,
+    token VARCHAR(255) NULL,
+    page_id INT NOT NULL DEFAULT 0,
     status ENUM('active','inactive','limit','die') NOT NULL DEFAULT 'active',
     CONSTRAINT fk_cookie_user FOREIGN KEY (created_by) REFERENCES users(id)
 );
@@ -107,8 +107,8 @@ CREATE TABLE comments (
     time_created TIMESTAMP NULL,
     phone_number VARCHAR(255),
     cmtid VARCHAR(255) NOT NULL,
-    link_id INT NOT NULL,
-    hide_cmt TINYINT(1) NOT NULL,
+    link_id INT NOT NULL DEFAULT 0,
+    hide_cmt TINYINT(1) NOT NULL DEFAULT 0,
     CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_comments_link FOREIGN KEY (link_id) REFERENCES links(id)
 );
@@ -129,7 +129,7 @@ CREATE TABLE vps (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ip VARCHAR(255) NOT NULL,
     port INT NOT NULL,
-    speed VARCHAR(255) NOT NULL,
+    speed VARCHAR(255) NOT NULL DEFAULT 0,
     status ENUM('live', 'die') NOT NULL DEFAULT 'live'
 );
 
