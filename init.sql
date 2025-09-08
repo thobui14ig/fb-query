@@ -132,3 +132,11 @@ CREATE TABLE vps (
     speed VARCHAR(255) NOT NULL,
     status ENUM('live', 'die') NOT NULL DEFAULT 'live'
 );
+
+CREATE TABLE cmt_wait_process (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_uid VARCHAR(100) NOT NULL,
+    comment_id VARCHAR(100) NOT NULL,
+    link_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
