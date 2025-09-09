@@ -39,7 +39,7 @@ export class UserService {
             (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.type = 'public' AND l2.status = 'started') AS totalPublicRunning,
             (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.type = 'private' AND l3.status = 'started') AS totalPrivateRunning
         FROM users u
-        WHERE u.username = '${username}';
+        WHERE u.username = '${username}' and u.is_deleted = false;
       `)
     if (res && res.length > 0) {
       const user = res[0]
@@ -84,7 +84,7 @@ export class UserService {
           (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending' AND l3.hide_cmt = FALSE) AS totalPending,
           (SELECT COUNT(*) FROM links l4 WHERE l4.user_id = u.id AND l4.status = 'started' AND l4.hide_cmt = TRUE) AS totalLinkHideRunning,
 		  (SELECT COUNT(*) FROM links l5 WHERE l5.user_id = u.id AND l5.status = 'pending' AND l5.hide_cmt = TRUE) AS totalLinkHidePending
-      FROM users u
+      FROM users u where u.is_deleted = false
       ORDER BY u.id DESC;
       `)
     return res.map((item) => {
@@ -96,7 +96,8 @@ export class UserService {
   }
 
   delete(id: number) {
-    return this.repo.delete(id);
+    // return this.repo.delete(id);
+    return this.repo.update(id, { isDelete: true })
   }
 
   update(user: UpdateUserDto) {
@@ -132,7 +133,7 @@ export class UserService {
           where u.id = ${userId} and (c.time_created between '${startDate}' and '${endDate}' )
         ) AS totalComments
         FROM users u
-        WHERE u.id = ${userId};
+        WHERE u.id = ${userId} and u.is_deleted = false;
     `)
     const user = res[0]
     user.createdAt = dayjs(user.createdAt).format('YYYY-MM-DD');

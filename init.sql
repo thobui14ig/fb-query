@@ -9,6 +9,7 @@ CREATE TABLE users (
     delay_on_private INT DEFAULT 5,
     link_on_hide_limit INT DEFAULT 0,
     get_phone TINYINT(1) DEFAULT 1,
+    is_deleted TINYINT(1) DEFAULT 0,
     account_fb_uuid VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

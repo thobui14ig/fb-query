@@ -52,6 +52,9 @@ export class UserEntity {
   @Column({ default: true, name: 'get_phone' })
   getPhone: Boolean;
 
+  @Column({ default: false, name: 'is_deleted' })
+  isDelete: Boolean;
+
   @Column({ default: null, name: 'account_fb_uuid' })
   accountFbUuid: string;
 
