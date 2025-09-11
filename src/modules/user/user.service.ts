@@ -34,10 +34,10 @@ export class UserService {
             u.link_off_hide_limit as linkOffHideLimit,
             u.level,
             u.get_phone as getPhone,
-            (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public') AS totalPublic,
-            (SELECT COUNT(*) FROM links l1 WHERE l1.user_id = u.id AND l1.type = 'private') AS totalPrivate,
-            (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.type = 'public' AND l2.status = 'started') AS totalPublicRunning,
-            (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.type = 'private' AND l3.status = 'started') AS totalPrivateRunning
+            (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.type = 'public' AND l.is_deleted = false) AS totalPublic,
+            (SELECT COUNT(*) FROM links l1 WHERE l1.user_id = u.id AND l1.type = 'private' AND l1.is_deleted = false) AS totalPrivate,
+            (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.type = 'public' AND l2.status = 'started' AND l2.is_deleted = false) AS totalPublicRunning,
+            (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.type = 'private' AND l3.status = 'started' AND l3.is_deleted = false) AS totalPrivateRunning
         FROM users u
         WHERE u.username = '${username}' and u.is_deleted = false;
       `)
@@ -80,10 +80,10 @@ export class UserService {
           u.delay_on_private as delayOnPrivate,
           u.delay_on_public as delayOnPublic,
           u.get_phone as getPhone,
-          (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started' AND l2.hide_cmt = FALSE) AS totalRunning,
-          (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending' AND l3.hide_cmt = FALSE) AS totalPending,
-          (SELECT COUNT(*) FROM links l4 WHERE l4.user_id = u.id AND l4.status = 'started' AND l4.hide_cmt = TRUE) AS totalLinkHideRunning,
-		  (SELECT COUNT(*) FROM links l5 WHERE l5.user_id = u.id AND l5.status = 'pending' AND l5.hide_cmt = TRUE) AS totalLinkHidePending
+          (SELECT COUNT(*) FROM links l2 WHERE l2.user_id = u.id AND l2.status = 'started' AND l2.hide_cmt = FALSE AND l2.is_deleted = false) AS totalRunning,
+          (SELECT COUNT(*) FROM links l3 WHERE l3.user_id = u.id AND l3.status = 'pending' AND l3.hide_cmt = FALSE AND l3.is_deleted = false) AS totalPending,
+          (SELECT COUNT(*) FROM links l4 WHERE l4.user_id = u.id AND l4.status = 'started' AND l4.hide_cmt = TRUE AND l4.is_deleted = false) AS totalLinkHideRunning,
+		  (SELECT COUNT(*) FROM links l5 WHERE l5.user_id = u.id AND l5.status = 'pending' AND l5.hide_cmt = TRUE AND l5.is_deleted = false) AS totalLinkHidePending
       FROM users u where u.is_deleted = false
       ORDER BY u.id DESC;
       `)
@@ -122,13 +122,13 @@ export class UserService {
         u.link_off_hide_limit as linkOffHideLimit,
         u.level,
         u.get_phone as getPhone,
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = false) AS totalLinkOn,
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' and l.hide_cmt = false) AS totalLinkOff,
-		    (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = true) AS totalLinkOnHide,
-        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' and l.hide_cmt = true) AS totalLinkOffHide,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = false AND l.is_deleted = false) AS totalLinkOn,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' and l.hide_cmt = false AND l.is_deleted = false) AS totalLinkOff,
+		    (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' and l.hide_cmt = true AND l.is_deleted = false) AS totalLinkOnHide,
+        (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' and l.hide_cmt = true AND l.is_deleted = false) AS totalLinkOffHide,
         (
           SELECT COUNT(*) FROM comments c
-          left join links l on l.id = c.link_id
+          left join links l on l.id = c.link_id AND l.is_deleted = false
           left join users u on u.id = l.user_id
           where u.id = ${userId} and (c.time_created between '${startDate}' and '${endDate}' )
         ) AS totalComments

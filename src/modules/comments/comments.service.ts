@@ -64,7 +64,7 @@ export class CommentsService {
       JOIN users u 
           ON u.id = c.user_id
       JOIN links l 
-          ON l.id = c.link_id
+          ON l.id = c.link_id and l.is_deleted = false
       WHERE 
         ${condition}
           l.hide_cmt = ${hideCmt}
