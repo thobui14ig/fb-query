@@ -4,7 +4,7 @@ import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
 import { isNullOrUndefined } from 'src/common/utils/check-utils';
-import { DataSource, In, MoreThanOrEqual, Not, Repository } from 'typeorm';
+import { DataSource, ILike, In, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
@@ -359,11 +359,26 @@ export class LinkService {
     return this.repo.save({ id: body.linkId, priority: body.priority })
   }
 
-  getLinksDeleted() {
-    return this.repo.find({
-      where: {
-        isDelete: true
-      }
-    })
+  getLinksDeleted(query: { userId: number | null, keyword: string | null }) {
+    let condition = ``
+    if (query.userId) {
+      condition += ` AND u.id = ${query.userId} `
+    }
+    if (query.keyword) {
+      condition += ` AND(u.username REGEXP '${query.keyword}'
+                    OR l.link_name REGEXP '${query.keyword}'
+                    OR l.link_url REGEXP '${query.keyword}')
+      `
+    }
+    return this.connection.query(`
+      select 
+          l.id,
+          l.link_name AS linkName,
+          l.link_url AS linkUrl,
+          u.username
+      from links l 
+      JOIN users u ON u.id = l.user_id
+      where l.is_deleted = true ${condition}
+    `)
   }
 }
