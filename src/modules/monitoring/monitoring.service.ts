@@ -80,7 +80,7 @@ export class MonitoringService {
   }
 
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async startMonitoring() {
     let vpsLive = []
     if (this.env == ENV.DEVELOPMENT) {
@@ -114,7 +114,7 @@ export class MonitoringService {
     }
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async checkStatusService() {
     if (this.env == ENV.DEVELOPMENT) return;
 

@@ -243,7 +243,7 @@ export class LinkService {
 
   delete(id: number) {
     //chưa xử lý stop_monitoring
-    return this.repo.delete(id);
+    return this.repo.update(id, { isDelete: true });
   }
 
   async hideCmt(linkId: number, type: HideBy, userId: number) {
@@ -274,6 +274,7 @@ export class LinkService {
   async settingLink(setting: ISettingLinkDto) {
     if (setting.isDelete) {
       // return this.repo.delete(setting.linkIds)
+      await this.repo.update(setting.linkIds, { isDelete: true })
     }
 
     const links = await this.repo.find({

@@ -43,6 +43,7 @@ CREATE TABLE links (
     thread INT NOT NULL DEFAULT 0,
     priority TINYINT(0) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted TINYINT(1) DEFAULT 0,
     CONSTRAINT fk_links_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 

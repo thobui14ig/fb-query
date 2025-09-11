@@ -97,7 +97,7 @@ export class UserService {
 
   delete(id: number) {
     // return this.repo.delete(id);
-    return this.repo.update(id, { isDelete: true })
+    // return this.repo.update(id, { isDelete: true })
   }
 
   update(user: UpdateUserDto) {
