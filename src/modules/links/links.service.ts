@@ -180,7 +180,7 @@ export class LinkService {
                   AND UTC_TIMESTAMP()
               GROUP BY link_id
           ) c2 ON c2.link_id = l.id
-          WHERE ${queryEntends}
+          WHERE l.is_deleted = false AND ${queryEntends}
             /* Filter lastCommentTime */
             ${(!isNullOrUndefined(lastCommentFrom) && !isNullOrUndefined(lastCommentTo))
         ? `AND (CASE WHEN l.last_comment_time IS NOT NULL 
