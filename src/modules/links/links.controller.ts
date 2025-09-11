@@ -24,6 +24,11 @@ import { CheckLimitLinkUserWhenUpdateMultipleLinkInterceptor } from './intercept
 export class LinkController {
   constructor(private readonly linkService: LinkService) { }
 
+  @Get('/get-link-deleted')
+  getLinkDelete() {
+    return this.linkService.getLinksDeleted();
+  }
+
   @Post()
   @UseInterceptors(CheckLimitLinkUserWhenAddLinkInterceptor)
   create(@Req() req: Request, @Body() createLinkDto: CreateLinkDTO) {
@@ -80,4 +85,6 @@ export class LinkController {
   getkeywordsByLink(@Param('id') id: number) {
     return this.linkService.getkeywordsByLink(id);
   }
+
+
 }

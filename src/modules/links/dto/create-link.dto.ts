@@ -17,9 +17,9 @@ import { Type } from 'class-transformer';
 
 class LinkDto {
   @IsString()
-  @Matches(/^https:\/\/www\.facebook\.com\//, {
-    message: 'Nội dung phải bắt đầu bằng "https://www.facebook.com/"',
-  })
+  // @Matches(/^https:\/\/www\.facebook\.com\//, {
+  //   message: 'Nội dung phải bắt đầu bằng "https://www.facebook.com/"',
+  // })
   @MinLength(1, { message: 'Nội dung không được bỏ trống' })
   url: string;
 

@@ -358,4 +358,12 @@ export class LinkService {
   priority(body: { priority: boolean, linkId: number }) {
     return this.repo.save({ id: body.linkId, priority: body.priority })
   }
+
+  getLinksDeleted() {
+    return this.repo.find({
+      where: {
+        isDelete: true
+      }
+    })
+  }
 }
