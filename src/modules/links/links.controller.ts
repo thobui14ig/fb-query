@@ -16,7 +16,7 @@ import { CreateLinkDTO } from './dto/create-link.dto';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkStatus, LinkType } from './entities/links.entity';
 import { LinkService } from './links.service';
-import { BodyLinkQuery, ISettingLinkDto } from './links.service.i';
+import { BodyLinkQuery, IGetLinkDeleted, ISettingLinkDto } from './links.service.i';
 import { CheckLimitLinkUserWhenAddLinkInterceptor } from './interceptors/handle-check-limit-link-user-when-add-link.interceptor';
 import { CheckLimitLinkUserWhenUpdateMultipleLinkInterceptor } from './interceptors/handle-check-limit-link-user-when-update-multiple-link.interceptor';
 
@@ -25,7 +25,7 @@ export class LinkController {
   constructor(private readonly linkService: LinkService) { }
 
   @Post('/get-link-deleted')
-  getLinkDelete(@Body() body) {
+  getLinkDelete(@Body() body: IGetLinkDeleted) {
     return this.linkService.getLinksDeleted(body);
   }
 
@@ -84,5 +84,10 @@ export class LinkController {
   @Get('get-keywords/:id')
   getkeywordsByLink(@Param('id') id: number) {
     return this.linkService.getkeywordsByLink(id);
+  }
+
+  @Post('/update-link-delete')
+  updateLinkDelete(@Body() body: { status: LinkStatus, linkIds: number[] }) {
+    return this.linkService.updateLinkDelete(body)
   }
 }

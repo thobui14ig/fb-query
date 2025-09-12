@@ -9,7 +9,7 @@ import { DelayEntity } from '../setting/entities/delay.entity';
 import { LEVEL } from '../user/entities/user.entity';
 import { UpdateLinkDTO } from './dto/update-link.dto';
 import { HideBy, LinkEntity, LinkStatus, LinkType } from './entities/links.entity';
-import { BodyLinkQuery, CreateLinkParams, ISettingLinkDto } from './links.service.i';
+import { BodyLinkQuery, CreateLinkParams, IGetLinkDeleted, ISettingLinkDto } from './links.service.i';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -359,26 +359,39 @@ export class LinkService {
     return this.repo.save({ id: body.linkId, priority: body.priority })
   }
 
-  getLinksDeleted(query: { userId: number | null, keyword: string | null }) {
+  async getLinksDeleted(query: IGetLinkDeleted) {
+    const { keyword, limit, offset, userId } = query
     let condition = ``
-    if (query.userId) {
-      condition += ` AND u.id = ${query.userId} `
+    if (userId) {
+      condition += ` AND u.id = ${userId} `
     }
-    if (query.keyword) {
-      condition += ` AND(u.username REGEXP '${query.keyword}'
-                    OR l.link_name REGEXP '${query.keyword}'
-                    OR l.link_url REGEXP '${query.keyword}')
+    if (keyword) {
+      condition += ` AND(u.username REGEXP '${keyword}'
+                    OR l.link_name REGEXP '${keyword}'
+                    OR l.link_url REGEXP '${keyword}')
       `
     }
-    return this.connection.query(`
+    const response = await this.connection.query(`
       select 
           l.id,
           l.link_name AS linkName,
           l.link_url AS linkUrl,
-          u.username
+          u.username,
+          COUNT(*) OVER() AS totalCount
       from links l 
       JOIN users u ON u.id = l.user_id
       where l.is_deleted = true ${condition}
+      LIMIT ${limit} OFFSET ${offset};
     `)
+    return {
+      data: response,
+      totalCount: response.length > 0 ? response[0].totalCount : 0
+    }
+  }
+
+  updateLinkDelete(body: { status: LinkStatus, linkIds: number[] }) {
+    const { linkIds, status } = body
+
+    return this.repo.update(linkIds, { status, isDelete: false })
   }
 }

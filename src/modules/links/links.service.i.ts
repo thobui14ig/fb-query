@@ -31,3 +31,5 @@ export interface ISettingLinkDto {
     hideCmt: boolean
     type: LinkStatus
 }
+
+export interface IGetLinkDeleted { userId: number | null, keyword: string | null, limit: number, offset: number }
