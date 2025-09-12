@@ -7,7 +7,9 @@ CREATE TABLE users (
     link_off_limit INT DEFAULT NULL,
     level INT DEFAULT 0, -- 0: USER, 1: ADMIN
     delay_on_private INT DEFAULT 5,
-    link_on_hide_limit INT DEFAULT 0,
+    delay_on_public INT DEFAULT 5,
+    link_on_hide_limit INT,
+    link_off_hide_limit INT,
     get_phone TINYINT(1) DEFAULT TRUE,
     is_deleted TINYINT(1) DEFAULT false,
     account_fb_uuid VARCHAR(255) DEFAULT NULL,
@@ -44,6 +46,7 @@ CREATE TABLE links (
     priority TINYINT(0) NOT NULL DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_deleted TINYINT(1) DEFAULT false,
+    table_page_id INT NULL,
     CONSTRAINT fk_links_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
