@@ -8,8 +8,8 @@ CREATE TABLE users (
     level INT DEFAULT 0, -- 0: USER, 1: ADMIN
     delay_on_private INT DEFAULT 5,
     link_on_hide_limit INT DEFAULT 0,
-    get_phone TINYINT(1) DEFAULT 1,
-    is_deleted TINYINT(1) DEFAULT 0,
+    get_phone TINYINT(1) DEFAULT TRUE,
+    is_deleted TINYINT(1) DEFAULT false,
     account_fb_uuid VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -31,19 +31,19 @@ CREATE TABLE links (
     status ENUM('pending','started') NOT NULL DEFAULT 'pending',
     type ENUM('die','undefined','public','private') NOT NULL,
     error_message VARCHAR(255),
-    process TINYINT(1) DEFAULT 0,
+    process TINYINT(1) DEFAULT false,
     count_before INT NOT NULL DEFAULT 0,
     count_after INT NOT NULL DEFAULT 0,
     like_before INT NOT NULL DEFAULT 0,
-    like_after INT NOT NULL 0,
-    hide_cmt TINYINT(1) NOT NULL DEFAULT 0, 
+    like_after INT NOT NULL DEFAULT 0,
+    hide_cmt TINYINT(1) NOT NULL DEFAULT false, 
     hide_by ENUM('all','phone','keywords') NOT NULL DEFAULT 'all',
-    post_id_die TINYINT(1) NOT NULL DEFAULT 0,
-    post_id_v1_die TINYINT(1) NOT NULL DEFAULT 0,
+    post_id_die TINYINT(1) NOT NULL DEFAULT false,
+    post_id_v1_die TINYINT(1) NOT NULL DEFAULT false,
     thread INT NOT NULL DEFAULT 0,
-    priority TINYINT(0) NOT NULL,
+    priority TINYINT(0) NOT NULL DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_deleted TINYINT(1) DEFAULT 0,
+    is_deleted TINYINT(1) DEFAULT false,
     CONSTRAINT fk_links_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -82,7 +82,7 @@ CREATE TABLE proxy (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proxy_address VARCHAR(100) NOT NULL,
     status ENUM('active','inactive') NOT NULL DEFAULT 'active',
-    is_fb_block TINYINT(1) NOT NULL DEFAULT 0,
+    is_fb_block TINYINT(1) NOT NULL DEFAULT false,
     error_code VARCHAR(255)
 );
 
@@ -110,7 +110,7 @@ CREATE TABLE comments (
     phone_number VARCHAR(255),
     cmtid VARCHAR(255) NOT NULL,
     link_id INT NOT NULL DEFAULT 0,
-    hide_cmt TINYINT(1) NOT NULL DEFAULT 0,
+    hide_cmt TINYINT(1) NOT NULL DEFAULT false,
     CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_comments_link FOREIGN KEY (link_id) REFERENCES links(id)
 );

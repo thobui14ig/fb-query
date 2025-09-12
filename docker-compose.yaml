@@ -14,7 +14,7 @@ services:
       - DB_HOST=46.62.205.241
       - DB_PORT=3306
       - DB_USER_NAME=root
-      - DB_PASSWORD=MyRootPass123!
+      - DB_PASSWORD=HoangChuong@1111
       - DB_DATABASE=crawl-fb
       - NODE_OPTIONS=--max-old-space-size=4096
       - ENV=production
