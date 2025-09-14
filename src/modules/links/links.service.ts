@@ -309,7 +309,8 @@ export class LinkService {
       .countBy({
         userId,
         status,
-        hideCmt
+        hideCmt,
+        isDelete: false
       })
 
     return count
