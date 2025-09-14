@@ -323,7 +323,8 @@ export class LinkService {
         userId,
         status: status === LinkStatus.Pending ? LinkStatus.Started : LinkStatus.Pending,
         hideCmt,
-        id: In(linkIds)
+        id: In(linkIds),
+        isDelete: false
       })
 
     return a + b
@@ -332,8 +333,8 @@ export class LinkService {
   async getTotalLinkUser(userId: number) {
     const response = await this.connection.query(`
         SELECT
-          (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started') AS totalLinkOn,
-          (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending') AS totalLinkOff
+          (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'started' AND l.is_deleted = false) AS totalLinkOn,
+          (SELECT COUNT(*) FROM links l WHERE l.user_id = u.id AND l.status = 'pending' AND l.is_deleted = false) AS totalLinkOff
           FROM users u
           WHERE u.id = ${userId};
       `)
@@ -347,7 +348,8 @@ export class LinkService {
         type: Not(LinkType.DIE),
         delayTime: MoreThanOrEqual(0),
         hideCmt: false,
-        priority: false
+        priority: false,
+        isDelete: false
       },
       relations: {
         user: true

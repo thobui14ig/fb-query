@@ -101,7 +101,7 @@ export class MonitoringService {
     const postsStarted = await this.linkService.getPostStarted()
     if (!postsStarted?.length) return;
 
-    const chunkSize = (postsStarted.length / vpsLive.length);
+    const chunkSize = Math.ceil(postsStarted.length / vpsLive.length);
     let stt = 0
     for (let i = 0; i < postsStarted.length; i += chunkSize) {
       const chunk = postsStarted.slice(i, i + chunkSize);

@@ -53,7 +53,7 @@ CREATE TABLE links (
 CREATE TABLE token (
     id INT AUTO_INCREMENT PRIMARY KEY,
     token_value VARCHAR(255) NOT NULL,
-    token_value_v1 VARCHAR(255) NOT NULL,
+    token_value_v1 VARCHAR(255) NULL,
     status ENUM('active','inactive','limit','die') NOT NULL DEFAULT 'active',
     type SMALLINT NOT NULL DEFAULT 1,
     retry_count INT DEFAULT 0
