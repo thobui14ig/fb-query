@@ -21,6 +21,7 @@ export interface BodyLinkQuery {
     diffTimeTo?: number
     totalCmtTodayFrom?: number
     totalCmtTodayTo?: number
+    keyword: string
 }
 
 export interface ISettingLinkDto {

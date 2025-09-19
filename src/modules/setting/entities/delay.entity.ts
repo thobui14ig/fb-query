@@ -39,4 +39,10 @@ export class DelayEntity {
 
     @Column({ name: 'time_remove_proxy_slow', type: 'int', default: 0 })
     timeRemoveProxySlow: number;
+
+    @Column({ name: 'vip' })
+    vip: string;
+
+    @Column({ name: 'popular' })
+    popular: string;
 }

@@ -93,6 +93,7 @@ export class LinkService {
   async getAll(status: LinkStatus, body: BodyLinkQuery, level: LEVEL, userIdByUerLogin: number, isFilter: boolean, hideCmt: boolean, limit: number, offset: number) {
     const { type, userId, delayFrom, delayTo, differenceCountCmtFrom, differenceCountCmtTo, lastCommentFrom, lastCommentTo, likeFrom, likeTo, diffTimeFrom, diffTimeTo, totalCmtTodayFrom, totalCmtTodayTo } = body
     let queryEntends = ``
+    const keyword = body.keyword?.length > 0 ? body.keyword?.trim() : null
     if (hideCmt) {
       queryEntends += ` l.hide_cmt = true`
     } else {
@@ -196,6 +197,13 @@ export class LinkService {
         ? `AND (l.count_after - (IFNULL(c1.totalCommentNewest, 0) - l.comment_count)) 
                   BETWEEN ${diffTimeFrom} AND ${diffTimeTo}`
         : ''}
+        ${keyword ? `AND (
+            l.post_id REGEXP '${keyword}'
+            OR l.link_name REGEXP '${keyword}'
+            OR l.link_url REGEXP '${keyword}'
+            OR l.status REGEXP '${keyword}'
+            OR u.username REGEXP '${keyword}'
+          )` : ""}
       )
       SELECT *, (SELECT COUNT(*) FROM filtered_links) AS totalCount
       FROM filtered_links

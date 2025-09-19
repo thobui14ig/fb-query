@@ -1,4 +1,4 @@
-import { IsNumber } from "class-validator";
+import { IsNumber, IsString } from "class-validator";
 
 export class CreateDelayDTO {
     @IsNumber()
@@ -12,4 +12,10 @@ export class CreateDelayDTO {
 
     @IsNumber()
     timeRemoveProxySlow: number
+
+    @IsString()
+    vip: string
+
+    @IsString()
+    popular: string
 }
