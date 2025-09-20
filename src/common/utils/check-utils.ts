@@ -1,3 +1,6 @@
+import { IsString } from "class-validator";
+
+
 function isNumeric(str: string) {
     return /^\d+$/.test(str);
 }
@@ -7,7 +10,7 @@ function isAlpha(str: string): boolean {
 }
 
 function isNullOrUndefined(value: any): boolean {
-    return value === null || value === undefined;
+    return value !== 0 && (!value || value === "undefined")
 }
 
 export {

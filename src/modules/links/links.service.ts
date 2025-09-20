@@ -194,7 +194,11 @@ export class LinkService {
         : ''}
             /* Filter diffTimeCondition */
             ${(!isNullOrUndefined(diffTimeFrom) && !isNullOrUndefined(diffTimeTo))
-        ? `AND (l.count_after - (IFNULL(c1.totalCommentNewest, 0) - l.comment_count)) 
+        ? `AND (CASE
+                  WHEN l.time_craw_update IS NOT NULL
+                      THEN TIMESTAMPDIFF(HOUR, l.time_craw_update, l.last_comment_time)
+                  ELSE 9999
+              END)
                   BETWEEN ${diffTimeFrom} AND ${diffTimeTo}`
         : ''}
         ${keyword ? `AND (
@@ -370,30 +374,81 @@ export class LinkService {
     return this.repo.save({ id: body.linkId, priority: body.priority })
   }
 
-  async getLinksDeleted(query: IGetLinkDeleted) {
-    const { keyword, limit, offset, userId } = query
-    let condition = ``
+  async getLinksDeleted(body: IGetLinkDeleted) {
+    const { limit, offset, userId } = body
+    let queryEntends = ``
+    const keyword = body.keyword?.length > 0 ? body.keyword?.trim() : null
+
     if (userId) {
-      condition += ` AND u.id = ${userId} `
+      queryEntends += ` AND l.user_id = ${userId}`
     }
-    if (keyword) {
-      condition += ` AND(u.username REGEXP '${keyword}'
-                    OR l.link_name REGEXP '${keyword}'
-                    OR l.link_url REGEXP '${keyword}')
-      `
-    }
-    const response = await this.connection.query(`
-      select 
-          l.id,
-          l.link_name AS linkName,
-          l.link_url AS linkUrl,
-          u.username,
-          COUNT(*) OVER() AS totalCount
-      from links l 
-      JOIN users u ON u.id = l.user_id
-      where l.is_deleted = true ${condition}
+    const query = `
+      WITH filtered_links AS (
+          SELECT
+              l.id,
+              l.error_message AS errorMessage,
+              l.link_name AS linkName,
+              l.link_url AS linkUrl,
+              l.like,
+              l.post_id AS postId,
+              l.delay_time AS delayTime,
+              l.status,
+              DATE_FORMAT(CONVERT_TZ(l.created_at, '+00:00', '+07:00'), '%Y-%m-%d %H:%i:%s') AS createdAt,
+              CASE
+                  WHEN l.last_comment_time IS NOT NULL
+                      THEN TIMESTAMPDIFF(HOUR, l.last_comment_time, UTC_TIMESTAMP())
+                  ELSE 9999
+              END AS lastCommentTime,
+              u.username,
+              l.count_before AS countBefore,
+              l.count_after AS countAfter,
+              l.like_before AS likeBefore,
+              l.like_after AS likeAfter,
+              l.hide_cmt AS hideCmt,
+              l.hide_by AS hideBy,
+              l.type,
+              CASE
+                  WHEN l.time_craw_update IS NOT NULL
+                      THEN TIMESTAMPDIFF(HOUR, l.time_craw_update, l.last_comment_time)
+                  ELSE 9999
+              END AS timeCrawUpdate,
+              l.comment_count AS totalComment,
+              l.priority,
+              IFNULL(c1.totalCommentNewest, 0) AS totalCommentNewest,
+              IFNULL(c2.totalCommentToday, 0) AS totalCommentToday,
+              (l.count_after - (IFNULL(c1.totalCommentNewest, 0) - l.comment_count)) AS diffTimeCondition
+          FROM links l
+          JOIN users u ON u.id = l.user_id
+          LEFT JOIN (
+              SELECT link_id, COUNT(*) AS totalCommentNewest
+              FROM comments
+              GROUP BY link_id
+          ) c1 ON c1.link_id = l.id
+          LEFT JOIN (
+              SELECT link_id, COUNT(*) AS totalCommentToday
+              FROM comments
+              WHERE time_created BETWEEN
+                  UTC_TIMESTAMP() - INTERVAL (HOUR(UTC_TIMESTAMP())+MINUTE(UTC_TIMESTAMP())/60+SECOND(UTC_TIMESTAMP())/3600) HOUR
+                  AND UTC_TIMESTAMP()
+              GROUP BY link_id
+          ) c2 ON c2.link_id = l.id
+          WHERE l.is_deleted = true ${queryEntends}
+        ${keyword ? `AND (
+            l.post_id REGEXP '${keyword}'
+            OR l.link_name REGEXP '${keyword}'
+            OR l.link_url REGEXP '${keyword}'
+            OR l.status REGEXP '${keyword}'
+            OR u.username REGEXP '${keyword}'
+          )` : ""}
+      )
+      SELECT *, (SELECT COUNT(*) FROM filtered_links) AS totalCount
+      FROM filtered_links
+      ORDER BY createdAt DESC
       LIMIT ${limit} OFFSET ${offset};
-    `)
+
+      `
+    let response: any[] = await this.connection.query(query, [])
+
     return {
       data: response,
       totalCount: response.length > 0 ? response[0].totalCount : 0
