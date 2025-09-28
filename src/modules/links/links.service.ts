@@ -32,6 +32,19 @@ export class LinkService {
     const linksInValid = [];
 
     for (const link of params.links) {
+      const isLinkDelete = await this.repo.findOne({
+        where: {
+          linkUrl: link.url,
+          userId: params.userId,
+          isDelete: true          
+        }
+      })
+      if(isLinkDelete) {
+        await this.repo.update(isLinkDelete.id, {
+          isDelete: false,
+          createdAt: dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any
+        })
+      }
       const isExitLink = await this.repo.findOne({
         where: {
           linkUrl: link.url,
