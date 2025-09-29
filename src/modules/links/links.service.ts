@@ -44,6 +44,7 @@ export class LinkService {
           isDelete: false,
           createdAt: dayjs.utc().format('YYYY-MM-DD HH:mm:ss') as any
         })
+        continue;
       }
       const isExitLink = await this.repo.findOne({
         where: {
